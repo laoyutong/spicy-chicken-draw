@@ -1,7 +1,6 @@
 name: Deploy GitHub Pages
 on:
   push:
-    // 触发的推送分支
     branches:
       - master
 jobs:
@@ -10,16 +9,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      // 打包命令
+
       - name: Build
         run: npm install && npm run build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          // 在developer setting中配置的 personal access tokens，需要包含workflow
           ACCESS_TOKEN: ${{ secrets.action_workflow }}
-          // 目标分支，需要与github pages配置的分支一致
           BRANCH: gh-pages
-          // 打包的目标文件目录
           FOLDER: dist
