@@ -2,17 +2,18 @@ import { ICON_LIST, ICON_PROPS } from "./config";
 import { useAtom } from "jotai";
 import { drawTypeAtom } from "@/store";
 import cls from "classnames";
-import { useKeydown } from "@/hooks";
+import { useKeyPress } from "ahooks";
 
 export const SelectionTool = (): JSX.Element => {
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
-  useKeydown((key) => {
-    const index = +key - 1;
-    if (!isNaN(index) && index !== -1 && index < ICON_LIST.length) {
-      setDrawType(ICON_LIST[index].type);
+  useKeyPress(
+    new Array(ICON_LIST.length).fill(null).map((_, index) => String(index + 1)),
+    (event) => {
+      const activeDrawType = ICON_LIST[Number(event.key) - 1];
+      activeDrawType && setDrawType(activeDrawType.type);
     }
-  });
+  );
 
   return (
     <div className="flex absolute top-3 left-1/2 -translate-x-1/2 rounded bg-slate-50 shadow">
