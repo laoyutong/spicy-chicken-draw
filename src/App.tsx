@@ -1,5 +1,11 @@
+import { SelectionTool } from "@/components";
+
 function App() {
-  return <div>spicy chicken draw</div>;
+  return (
+    <>
+      <SelectionTool />
+    </>
+  );
 }
 
 export default App;
