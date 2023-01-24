@@ -19,5 +19,3 @@ jobs:
           token: ${{ secrets.ACTION_WORKFLOW }}
           branch: gh-pages
           folder: dist
-          git-config-name: laoyutong
-          git-config-email: 1262145400@qq.com
