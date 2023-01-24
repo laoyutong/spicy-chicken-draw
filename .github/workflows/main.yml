@@ -16,7 +16,7 @@ jobs:
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.4.1
         with:
-          token: ${{ github.action_workflow }}
+          token: ${{ secrets.ACTION_WORKFLOW }}
           branch: gh-pages
           folder: dist
           git-config-name: laoyutong
