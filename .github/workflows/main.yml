@@ -16,6 +16,6 @@ jobs:
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
-          token: ${{ secrets.action_workflow }}
-          BRANCH: gh-pages
-          FOLDER: dist
+          token: ${{ github.action_workflow }}
+          branch: gh-pages
+          folder: dist
