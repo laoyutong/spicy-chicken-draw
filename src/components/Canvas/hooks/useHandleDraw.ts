@@ -1,5 +1,11 @@
-import { RefObject, useState } from "react";
+import { DrawData, DrawType } from "@/types";
+import { useTrackedEffect, useUpdateEffect } from "ahooks";
+import { RefObject, useRef, useState } from "react";
 import { useMouseEvent } from ".";
+import { nanoid } from "nanoid";
+import { useAtomValue } from "jotai";
+import { drawTypeAtom } from "@/store";
+import { drawCanvas } from "@/utils";
 
 export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
@@ -7,5 +13,62 @@ export const useHandleDraw = (
 ) => {
   const { isMoving, startCoordinate, moveCoordinate } = useMouseEvent();
 
-  const [drawData, setDrawData] = useState([]);
+  const drawType = useAtomValue(drawTypeAtom);
+
+  const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
+
+  const [staticDrawData, setStaticDrawData] = useState<DrawData[]>([]);
+
+  const workingDrawData = useRef<DrawData | null>(null);
+
+  useUpdateEffect(() => {
+    // 鼠标按下正在移动过程中
+    if (isMoving) {
+      // 初始化 workingDrawData
+      if (!workingDrawData.current) {
+        if (startCoordinate) {
+          workingDrawData.current = {
+            id: nanoid(),
+            type: drawType,
+            width: 0,
+            height: 0,
+            ...startCoordinate,
+          };
+        }
+      } else {
+        // 移动过程中实时更改 workingDrawData 的 width 和 height
+        if (startCoordinate && moveCoordinate) {
+          workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
+          workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
+          setActiveDrawData([workingDrawData.current]);
+        }
+      }
+    } else {
+      if (
+        workingDrawData.current?.width &&
+        workingDrawData.current?.height &&
+        // selection 不需要静态绘制
+        workingDrawData.current?.type !== DrawType.selection
+      ) {
+        // 缓存下 不然 setState 的时候已经是 null 了
+        const workingDrawDataCache = workingDrawData.current!;
+        setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
+      }
+      activeDrawData.length && setActiveDrawData([]);
+      workingDrawData.current = null;
+    }
+  }, [isMoving, startCoordinate, moveCoordinate]);
+
+  useTrackedEffect(
+    (changes) => {
+      if (changes?.includes(0) && activeCanvasCtx.current) {
+        drawCanvas(activeCanvasCtx.current, activeDrawData);
+      }
+
+      if (changes?.includes(1) && statisCanvasCtx.current) {
+        drawCanvas(statisCanvasCtx.current, staticDrawData);
+      }
+    },
+    [activeDrawData, staticDrawData]
+  );
 };

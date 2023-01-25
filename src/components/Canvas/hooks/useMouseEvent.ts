@@ -30,6 +30,8 @@ export const useMouseEvent = () => {
     "mouseup",
     () => {
       setIsMoving(false);
+      setStartCoordinate(null);
+      setMoveCoordinate(null);
     },
     { target: document }
   );

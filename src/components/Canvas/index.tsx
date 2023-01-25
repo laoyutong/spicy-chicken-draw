@@ -1,4 +1,5 @@
 import { useCanvasInit, useHandleDraw, useResizeCanvas } from "./hooks";
+import styles from "./style.module.less";
 
 export const Canvas = (): JSX.Element => {
   const { activeCanvasCtx, activeCanvasRef, staticCanvasCtx, staticCanvasRef } =
@@ -12,9 +13,9 @@ export const Canvas = (): JSX.Element => {
   useHandleDraw(activeCanvasCtx, staticCanvasCtx);
 
   return (
-    <>
-      <canvas ref={staticCanvasRef} />
+    <div className={styles.canvas_container}>
       <canvas ref={activeCanvasRef} />
-    </>
+      <canvas ref={staticCanvasRef} />
+    </div>
   );
 };

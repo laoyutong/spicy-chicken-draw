@@ -8,3 +8,12 @@ export const enum DrawType {
 }
 
 export type Coordinate = Record<"x" | "y", number>;
+
+export interface DrawData {
+  id: string;
+  type: DrawType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
