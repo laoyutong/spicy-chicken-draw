@@ -1,11 +1,10 @@
-import { SelectionTool } from "@/components";
+import { SelectionTool, Canvas } from "@/components";
 
-function App() {
-  return (
-    <>
-      <SelectionTool />
-    </>
-  );
-}
+const App = () => (
+  <>
+    <SelectionTool />
+    <Canvas />
+  </>
+);
 
 export default App;

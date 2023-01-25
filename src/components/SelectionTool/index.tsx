@@ -22,9 +22,7 @@ export const SelectionTool = (): JSX.Element => {
           key={type}
           className={cls(
             "w-11 h-10 flex items-center justify-center flex-col cursor-pointer",
-            drawType === type && "bg-slate-300",
-            // TODO 调整一下写法
-            drawType !== type && "hover:bg-slate-200"
+            drawType === type ? "bg-slate-300" : "hover:bg-slate-200"
           )}
           onClick={() => setDrawType(type)}
         >
