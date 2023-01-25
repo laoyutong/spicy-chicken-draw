@@ -6,3 +6,5 @@ export const enum DrawType {
   text = "text",
   diamond = "diamond",
 }
+
+export type Coordinate = Record<"x" | "y", number>;
