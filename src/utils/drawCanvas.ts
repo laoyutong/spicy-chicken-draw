@@ -52,9 +52,6 @@ const drawSelection: DrawDetailTypeFn = (
   ctx.restore();
 };
 
-const getAngle = (x: number, y: number) =>
-  Math.floor(180 / (Math.PI / Math.atan(x / y)));
-
 const drawArrow: DrawDetailTypeFn = (
   ctx: CanvasRenderingContext2D,
   { x, y, width, height }
@@ -65,7 +62,7 @@ const drawArrow: DrawDetailTypeFn = (
   );
   const directionLength = height < 0 ? -arrowLength : arrowLength;
 
-  const angle = getAngle(width, height);
+  const angle = Math.floor(180 / (Math.PI / Math.atan(width / height)));
   const angleA = angle + ARROW_DEG;
   const angleB = angle - ARROW_DEG;
   const targetX = x + width;
