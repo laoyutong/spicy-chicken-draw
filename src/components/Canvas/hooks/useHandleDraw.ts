@@ -1,5 +1,5 @@
 import { DrawData, DrawType } from "@/types";
-import { useTrackedEffect, useUpdateEffect } from "ahooks";
+import { useMount, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useRef, useState } from "react";
 import { useMouseEvent } from ".";
 import { nanoid } from "nanoid";
@@ -11,7 +11,7 @@ import {
   splitContent,
   TextOnChangeEvent,
 } from "@/utils";
-import { TEXT_FONT_SIZE } from "@/config";
+import { LOCAL_STORAGE_KEY, TEXT_FONT_SIZE } from "@/config";
 
 export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
@@ -24,6 +24,14 @@ export const useHandleDraw = (
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
   const [staticDrawData, setStaticDrawData] = useState<DrawData[]>([]);
+
+  useMount(() => {
+    let result = [];
+    try {
+      result = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+    } catch {}
+    result.length && setStaticDrawData(result);
+  });
 
   const workingDrawData = useRef<DrawData | null>(null);
 
@@ -112,6 +120,7 @@ export const useHandleDraw = (
 
       if (changes?.includes(1) && statisCanvasCtx.current) {
         drawCanvas(statisCanvasCtx.current, staticDrawData);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(staticDrawData));
       }
     },
     [activeDrawData, staticDrawData]
