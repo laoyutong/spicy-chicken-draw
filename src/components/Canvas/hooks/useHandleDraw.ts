@@ -5,7 +5,13 @@ import { useMouseEvent } from ".";
 import { nanoid } from "nanoid";
 import { useAtomValue } from "jotai";
 import { drawTypeAtom } from "@/store";
-import { drawCanvas } from "@/utils";
+import {
+  createText,
+  drawCanvas,
+  splitContent,
+  TextOnChangeEvent,
+} from "@/utils";
+import { TEXT_FONT_SIZE } from "@/config";
 
 export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
@@ -21,43 +27,82 @@ export const useHandleDraw = (
 
   const workingDrawData = useRef<DrawData | null>(null);
 
-  useUpdateEffect(() => {
-    // 鼠标按下正在移动过程中
-    if (isMoving) {
-      // 初始化 workingDrawData
-      if (!workingDrawData.current) {
-        if (startCoordinate) {
-          workingDrawData.current = {
-            id: nanoid(),
-            type: drawType,
-            width: 0,
-            height: 0,
-            ...startCoordinate,
-          };
+  const createTextOnChange: TextOnChangeEvent = (textValue) => {
+    if (textValue.trim()) {
+      const lines = splitContent(textValue);
+      let maxWidth = 0;
+      lines.forEach((line) => {
+        if (statisCanvasCtx.current) {
+          const { width } = statisCanvasCtx.current.measureText(line);
+          if (width > maxWidth) {
+            maxWidth = width;
+          }
+        }
+      });
+
+      setStaticDrawData((pre) => [
+        ...pre,
+        {
+          id: nanoid(),
+          type: DrawType.text,
+          content: textValue,
+          width: maxWidth,
+          height: lines.length * TEXT_FONT_SIZE,
+          ...startCoordinate!,
+        },
+      ]);
+    }
+  };
+
+  useTrackedEffect(
+    (changes) => {
+      if (drawType === DrawType.text) {
+        if (changes?.includes(1) && startCoordinate) {
+          createText(startCoordinate, createTextOnChange);
+        }
+        return;
+      }
+
+      // 鼠标按下正在移动过程中
+      if (isMoving) {
+        // 初始化 workingDrawData
+        if (!workingDrawData.current) {
+          if (startCoordinate) {
+            workingDrawData.current = {
+              id: nanoid(),
+              type: drawType,
+              width: 0,
+              height: 0,
+              ...startCoordinate,
+            };
+          }
+        } else {
+          // 移动过程中实时更改 workingDrawData 的 width 和 height
+          if (startCoordinate && moveCoordinate) {
+            workingDrawData.current.width =
+              moveCoordinate.x - startCoordinate.x;
+            workingDrawData.current.height =
+              moveCoordinate.y - startCoordinate.y;
+            setActiveDrawData([workingDrawData.current]);
+          }
         }
       } else {
-        // 移动过程中实时更改 workingDrawData 的 width 和 height
-        if (startCoordinate && moveCoordinate) {
-          workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
-          workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
-          setActiveDrawData([workingDrawData.current]);
+        if (
+          workingDrawData.current?.width &&
+          workingDrawData.current?.height &&
+          // selection 不需要静态绘制
+          workingDrawData.current?.type !== DrawType.selection
+        ) {
+          // 缓存下 不然 setState 的时候已经是 null 了
+          const workingDrawDataCache = workingDrawData.current!;
+          setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
         }
+        activeDrawData.length && setActiveDrawData([]);
+        workingDrawData.current = null;
       }
-    } else {
-      if (
-        workingDrawData.current?.width &&
-        workingDrawData.current?.height &&
-        // selection 不需要静态绘制
-        workingDrawData.current?.type !== DrawType.selection
-      ) {
-        // 缓存下 不然 setState 的时候已经是 null 了
-        const workingDrawDataCache = workingDrawData.current!;
-        setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
-      }
-      activeDrawData.length && setActiveDrawData([]);
-      workingDrawData.current = null;
-    }
-  }, [isMoving, startCoordinate, moveCoordinate]);
+    },
+    [isMoving, startCoordinate, moveCoordinate]
+  );
 
   useTrackedEffect(
     (changes) => {

@@ -13,9 +13,23 @@ export const useResizeCanvas = (
       return;
     }
 
-    canvasRefList.forEach((item) => {
-      item.current!.width = window.innerWidth;
-      item.current!.height = window.innerHeight;
+    canvasRefList.forEach((item, index) => {
+      if (!item.current) {
+        return;
+      }
+
+      const { innerWidth, innerHeight, devicePixelRatio } = window;
+      item.current.width = innerWidth;
+      item.current.height = innerHeight;
+      item.current.style.width = innerWidth + "px";
+      item.current.style.height = innerHeight + "px";
+      // 高清屏上物理像素和设备独立像素不一致 解决文本绘制模糊的问题
+      item.current.width = devicePixelRatio * innerWidth;
+      item.current.height = devicePixelRatio * innerHeight;
+      canvasCtxList[index]?.current?.scale?.(
+        devicePixelRatio,
+        devicePixelRatio
+      );
     });
   };
 

@@ -1,5 +1,12 @@
-import { ARROW_DEG, ARROW_LENGTH } from "@/config";
+import {
+  ARROW_DEG,
+  ARROW_LENGTH,
+  SELECTION_AREA_BG_COLOR,
+  TEXT_FONT_FAMILY,
+  TEXT_FONT_SIZE,
+} from "@/config";
 import { DrawData, DrawType } from "@/types";
+import { splitContent } from ".";
 
 type DrawDetailTypeFn = (
   ctx: CanvasRenderingContext2D,
@@ -47,7 +54,7 @@ const drawSelection: DrawDetailTypeFn = (
   { x, y, width, height }
 ) => {
   ctx.save();
-  ctx.fillStyle = "rgba(255,165,0,0.5)";
+  ctx.fillStyle = SELECTION_AREA_BG_COLOR;
   ctx.fillRect(x, y, width, height);
   ctx.restore();
 };
@@ -80,6 +87,18 @@ const drawArrow: DrawDetailTypeFn = (
   ctx.lineTo(x2, y2);
 };
 
+const drawText: DrawDetailTypeFn = (ctx, { x, y, content }) => {
+  if (!content?.trim()) {
+    return;
+  }
+  ctx.textBaseline = "bottom";
+  ctx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
+  const lines = splitContent(content);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + TEXT_FONT_SIZE * (index + 1));
+  });
+};
+
 const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
   switch (drawData.type) {
     case DrawType.selection:
@@ -96,6 +115,9 @@ const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
       return;
     case DrawType.arrow:
       drawArrow(ctx, drawData);
+      return;
+    case DrawType.text:
+      drawText(ctx, drawData);
       return;
   }
 };

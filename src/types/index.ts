@@ -16,4 +16,5 @@ export interface DrawData {
   y: number;
   width: number;
   height: number;
+  content?: string;
 }
