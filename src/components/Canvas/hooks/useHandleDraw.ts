@@ -1,5 +1,10 @@
 import { DrawData, DrawType } from "@/types";
-import { useMount, useTrackedEffect, useUpdateEffect } from "ahooks";
+import {
+  useEventListener,
+  useMount,
+  useTrackedEffect,
+  useUpdateEffect,
+} from "ahooks";
 import { RefObject, useRef, useState } from "react";
 import { useMouseEvent } from ".";
 import { nanoid } from "nanoid";
@@ -13,6 +18,14 @@ import {
 } from "@/utils";
 import { LOCAL_STORAGE_KEY, TEXT_FONT_SIZE } from "@/config";
 
+const getInitialDrawData = () => {
+  let result = [];
+  try {
+    result = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+  } catch {}
+  return result;
+};
+
 export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
   statisCanvasCtx: RefObject<CanvasRenderingContext2D>
@@ -23,15 +36,8 @@ export const useHandleDraw = (
 
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
-  const [staticDrawData, setStaticDrawData] = useState<DrawData[]>([]);
-
-  useMount(() => {
-    let result = [];
-    try {
-      result = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-    } catch {}
-    result.length && setStaticDrawData(result);
-  });
+  const [staticDrawData, setStaticDrawData] =
+    useState<DrawData[]>(getInitialDrawData);
 
   const workingDrawData = useRef<DrawData | null>(null);
 
@@ -110,6 +116,23 @@ export const useHandleDraw = (
       }
     },
     [isMoving, startCoordinate, moveCoordinate]
+  );
+
+  useMount(() => {
+    staticDrawData.length &&
+      statisCanvasCtx.current &&
+      drawCanvas(statisCanvasCtx.current, staticDrawData);
+  });
+
+  useEventListener(
+    "resize",
+    () => {
+      activeCanvasCtx.current &&
+        drawCanvas(activeCanvasCtx.current, activeDrawData);
+      statisCanvasCtx.current &&
+        drawCanvas(statisCanvasCtx.current, staticDrawData);
+    },
+    { target: window }
   );
 
   useTrackedEffect(
