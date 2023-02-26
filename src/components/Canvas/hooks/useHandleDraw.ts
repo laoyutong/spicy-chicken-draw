@@ -1,4 +1,4 @@
-import { CursorConfig, DrawData, DrawType } from "@/types";
+import { Coordinate, CursorConfig, DrawData, DrawType } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useMouseEvent } from ".";
@@ -8,6 +8,8 @@ import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
   drawCanvas,
+  getMaxDis,
+  getMinDis,
   splitContent,
   TextOnChangeEvent,
 } from "@/utils";
@@ -29,7 +31,7 @@ export const useHandleDraw = (
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
-  const setCursorPoint = useSetAtom(cursorPointAtom);
+  const [cursorPoint, setCursorPoint] = useAtom(cursorPointAtom);
 
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
@@ -67,6 +69,8 @@ export const useHandleDraw = (
     }
   };
 
+  const cacheDrawData = useRef<DrawData | null>(null);
+
   useTrackedEffect(
     (changes) => {
       if (
@@ -81,6 +85,35 @@ export const useHandleDraw = (
 
       // 鼠标按下正在移动过程中
       if (startCoordinate) {
+        // 是否需要移动图形
+        const shouldMoveElement =
+          [...staticDrawData, ...activeDrawData].find(
+            (item) => item.selected
+          ) && cursorPoint === CursorConfig.move;
+
+        if (shouldMoveElement) {
+          if (!cacheDrawData.current) {
+            cacheDrawData.current = staticDrawData.find(
+              (item) => item.selected
+            )!;
+            setActiveDrawData([cacheDrawData.current]);
+            setStaticDrawData((pre) => pre.filter((item) => !item.selected));
+            return;
+          }
+          setActiveDrawData([
+            {
+              ...cacheDrawData.current,
+              x: cacheDrawData.current.x + moveCoordinate.x - startCoordinate.x,
+              y: cacheDrawData.current.y + moveCoordinate.y - startCoordinate.y,
+            },
+          ]);
+          return;
+        }
+
+        setStaticDrawData((pre) =>
+          pre.map((item) => ({ ...item, selected: false }))
+        );
+
         // 初始化 workingDrawData
         if (!workingDrawData.current) {
           workingDrawData.current = {
@@ -93,15 +126,22 @@ export const useHandleDraw = (
           };
           return;
         }
+
         // 移动过程中实时更改 workingDrawData 的 width 和 height
-        if (moveCoordinate) {
-          workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
-          workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
-          setActiveDrawData([workingDrawData.current]);
-        }
+        workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
+        workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
+        setActiveDrawData([workingDrawData.current]);
         return;
       }
 
+      if (cacheDrawData.current) {
+        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
+        setActiveDrawData([]);
+        cacheDrawData.current = null;
+        return;
+      }
+
+      // 需要绘制图形
       if (workingDrawData.current) {
         // selection不需要绘制
         // text在createTextOnChange里绘制
@@ -111,18 +151,34 @@ export const useHandleDraw = (
           )
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
-          const workingDrawDataCache: DrawData = {
+          const copyWorkingDrawData: DrawData = {
             ...workingDrawData.current,
             selected: true,
           };
-          setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
+          setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
           setDrawType(DrawType.selection);
           setCursorPoint(CursorConfig.move);
         }
 
+        setActiveDrawData([]);
         workingDrawData.current = null;
-        activeDrawData.length && setActiveDrawData([]);
       }
+
+      // 是否hover在selected图形内
+      const selectedGragh = staticDrawData.find((item) => item.selected);
+      if (selectedGragh) {
+        if (
+          moveCoordinate.x >= getMinDis(selectedGragh.x, selectedGragh.width) &&
+          moveCoordinate.x <= getMaxDis(selectedGragh.x, selectedGragh.width) &&
+          moveCoordinate.y >=
+            getMinDis(selectedGragh.y, selectedGragh.height) &&
+          moveCoordinate.y <= getMaxDis(selectedGragh.y, selectedGragh.height)
+        ) {
+          setCursorPoint(CursorConfig.move);
+          return;
+        }
+      }
+      setCursorPoint(CursorConfig.default);
     },
     [startCoordinate, moveCoordinate]
   );

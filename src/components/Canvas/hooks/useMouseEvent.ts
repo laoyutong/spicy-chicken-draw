@@ -7,7 +7,10 @@ export const useMouseEvent = () => {
     null
   );
 
-  const [moveCoordinate, setMoveCoordinate] = useState<Coordinate | null>(null);
+  const [moveCoordinate, setMoveCoordinate] = useState<Coordinate>({
+    x: 0,
+    y: 0,
+  });
 
   useEventListener(
     "mousedown",
