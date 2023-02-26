@@ -1,10 +1,10 @@
-import { DrawData, DrawType } from "@/types";
+import { CursorConfig, DrawData, DrawType } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useMouseEvent } from ".";
 import { nanoid } from "nanoid";
-import { useAtomValue } from "jotai";
-import { drawTypeAtom } from "@/store";
+import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
   drawCanvas,
@@ -25,9 +25,11 @@ export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
   statisCanvasCtx: RefObject<CanvasRenderingContext2D>
 ) => {
-  const { isMoving, startCoordinate, moveCoordinate } = useMouseEvent();
+  const { startCoordinate, moveCoordinate } = useMouseEvent();
 
-  const drawType = useAtomValue(drawTypeAtom);
+  const [drawType, setDrawType] = useAtom(drawTypeAtom);
+
+  const setCursorPoint = useSetAtom(cursorPointAtom);
 
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
@@ -61,48 +63,52 @@ export const useHandleDraw = (
           ...startCoordinate!,
         },
       ]);
+      setDrawType(DrawType.selection);
     }
   };
 
   useTrackedEffect(
     (changes) => {
-      if (drawType === DrawType.text) {
-        if (changes?.includes(1) && startCoordinate) {
-          createText(startCoordinate, createTextOnChange);
-        }
+      if (
+        drawType === DrawType.text &&
+        changes?.includes(0) &&
+        startCoordinate
+      ) {
+        createText(startCoordinate, createTextOnChange);
+        setCursorPoint(CursorConfig.default);
         return;
       }
 
       // 鼠标按下正在移动过程中
-      if (isMoving) {
+      if (startCoordinate) {
         // 初始化 workingDrawData
         if (!workingDrawData.current) {
-          if (startCoordinate) {
-            workingDrawData.current = {
-              id: nanoid(),
-              type: drawType,
-              width: 0,
-              height: 0,
-              selected: false,
-              ...startCoordinate,
-            };
-          }
-        } else {
-          // 移动过程中实时更改 workingDrawData 的 width 和 height
-          if (startCoordinate && moveCoordinate) {
-            workingDrawData.current.width =
-              moveCoordinate.x - startCoordinate.x;
-            workingDrawData.current.height =
-              moveCoordinate.y - startCoordinate.y;
-            setActiveDrawData([workingDrawData.current]);
-          }
+          workingDrawData.current = {
+            id: nanoid(),
+            type: drawType,
+            width: 0,
+            height: 0,
+            selected: false,
+            ...startCoordinate,
+          };
+          return;
         }
-      } else {
+        // 移动过程中实时更改 workingDrawData 的 width 和 height
+        if (moveCoordinate) {
+          workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
+          workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
+          setActiveDrawData([workingDrawData.current]);
+        }
+        return;
+      }
+
+      if (workingDrawData.current) {
+        // selection不需要绘制
+        // text在createTextOnChange里绘制
         if (
-          workingDrawData.current?.width &&
-          workingDrawData.current?.height &&
-          // selection 不需要静态绘制
-          workingDrawData.current?.type !== DrawType.selection
+          ![DrawType.selection, DrawType.text].includes(
+            workingDrawData.current.type
+          )
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
           const workingDrawDataCache: DrawData = {
@@ -110,12 +116,15 @@ export const useHandleDraw = (
             selected: true,
           };
           setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
+          setDrawType(DrawType.selection);
+          setCursorPoint(CursorConfig.move);
         }
-        activeDrawData.length && setActiveDrawData([]);
+
         workingDrawData.current = null;
+        activeDrawData.length && setActiveDrawData([]);
       }
     },
-    [isMoving, startCoordinate, moveCoordinate]
+    [startCoordinate, moveCoordinate]
   );
 
   useUpdateEffect(() => {

@@ -1,11 +1,13 @@
 import { ICON_LIST, ICON_PROPS } from "./config";
-import { useAtom } from "jotai";
-import { drawTypeAtom } from "@/store";
+import { useAtom, useSetAtom } from "jotai";
+import { cursorPointAtom, drawTypeAtom } from "@/store";
 import cls from "classnames";
-import { useKeyPress } from "ahooks";
+import { useKeyPress, useUpdateEffect } from "ahooks";
+import { CursorConfig, DrawType } from "@/types";
 
 export const SelectionTool = (): JSX.Element => {
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
+  const setCursorPoint = useSetAtom(cursorPointAtom);
 
   useKeyPress(
     new Array(ICON_LIST.length).fill(null).map((_, index) => String(index + 1)),
@@ -14,6 +16,10 @@ export const SelectionTool = (): JSX.Element => {
       activeDrawType && setDrawType(activeDrawType.type);
     }
   );
+
+  useUpdateEffect(() => {
+    drawType !== DrawType.selection && setCursorPoint(CursorConfig.crosshair);
+  }, [drawType]);
 
   return (
     <div className="flex absolute top-3 left-1/2 -translate-x-1/2 rounded bg-slate-50 shadow">

@@ -3,8 +3,6 @@ import { useEventListener } from "ahooks";
 import { useState } from "react";
 
 export const useMouseEvent = () => {
-  const [isMoving, setIsMoving] = useState(false);
-
   const [startCoordinate, setStartCoordinate] = useState<Coordinate | null>(
     null
   );
@@ -14,7 +12,6 @@ export const useMouseEvent = () => {
   useEventListener(
     "mousedown",
     ({ pageX, pageY }) => {
-      setIsMoving(true);
       setStartCoordinate({ x: pageX, y: pageY });
     },
     { target: document }
@@ -22,22 +19,19 @@ export const useMouseEvent = () => {
   useEventListener(
     "mousemove",
     ({ pageX, pageY }) => {
-      isMoving && setMoveCoordinate({ x: pageX, y: pageY });
+      setMoveCoordinate({ x: pageX, y: pageY });
     },
     { target: document }
   );
   useEventListener(
     "mouseup",
     () => {
-      setIsMoving(false);
       setStartCoordinate(null);
-      setMoveCoordinate(null);
     },
     { target: document }
   );
 
   return {
-    isMoving,
     startCoordinate,
     moveCoordinate,
   };
