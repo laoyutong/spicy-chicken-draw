@@ -83,7 +83,7 @@ export const useHandleDraw = (
         return;
       }
 
-      // 鼠标按下正在移动过程中
+      // 鼠标按下的绘制过程
       if (startCoordinate) {
         // 是否需要移动图形
         const shouldMoveElement =
@@ -100,6 +100,7 @@ export const useHandleDraw = (
             setStaticDrawData((pre) => pre.filter((item) => !item.selected));
             return;
           }
+          // 移动图形
           setActiveDrawData([
             {
               ...cacheDrawData.current,
@@ -109,10 +110,6 @@ export const useHandleDraw = (
           ]);
           return;
         }
-
-        setStaticDrawData((pre) =>
-          pre.map((item) => ({ ...item, selected: false }))
-        );
 
         // 初始化 workingDrawData
         if (!workingDrawData.current) {
@@ -131,9 +128,40 @@ export const useHandleDraw = (
         workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
         workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
         setActiveDrawData([workingDrawData.current]);
+
+        // 对selection范围内的图形设置selected
+        if (drawType === DrawType.selection) {
+          const copyWorkingDrawData = workingDrawData.current;
+          setStaticDrawData((pre) =>
+            pre.map((item) => {
+              const isInSelectionArea =
+                getMinDis(item.x, item.width) >=
+                  getMinDis(copyWorkingDrawData.x, copyWorkingDrawData.width) &&
+                getMaxDis(item.x, item.width) <=
+                  getMaxDis(copyWorkingDrawData.x, copyWorkingDrawData.width) &&
+                getMinDis(item.y, item.height) >=
+                  getMinDis(
+                    copyWorkingDrawData.y,
+                    copyWorkingDrawData.height
+                  ) &&
+                getMaxDis(item.y, item.height) <=
+                  getMaxDis(copyWorkingDrawData.y, copyWorkingDrawData.height);
+
+              return {
+                ...item,
+                selected: isInSelectionArea,
+              };
+            })
+          );
+        }
         return;
       }
 
+      // setStaticDrawData((pre) =>
+      //   pre.map((item) => ({ ...item, selected: false }))
+      // );
+
+      // 结束移动
       if (cacheDrawData.current) {
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
@@ -141,7 +169,7 @@ export const useHandleDraw = (
         return;
       }
 
-      // 需要绘制图形
+      // 处理绘制结果
       if (workingDrawData.current) {
         // selection不需要绘制
         // text在createTextOnChange里绘制
@@ -151,23 +179,18 @@ export const useHandleDraw = (
           )
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
-          const copyWorkingDrawData: DrawData = {
-            ...workingDrawData.current,
-            selected: true,
-          };
+          const copyWorkingDrawData: DrawData = workingDrawData.current;
           setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
-          setDrawType(DrawType.selection);
-          setCursorPoint(CursorConfig.move);
         }
-
         setActiveDrawData([]);
         workingDrawData.current = null;
       }
 
-      // 是否hover在selected图形内
-      const selectedGragh = staticDrawData.find((item) => item.selected);
-      if (selectedGragh) {
+      if (drawType === DrawType.selection) {
+        // 是否hover在selected图形内
+        const selectedGragh = staticDrawData.find((item) => item.selected);
         if (
+          selectedGragh &&
           moveCoordinate.x >= getMinDis(selectedGragh.x, selectedGragh.width) &&
           moveCoordinate.x <= getMaxDis(selectedGragh.x, selectedGragh.width) &&
           moveCoordinate.y >=
@@ -177,8 +200,8 @@ export const useHandleDraw = (
           setCursorPoint(CursorConfig.move);
           return;
         }
+        setCursorPoint(CursorConfig.default);
       }
-      setCursorPoint(CursorConfig.default);
     },
     [startCoordinate, moveCoordinate]
   );
