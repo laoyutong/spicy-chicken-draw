@@ -2,6 +2,8 @@ import {
   ARROW_DEG,
   ARROW_LENGTH,
   SELECTION_AREA_BG_COLOR,
+  SELECTION_GAP,
+  SELECTION_RECT_WIDTH,
   TEXT_FONT_FAMILY,
   TEXT_FONT_SIZE,
 } from "@/config";
@@ -12,6 +14,43 @@ type DrawDetailTypeFn = (
   ctx: CanvasRenderingContext2D,
   drawData: DrawData
 ) => void;
+
+const getDrawRectParams = (
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) => ({ x, y, width, height } as DrawData);
+
+/** 绘制selected的选择框 */
+const drawSelectedArea: DrawDetailTypeFn = (
+  ctx,
+  { x, y, width, height, type }
+) => {
+  const gapX = width > 0 ? SELECTION_GAP : -SELECTION_GAP;
+  const gapY = height > 0 ? SELECTION_GAP : -SELECTION_GAP;
+  const x1 = x - gapX;
+  const x2 = x + width + gapX;
+  const y1 = y - gapY;
+  const y2 = y + height + gapY;
+
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x1, y2);
+  ctx.closePath();
+
+  const rectWidth = width > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+  const rectHeight = height > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+  if (type !== DrawType.text) {
+    drawRect(ctx, getDrawRectParams(x1, y1, -rectWidth, -rectHeight));
+    drawRect(ctx, getDrawRectParams(x2, y2, rectWidth, rectHeight));
+    if (type !== DrawType.arrow) {
+      drawRect(ctx, getDrawRectParams(x2, y1, rectWidth, -rectHeight));
+      drawRect(ctx, getDrawRectParams(x1, y2, -rectWidth, rectHeight));
+    }
+  }
+};
 
 const drawRect: DrawDetailTypeFn = (ctx, { x, y, width, height }) => {
   ctx.moveTo(x, y);
@@ -124,8 +163,10 @@ const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
 
 export const drawCanvas = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
   ctx.beginPath();
   data.forEach((item) => {
+    item.selected && drawSelectedArea(ctx, item);
     drawGraph(ctx, item);
   });
   ctx.stroke();

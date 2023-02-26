@@ -17,4 +17,5 @@ export interface DrawData {
   width: number;
   height: number;
   content?: string;
+  selected: boolean;
 }

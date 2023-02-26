@@ -57,6 +57,7 @@ export const useHandleDraw = (
           content: textValue,
           width: maxWidth,
           height: lines.length * TEXT_FONT_SIZE,
+          selected: true,
           ...startCoordinate!,
         },
       ]);
@@ -82,6 +83,7 @@ export const useHandleDraw = (
               type: drawType,
               width: 0,
               height: 0,
+              selected: false,
               ...startCoordinate,
             };
           }
@@ -103,7 +105,10 @@ export const useHandleDraw = (
           workingDrawData.current?.type !== DrawType.selection
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
-          const workingDrawDataCache = workingDrawData.current!;
+          const workingDrawDataCache: DrawData = {
+            ...workingDrawData.current,
+            selected: true,
+          };
           setStaticDrawData((pre) => [...pre, workingDrawDataCache]);
         }
         activeDrawData.length && setActiveDrawData([]);

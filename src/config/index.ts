@@ -9,3 +9,8 @@ export const TEXT_FONT_SIZE = 15;
 export const TEXT_FONT_FAMILY = "Segoe UI Emoji";
 
 export const LOCAL_STORAGE_KEY = "SPICY_CHICKEN_DRAW";
+
+export const SELECTION_GAP = 3;
+
+export const SELECTION_RECT_WIDTH = 8;
+
