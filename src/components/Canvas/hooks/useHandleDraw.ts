@@ -69,7 +69,7 @@ export const useHandleDraw = (
     }
   };
 
-  const cacheDrawData = useRef<DrawData | null>(null);
+  const movingDrawData = useRef<DrawData[]>([]);
 
   useTrackedEffect(
     (changes) => {
@@ -92,22 +92,35 @@ export const useHandleDraw = (
           ) && cursorPoint === CursorConfig.move;
 
         if (shouldMoveElement) {
-          if (!cacheDrawData.current) {
-            cacheDrawData.current = staticDrawData.find(
+          if (!movingDrawData.current.length) {
+            movingDrawData.current = staticDrawData.filter(
               (item) => item.selected
             )!;
-            setActiveDrawData([cacheDrawData.current]);
+            setActiveDrawData(movingDrawData.current);
             setStaticDrawData((pre) => pre.filter((item) => !item.selected));
             return;
           }
+
           // 移动图形
-          setActiveDrawData([
-            {
-              ...cacheDrawData.current,
-              x: cacheDrawData.current.x + moveCoordinate.x - startCoordinate.x,
-              y: cacheDrawData.current.y + moveCoordinate.y - startCoordinate.y,
-            },
-          ]);
+          setActiveDrawData((pre) =>
+            pre.map((item) => {
+              const activeMovingDrawItem = movingDrawData.current.find(
+                (i) => i.id === item.id
+              );
+
+              if (!activeMovingDrawItem) {
+                return item;
+              }
+
+              return {
+                ...activeMovingDrawItem,
+                x:
+                  activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
+                y:
+                  activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
+              };
+            })
+          );
           return;
         }
 
@@ -162,10 +175,10 @@ export const useHandleDraw = (
       // );
 
       // 结束移动
-      if (cacheDrawData.current) {
+      if (movingDrawData.current.length) {
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
-        cacheDrawData.current = null;
+        movingDrawData.current = [];
         return;
       }
 
@@ -188,14 +201,15 @@ export const useHandleDraw = (
 
       if (drawType === DrawType.selection) {
         // 是否hover在selected图形内
-        const selectedGragh = staticDrawData.find((item) => item.selected);
         if (
-          selectedGragh &&
-          moveCoordinate.x >= getMinDis(selectedGragh.x, selectedGragh.width) &&
-          moveCoordinate.x <= getMaxDis(selectedGragh.x, selectedGragh.width) &&
-          moveCoordinate.y >=
-            getMinDis(selectedGragh.y, selectedGragh.height) &&
-          moveCoordinate.y <= getMaxDis(selectedGragh.y, selectedGragh.height)
+          staticDrawData.find(
+            (item) =>
+              item.selected &&
+              moveCoordinate.x >= getMinDis(item.x, item.width) &&
+              moveCoordinate.x <= getMaxDis(item.x, item.width) &&
+              moveCoordinate.y >= getMinDis(item.y, item.height) &&
+              moveCoordinate.y <= getMaxDis(item.y, item.height)
+          )
         ) {
           setCursorPoint(CursorConfig.move);
           return;
