@@ -8,6 +8,7 @@ import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
   drawCanvas,
+  getHoverElementByCoordinate,
   getMaxDis,
   getMinDis,
   splitContent,
@@ -86,12 +87,39 @@ export const useHandleDraw = (
       // 鼠标按下的绘制过程
       if (startCoordinate) {
         // 是否需要移动图形
+
+        const hoverElementId = getHoverElementByCoordinate(
+          startCoordinate,
+          staticDrawData
+        );
+
         const shouldMoveElement =
-          [...staticDrawData, ...activeDrawData].find(
+          cursorPoint === CursorConfig.move &&
+          ([...staticDrawData, ...activeDrawData].find(
             (item) => item.selected
-          ) && cursorPoint === CursorConfig.move;
+          ) ||
+            hoverElementId);
 
         if (shouldMoveElement) {
+          // hover在图形上的场景
+          const activeHoverElement = staticDrawData.find(
+            (item) => item.id === hoverElementId
+          );
+          if (activeHoverElement?.selected === false) {
+            movingDrawData.current = [
+              {
+                ...activeHoverElement,
+                selected: true,
+              },
+            ];
+            setActiveDrawData(movingDrawData.current);
+            setStaticDrawData((pre) =>
+              pre.filter((item) => item.id !== hoverElementId)
+            );
+            return;
+          }
+
+          // 对于已经selected的图形
           if (!movingDrawData.current.length) {
             movingDrawData.current = staticDrawData.filter(
               (item) => item.selected
@@ -170,10 +198,6 @@ export const useHandleDraw = (
         return;
       }
 
-      // setStaticDrawData((pre) =>
-      //   pre.map((item) => ({ ...item, selected: false }))
-      // );
-
       // 结束移动
       if (movingDrawData.current.length) {
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
@@ -189,7 +213,8 @@ export const useHandleDraw = (
         if (
           ![DrawType.selection, DrawType.text].includes(
             workingDrawData.current.type
-          )
+          ) &&
+          (workingDrawData.current.width || workingDrawData.current.height)
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
           const copyWorkingDrawData: DrawData = workingDrawData.current;
@@ -200,17 +225,8 @@ export const useHandleDraw = (
       }
 
       if (drawType === DrawType.selection) {
-        // 是否hover在selected图形内
-        if (
-          staticDrawData.find(
-            (item) =>
-              item.selected &&
-              moveCoordinate.x >= getMinDis(item.x, item.width) &&
-              moveCoordinate.x <= getMaxDis(item.x, item.width) &&
-              moveCoordinate.y >= getMinDis(item.y, item.height) &&
-              moveCoordinate.y <= getMaxDis(item.y, item.height)
-          )
-        ) {
+        // 是否hover在图形内
+        if (getHoverElementByCoordinate(moveCoordinate, staticDrawData)) {
           setCursorPoint(CursorConfig.move);
           return;
         }
