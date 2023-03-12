@@ -44,7 +44,10 @@ export const useHandleDraw = (
 
   const createTextOnChange: TextOnChangeEvent = (textValue, container) => {
     if (textValue.trim() && startCoordinate) {
-      const lines = splitContent(textValue).filter((item) => !!item.trim());
+      const textList = splitContent(textValue);
+      const lines = textList.filter(
+        (item, index) => index !== textList.length - 1 && !!item.trim()
+      );
       let maxWidth = 0;
       lines.forEach((line) => {
         if (statisCanvasCtx.current) {
@@ -86,13 +89,12 @@ export const useHandleDraw = (
           type: DrawType.text,
           content: textValue,
           width: maxWidth,
-          selected: true,
+          selected: false,
           height: TEXTAREA_HEIGHT,
           ...textProperty,
           ...(container ? { containerId: container.id } : {}),
         },
       ]);
-      setDrawType(DrawType.selection);
     }
   };
 
@@ -258,6 +260,8 @@ export const useHandleDraw = (
         return;
       }
       setCursorPoint(CursorConfig.default);
+    } else {
+      setCursorPoint(CursorConfig.crosshair);
     }
   };
 
