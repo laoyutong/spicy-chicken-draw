@@ -74,6 +74,13 @@ export const useHandleDraw = (
 
   const handleMoveElement = () => {
     if (!startCoordinate) {
+      // 结束移动
+      if (movingDrawData.current.length) {
+        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
+        setActiveDrawData([]);
+        movingDrawData.current = [];
+        return true;
+      }
       return false;
     }
 
@@ -141,6 +148,23 @@ export const useHandleDraw = (
 
   const handleDrawElement = () => {
     if (!startCoordinate) {
+      // 处理绘制结果
+      if (workingDrawData.current) {
+        // selection不需要绘制
+        // text在createTextOnChange里绘制
+        if (
+          ![DrawType.selection, DrawType.text].includes(
+            workingDrawData.current.type
+          ) &&
+          (workingDrawData.current.width || workingDrawData.current.height)
+        ) {
+          // 缓存下 不然 setState 的时候已经是 null 了
+          const copyWorkingDrawData: DrawData = workingDrawData.current;
+          setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
+        }
+        setActiveDrawData([]);
+        workingDrawData.current = null;
+      }
       return false;
     }
 
@@ -206,32 +230,6 @@ export const useHandleDraw = (
 
       if (handleDrawElement()) {
         return;
-      }
-
-      // 结束移动
-      if (movingDrawData.current.length) {
-        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
-        setActiveDrawData([]);
-        movingDrawData.current = [];
-        return;
-      }
-
-      // 处理绘制结果
-      if (workingDrawData.current) {
-        // selection不需要绘制
-        // text在createTextOnChange里绘制
-        if (
-          ![DrawType.selection, DrawType.text].includes(
-            workingDrawData.current.type
-          ) &&
-          (workingDrawData.current.width || workingDrawData.current.height)
-        ) {
-          // 缓存下 不然 setState 的时候已经是 null 了
-          const copyWorkingDrawData: DrawData = workingDrawData.current;
-          setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
-        }
-        setActiveDrawData([]);
-        workingDrawData.current = null;
       }
 
       if (drawType === DrawType.selection) {
