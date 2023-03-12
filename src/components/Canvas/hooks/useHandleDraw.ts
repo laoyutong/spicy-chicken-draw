@@ -1,9 +1,9 @@
-import { Coordinate, CursorConfig, DrawData, DrawType } from "@/types";
+import { CursorConfig, DrawData, DrawType } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useMouseEvent } from ".";
 import { nanoid } from "nanoid";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtom } from "jotai";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
@@ -72,6 +72,73 @@ export const useHandleDraw = (
 
   const movingDrawData = useRef<DrawData[]>([]);
 
+  const handleMoveElement = () => {
+    if (!startCoordinate) {
+      return false;
+    }
+
+    // 是否需要移动图形
+    const hoverElementId = getHoverElementByCoordinate(
+      startCoordinate,
+      staticDrawData
+    );
+
+    const shouldMoveElement =
+      cursorPoint === CursorConfig.move &&
+      ([...staticDrawData, ...activeDrawData].find((item) => item.selected) ||
+        hoverElementId);
+
+    if (shouldMoveElement) {
+      // hover在图形上的场景
+      const activeHoverElement = staticDrawData.find(
+        (item) => item.id === hoverElementId
+      );
+      if (activeHoverElement?.selected === false) {
+        movingDrawData.current = [
+          {
+            ...activeHoverElement,
+            selected: true,
+          },
+        ];
+        setActiveDrawData(movingDrawData.current);
+        setStaticDrawData((pre) =>
+          pre.filter((item) => item.id !== hoverElementId)
+        );
+        return true;
+      }
+
+      // 对于已经selected的图形
+      if (!movingDrawData.current.length) {
+        movingDrawData.current = staticDrawData.filter(
+          (item) => item.selected
+        )!;
+        setActiveDrawData(movingDrawData.current);
+        setStaticDrawData((pre) => pre.filter((item) => !item.selected));
+        return true;
+      }
+
+      // 移动图形
+      setActiveDrawData((pre) =>
+        pre.map((item) => {
+          const activeMovingDrawItem = movingDrawData.current.find(
+            (i) => i.id === item.id
+          );
+
+          if (!activeMovingDrawItem) {
+            return item;
+          }
+
+          return {
+            ...activeMovingDrawItem,
+            x: activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
+            y: activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
+          };
+        })
+      );
+      return true;
+    }
+  };
+
   useTrackedEffect(
     (changes) => {
       if (
@@ -84,74 +151,12 @@ export const useHandleDraw = (
         return;
       }
 
+      if (handleMoveElement()) {
+        return;
+      }
+
       // 鼠标按下的绘制过程
       if (startCoordinate) {
-        // 是否需要移动图形
-
-        const hoverElementId = getHoverElementByCoordinate(
-          startCoordinate,
-          staticDrawData
-        );
-
-        const shouldMoveElement =
-          cursorPoint === CursorConfig.move &&
-          ([...staticDrawData, ...activeDrawData].find(
-            (item) => item.selected
-          ) ||
-            hoverElementId);
-
-        if (shouldMoveElement) {
-          // hover在图形上的场景
-          const activeHoverElement = staticDrawData.find(
-            (item) => item.id === hoverElementId
-          );
-          if (activeHoverElement?.selected === false) {
-            movingDrawData.current = [
-              {
-                ...activeHoverElement,
-                selected: true,
-              },
-            ];
-            setActiveDrawData(movingDrawData.current);
-            setStaticDrawData((pre) =>
-              pre.filter((item) => item.id !== hoverElementId)
-            );
-            return;
-          }
-
-          // 对于已经selected的图形
-          if (!movingDrawData.current.length) {
-            movingDrawData.current = staticDrawData.filter(
-              (item) => item.selected
-            )!;
-            setActiveDrawData(movingDrawData.current);
-            setStaticDrawData((pre) => pre.filter((item) => !item.selected));
-            return;
-          }
-
-          // 移动图形
-          setActiveDrawData((pre) =>
-            pre.map((item) => {
-              const activeMovingDrawItem = movingDrawData.current.find(
-                (i) => i.id === item.id
-              );
-
-              if (!activeMovingDrawItem) {
-                return item;
-              }
-
-              return {
-                ...activeMovingDrawItem,
-                x:
-                  activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
-                y:
-                  activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
-              };
-            })
-          );
-          return;
-        }
-
         // 初始化 workingDrawData
         if (!workingDrawData.current) {
           workingDrawData.current = {
