@@ -43,7 +43,7 @@ export const useHandleDraw = (
 
   const createTextOnChange: TextOnChangeEvent = (textValue) => {
     if (textValue.trim()) {
-      const lines = splitContent(textValue);
+      const lines = splitContent(textValue).filter((item) => !!item.trim());
       let maxWidth = 0;
       lines.forEach((line) => {
         if (statisCanvasCtx.current) {
