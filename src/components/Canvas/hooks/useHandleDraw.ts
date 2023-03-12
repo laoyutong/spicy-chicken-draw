@@ -46,7 +46,7 @@ export const useHandleDraw = (
     if (textValue.trim() && startCoordinate) {
       const textList = splitContent(textValue);
       const lines = textList.filter(
-        (item, index) => index !== textList.length - 1 && !!item.trim()
+        (item, index) => !!item.trim() || index !== textList.length - 1
       );
       let maxWidth = 0;
       lines.forEach((line) => {
@@ -58,14 +58,16 @@ export const useHandleDraw = (
         }
       });
 
-      const TEXTAREA_HEIGHT = TEXT_FONT_SIZE * lines.length;
+      const textareaHeight = TEXT_FONT_SIZE * lines.length;
 
       const textProperty = container
         ? {
             x: container.x + (container.width - maxWidth) / 2,
-            y: container.y + container.height / 2 - TEXTAREA_HEIGHT / 2,
+            y: container.y + container.height / 2 - textareaHeight / 2,
           }
         : startCoordinate;
+
+      console.log(maxWidth, textareaHeight);
 
       const newTextId = nanoid();
       setStaticDrawData((pre) => [
@@ -90,7 +92,7 @@ export const useHandleDraw = (
           content: textValue,
           width: maxWidth,
           selected: false,
-          height: TEXTAREA_HEIGHT,
+          height: textareaHeight,
           ...textProperty,
           ...(container ? { containerId: container.id } : {}),
         },
