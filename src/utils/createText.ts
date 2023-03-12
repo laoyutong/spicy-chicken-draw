@@ -1,7 +1,14 @@
-import { TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from "@/config";
-import { Coordinate } from "@/types";
+import {
+  TEXT_FONT_SIZE,
+  TEXT_FONT_FAMILY,
+  TEXTAREA_PER_HEIGHT,
+} from "@/config";
+import { Coordinate, DrawData } from "@/types";
 
-export type TextOnChangeEvent = (value: string) => void;
+export type TextOnChangeEvent = (
+  value: string,
+  container: DrawData | null
+) => void;
 
 const createTextAreaElement = () => {
   const oldTextarea = document.querySelector("textarea");
@@ -14,6 +21,7 @@ const createTextAreaElement = () => {
 
 const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
+  container: DrawData | null,
   {
     oninput,
     onChange,
@@ -32,7 +40,7 @@ const addTextAreaEvent = (
   };
 
   textarea.onblur = (e: Event) => {
-    onChange((e.target as HTMLInputElement).value);
+    onChange((e.target as HTMLInputElement).value, container);
     document.body.removeChild(textarea);
   };
 
@@ -62,6 +70,7 @@ const setTextAreaStyle = (
 
 export const createText = (
   { x, y }: Coordinate,
+  container: DrawData | null,
   onChange: TextOnChangeEvent
 ) => {
   const textAreaElement = createTextAreaElement();
@@ -69,14 +78,26 @@ export const createText = (
     return;
   }
 
-  setTextAreaStyle(textAreaElement, {
-    top: y + "px",
-    left: x + "px",
-    width: `${window.innerWidth - x}px`,
-    whiteSpace: "nowrap",
-  });
+  setTextAreaStyle(
+    textAreaElement,
+    container
+      ? {
+          top:
+            container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + "px",
+          left: container.x + "px",
+          width: container.width + "px",
+          height: TEXTAREA_PER_HEIGHT + "px",
+          textAlign: "center",
+        }
+      : {
+          top: y + "px",
+          left: x + "px",
+          width: `${window.innerWidth - x}px`,
+          whiteSpace: "nowrap",
+        }
+  );
 
-  addTextAreaEvent(textAreaElement, {
+  addTextAreaEvent(textAreaElement, container, {
     onChange,
   });
 

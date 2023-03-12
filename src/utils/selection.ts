@@ -1,6 +1,10 @@
 import { Coordinate, DrawData, DrawType } from "@/types";
 import { getDrawDataDis } from "./common";
-import { SELECTION_GAP } from "@/config";
+import {
+  HAS_BOUNDING_ELEMENTS_LIST,
+  SELECTION_GAP,
+  TEXT_BOUND_GAP,
+} from "@/config";
 
 const getValueWithoutGap = (x: number) =>
   x > SELECTION_GAP ? x - SELECTION_GAP : 0;
@@ -17,7 +21,7 @@ const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
     1 / 2
   );
 
-export const getHoverElementByCoordinate = (
+export const getHoverElement = (
   { x, y }: Coordinate,
   drawData: DrawData[]
 ): DrawData | null => {
@@ -102,4 +106,37 @@ export const getHoverElementByCoordinate = (
   }
 
   return null;
+};
+
+export const getTextContainer = (
+  { x, y }: Coordinate,
+  drawData: DrawData[]
+): DrawData | null => {
+  let result: DrawData | null = null;
+  drawData.forEach((item) => {
+    if (!HAS_BOUNDING_ELEMENTS_LIST.includes(item.type)) {
+      return;
+    }
+
+    const [middleX, middleY] = [
+      item.x + item.width / 2,
+      item.y + item.height / 2,
+    ];
+
+    if (
+      x <= middleX + TEXT_BOUND_GAP &&
+      x >= middleX - TEXT_BOUND_GAP &&
+      y <= middleY + TEXT_BOUND_GAP &&
+      y >= middleY - TEXT_BOUND_GAP
+    ) {
+      if (result) {
+        if (item.width < result.width) {
+          result = item;
+        }
+      } else {
+        result = item;
+      }
+    }
+  });
+  return result;
 };

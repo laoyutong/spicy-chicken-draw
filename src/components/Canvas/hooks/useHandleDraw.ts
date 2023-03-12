@@ -8,13 +8,14 @@ import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
   drawCanvas,
-  getHoverElementByCoordinate,
+  getHoverElement,
   getMaxDis,
   getMinDis,
+  getTextContainer,
   splitContent,
   TextOnChangeEvent,
 } from "@/utils";
-import { LOCAL_STORAGE_KEY, TEXT_FONT_SIZE } from "@/config";
+import { LOCAL_STORAGE_KEY, MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
 
 const getInitialDrawData = () => {
   let result = [];
@@ -41,8 +42,8 @@ export const useHandleDraw = (
 
   const workingDrawData = useRef<DrawData | null>(null);
 
-  const createTextOnChange: TextOnChangeEvent = (textValue) => {
-    if (textValue.trim()) {
+  const createTextOnChange: TextOnChangeEvent = (textValue, container) => {
+    if (textValue.trim() && startCoordinate) {
       const lines = splitContent(textValue).filter((item) => !!item.trim());
       let maxWidth = 0;
       lines.forEach((line) => {
@@ -54,6 +55,15 @@ export const useHandleDraw = (
         }
       });
 
+      const TEXTAREA_HEIGHT = TEXT_FONT_SIZE * lines.length;
+
+      const textProperty = container
+        ? {
+            x: container.x + (container.width - maxWidth) / 2,
+            y: container.y + container.height / 2 - TEXTAREA_HEIGHT / 2,
+          }
+        : startCoordinate;
+
       setStaticDrawData((pre) => [
         ...pre,
         {
@@ -61,9 +71,10 @@ export const useHandleDraw = (
           type: DrawType.text,
           content: textValue,
           width: maxWidth,
-          height: lines.length * TEXT_FONT_SIZE,
           selected: true,
-          ...startCoordinate!,
+          height: TEXTAREA_HEIGHT,
+          ...textProperty,
+          ...(container ? { containerId: container.id } : {}),
         },
       ]);
       setDrawType(DrawType.selection);
@@ -87,7 +98,7 @@ export const useHandleDraw = (
       return false;
     }
 
-    const activeHoverElement = getHoverElementByCoordinate(startCoordinate, [
+    const activeHoverElement = getHoverElement(startCoordinate, [
       ...staticDrawData,
       ...activeDrawData,
     ]);
@@ -164,7 +175,8 @@ export const useHandleDraw = (
           ![DrawType.selection, DrawType.text].includes(
             workingDrawData.current.type
           ) &&
-          (workingDrawData.current.width || workingDrawData.current.height)
+          (workingDrawData.current.width >= MIN_DRAW_DIS ||
+            workingDrawData.current.height >= MIN_DRAW_DIS)
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
           const copyWorkingDrawData: DrawData = workingDrawData.current;
@@ -226,7 +238,7 @@ export const useHandleDraw = (
   const handleCursorPoint = () => {
     if (drawType === DrawType.selection) {
       // 是否hover在图形内
-      if (getHoverElementByCoordinate(moveCoordinate, staticDrawData)) {
+      if (getHoverElement(moveCoordinate, staticDrawData)) {
         setCursorPoint(CursorConfig.move);
         return;
       }
@@ -241,7 +253,8 @@ export const useHandleDraw = (
         changes?.includes(0) &&
         startCoordinate
       ) {
-        createText(startCoordinate, createTextOnChange);
+        const textContainer = getTextContainer(startCoordinate, staticDrawData);
+        createText(startCoordinate, textContainer, createTextOnChange);
         setCursorPoint(CursorConfig.default);
         return;
       }
