@@ -92,14 +92,15 @@ export const useHandleDraw = (
       staticDrawData
     );
 
-    /**
-     * 判断是否需要move
-     */
-    if (
-      cursorPoint === CursorConfig.move &&
-      ([...staticDrawData, ...activeDrawData].find((item) => item.selected) ||
-        hoverElementId)
-    ) {
+    // 在点击的时候 把select的状态重置
+    if (!hoverElementId) {
+      staticDrawData.find((item) => item.selected) &&
+        setStaticDrawData((pre) =>
+          pre.map((item) => ({ ...item, selected: false }))
+        );
+    }
+
+    if (cursorPoint === CursorConfig.move) {
       // hover在图形上的场景
       const activeHoverElement = staticDrawData.find(
         (item) => item.id === hoverElementId
@@ -113,7 +114,9 @@ export const useHandleDraw = (
         ];
         setActiveDrawData(movingDrawData.current);
         setStaticDrawData((pre) =>
-          pre.filter((item) => item.id !== hoverElementId)
+          pre
+            .filter((item) => item.id !== hoverElementId)
+            .map((item) => ({ ...item, selected: false }))
         );
         return true;
       }
