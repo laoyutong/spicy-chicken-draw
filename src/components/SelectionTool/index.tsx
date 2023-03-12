@@ -33,7 +33,7 @@ export const SelectionTool = (): JSX.Element => {
           onClick={() => setDrawType(type)}
         >
           <Icon {...ICON_PROPS} />
-          <div className="text-xs">{index + 1}</div>
+          <div className="text-xs select-none">{index + 1}</div>
         </div>
       ))}
     </div>

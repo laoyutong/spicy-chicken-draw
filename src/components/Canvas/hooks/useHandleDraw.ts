@@ -1,7 +1,7 @@
 import { CursorConfig, DrawData, DrawType } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
-import { useMouseEvent } from ".";
+import { useHandleKeyPress, useMouseEvent } from ".";
 import { nanoid } from "nanoid";
 import { useAtom } from "jotai";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
@@ -72,6 +72,9 @@ export const useHandleDraw = (
 
   const movingDrawData = useRef<DrawData[]>([]);
 
+  /**
+   * 移动图形的处理
+   */
   const handleMoveElement = () => {
     if (!startCoordinate) {
       // 结束移动
@@ -84,18 +87,19 @@ export const useHandleDraw = (
       return false;
     }
 
-    // 是否需要移动图形
     const hoverElementId = getHoverElementByCoordinate(
       startCoordinate,
       staticDrawData
     );
 
-    const shouldMoveElement =
+    /**
+     * 判断是否需要move
+     */
+    if (
       cursorPoint === CursorConfig.move &&
       ([...staticDrawData, ...activeDrawData].find((item) => item.selected) ||
-        hoverElementId);
-
-    if (shouldMoveElement) {
+        hoverElementId)
+    ) {
       // hover在图形上的场景
       const activeHoverElement = staticDrawData.find(
         (item) => item.id === hoverElementId
@@ -146,6 +150,9 @@ export const useHandleDraw = (
     }
   };
 
+  /**
+   * 绘制图形的处理
+   */
   const handleDrawElement = () => {
     if (!startCoordinate) {
       // 处理绘制结果
@@ -212,6 +219,20 @@ export const useHandleDraw = (
     return true;
   };
 
+  /**
+   * 在selection时，判断cursorPoint状态
+   */
+  const handleCursorPoint = () => {
+    if (drawType === DrawType.selection) {
+      // 是否hover在图形内
+      if (getHoverElementByCoordinate(moveCoordinate, staticDrawData)) {
+        setCursorPoint(CursorConfig.move);
+        return;
+      }
+      setCursorPoint(CursorConfig.default);
+    }
+  };
+
   useTrackedEffect(
     (changes) => {
       if (
@@ -232,14 +253,7 @@ export const useHandleDraw = (
         return;
       }
 
-      if (drawType === DrawType.selection) {
-        // 是否hover在图形内
-        if (getHoverElementByCoordinate(moveCoordinate, staticDrawData)) {
-          setCursorPoint(CursorConfig.move);
-          return;
-        }
-        setCursorPoint(CursorConfig.default);
-      }
+      handleCursorPoint();
     },
     [startCoordinate, moveCoordinate]
   );
@@ -266,4 +280,6 @@ export const useHandleDraw = (
     },
     { target: window }
   );
+
+  useHandleKeyPress(setStaticDrawData);
 };
