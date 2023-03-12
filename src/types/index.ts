@@ -18,7 +18,7 @@ export const enum CursorConfig {
 
 export type Coordinate = Record<"x" | "y", number>;
 
-interface BoundingElement {
+export interface BoundingElement {
   id: string;
   type: DrawType.text | DrawType.arrow;
 }

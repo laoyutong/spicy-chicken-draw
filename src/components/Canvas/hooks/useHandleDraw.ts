@@ -1,4 +1,4 @@
-import { CursorConfig, DrawData, DrawType } from "@/types";
+import { BoundingElement, CursorConfig, DrawData, DrawType } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useHandleKeyPress, useMouseEvent } from ".";
@@ -64,10 +64,25 @@ export const useHandleDraw = (
           }
         : startCoordinate;
 
+      const newTextId = nanoid();
       setStaticDrawData((pre) => [
-        ...pre,
+        ...pre.filter((item) => item.id !== container?.id),
+        ...(container
+          ? [
+              {
+                ...container,
+                boundingElements: [
+                  ...(container?.boundingElements ?? []),
+                  {
+                    type: DrawType.text,
+                    id: newTextId,
+                  } as BoundingElement,
+                ],
+              },
+            ]
+          : []),
         {
-          id: nanoid(),
+          id: newTextId,
           type: DrawType.text,
           content: textValue,
           width: maxWidth,
