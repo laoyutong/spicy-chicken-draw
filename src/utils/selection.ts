@@ -30,6 +30,12 @@ export const getHoverElementByCoordinate = (
       }
     }
 
+    if (graghItem.type === DrawType.text) {
+      if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
+        return graghItem.id;
+      }
+    }
+
     if (graghItem.type === DrawType.rectangle) {
       if (
         ((isInRange(x, minX) || isInRange(x, maxX)) &&
