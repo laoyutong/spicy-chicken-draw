@@ -87,13 +87,13 @@ export const useHandleDraw = (
       return false;
     }
 
-    const hoverElementId = getHoverElementByCoordinate(
-      startCoordinate,
-      staticDrawData
-    );
+    const activeHoverElement = getHoverElementByCoordinate(startCoordinate, [
+      ...staticDrawData,
+      ...activeDrawData,
+    ]);
 
     // 在点击的时候 把select的状态重置
-    if (!hoverElementId) {
+    if (!activeHoverElement) {
       staticDrawData.find((item) => item.selected) &&
         setStaticDrawData((pre) =>
           pre.map((item) => ({ ...item, selected: false }))
@@ -101,10 +101,7 @@ export const useHandleDraw = (
     }
 
     if (cursorPoint === CursorConfig.move) {
-      // hover在图形上的场景
-      const activeHoverElement = staticDrawData.find(
-        (item) => item.id === hoverElementId
-      );
+      // 如果为false说明不存在selected的图形
       if (activeHoverElement?.selected === false) {
         movingDrawData.current = [
           {
@@ -115,7 +112,7 @@ export const useHandleDraw = (
         setActiveDrawData(movingDrawData.current);
         setStaticDrawData((pre) =>
           pre
-            .filter((item) => item.id !== hoverElementId)
+            .filter((item) => item.id !== activeHoverElement.id)
             .map((item) => ({ ...item, selected: false }))
         );
         return true;
@@ -149,6 +146,7 @@ export const useHandleDraw = (
           };
         })
       );
+
       return true;
     }
   };

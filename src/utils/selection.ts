@@ -20,19 +20,23 @@ const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
 export const getHoverElementByCoordinate = (
   { x, y }: Coordinate,
   drawData: DrawData[]
-): string | null => {
+): DrawData | null => {
+  // selected的优先级高
+  const selectedHoverElement = drawData.find((item) => {
+    const [minX, maxX, minY, maxY] = getDrawDataDis(item);
+    return item.selected && x >= minX && x <= maxX && y >= minY && y <= maxY;
+  });
+
+  if (selectedHoverElement) {
+    return selectedHoverElement;
+  }
+
   for (const graghItem of drawData) {
     const [minX, maxX, minY, maxY] = getDrawDataDis(graghItem);
 
-    if (graghItem.selected) {
-      if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-        return graghItem.id;
-      }
-    }
-
     if (graghItem.type === DrawType.text) {
       if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
-        return graghItem.id;
+        return graghItem;
       }
     }
 
@@ -42,7 +46,7 @@ export const getHoverElementByCoordinate = (
           isInRange(y, minY, maxY)) ||
         ((isInRange(y, minY) || isInRange(y, maxY)) && isInRange(x, minX, maxX))
       ) {
-        return graghItem.id;
+        return graghItem;
       }
     }
 
@@ -54,7 +58,7 @@ export const getHoverElementByCoordinate = (
         Math.pow(y - (graghItem.y + halfHeight), 2) / Math.pow(halfHeight, 2);
 
       if (value <= 1.1 && value >= 0.9) {
-        return graghItem.id;
+        return graghItem;
       }
     }
 
@@ -72,7 +76,7 @@ export const getHoverElementByCoordinate = (
         2;
 
       if (maxArea >= targetArea && minArea <= targetArea) {
-        return graghItem.id;
+        return graghItem;
       }
     }
 
@@ -92,7 +96,7 @@ export const getHoverElementByCoordinate = (
         active >= target - SELECTION_GAP / 2 &&
         active <= target + SELECTION_GAP / 2
       ) {
-        return graghItem.id;
+        return graghItem;
       }
     }
   }
