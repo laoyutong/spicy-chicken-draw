@@ -84,7 +84,8 @@ export const createText = (
       ? {
           top:
             container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + "px",
-          left: container.x + "px",
+          left:
+            container.x - (container.width < 0 ? container.width : 0) + "px",
           width: container.width + "px",
           height: TEXTAREA_PER_HEIGHT + "px",
           textAlign: "center",

@@ -175,8 +175,8 @@ export const useHandleDraw = (
           ![DrawType.selection, DrawType.text].includes(
             workingDrawData.current.type
           ) &&
-          (workingDrawData.current.width >= MIN_DRAW_DIS ||
-            workingDrawData.current.height >= MIN_DRAW_DIS)
+          (Math.abs(workingDrawData.current.width) >= MIN_DRAW_DIS ||
+            Math.abs(workingDrawData.current.height) >= MIN_DRAW_DIS)
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
           const copyWorkingDrawData: DrawData = workingDrawData.current;
