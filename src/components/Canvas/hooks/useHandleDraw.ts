@@ -67,9 +67,8 @@ export const useHandleDraw = (
           }
         : startCoordinate;
 
-      console.log(maxWidth, textareaHeight);
-
       const newTextId = nanoid();
+
       setStaticDrawData((pre) => [
         ...pre.filter((item) => item.id !== container?.id),
         ...(container
@@ -133,28 +132,67 @@ export const useHandleDraw = (
     if (cursorPoint === CursorConfig.move) {
       // 如果为false说明不存在selected的图形
       if (activeHoverElement?.selected === false) {
-        movingDrawData.current = [
-          {
-            ...activeHoverElement,
-            selected: true,
-          },
-        ];
+        // 如果hover的图形有containerId，则hover其container
+        if (activeHoverElement.containerId) {
+          const hoverElementContainer = staticDrawData.find(
+            (item) => item.id === activeHoverElement.containerId
+          );
+          if (hoverElementContainer) {
+            movingDrawData.current = [
+              {
+                ...hoverElementContainer,
+                selected: true,
+              },
+              activeHoverElement,
+            ];
+          }
+        } else {
+          movingDrawData.current = [
+            {
+              ...activeHoverElement,
+              selected: true,
+            },
+            ...(activeHoverElement.boundingElements
+              ?.map((item) => staticDrawData.find((i) => i.id === item.id))
+              .filter((item) => item) as DrawData[]),
+          ];
+        }
         setActiveDrawData(movingDrawData.current);
         setStaticDrawData((pre) =>
           pre
-            .filter((item) => item.id !== activeHoverElement.id)
+            .filter(
+              (item) => !movingDrawData.current.some((i) => i.id === item.id)
+            )
             .map((item) => ({ ...item, selected: false }))
         );
+
         return true;
       }
 
       // 对于已经selected的图形
       if (!movingDrawData.current.length) {
-        movingDrawData.current = staticDrawData.filter(
-          (item) => item.selected
-        )!;
+        const boudingElementIdList: string[] = [];
+        movingDrawData.current = staticDrawData.filter((item) => {
+          if (item.selected && item.boundingElements?.length) {
+            item.boundingElements.forEach((boundingElement) => {
+              boudingElementIdList.push(boundingElement.id);
+            });
+          }
+          return item.selected;
+        })!;
+
+        movingDrawData.current.push(
+          ...(boudingElementIdList
+            .map((item) => staticDrawData.find((i) => item === i.id))
+            .filter((item) => item) as DrawData[])
+        );
+
         setActiveDrawData(movingDrawData.current);
-        setStaticDrawData((pre) => pre.filter((item) => !item.selected));
+        setStaticDrawData((pre) =>
+          pre.filter(
+            (item) => !movingDrawData.current.some((i) => i.id === item.id)
+          )
+        );
         return true;
       }
 
