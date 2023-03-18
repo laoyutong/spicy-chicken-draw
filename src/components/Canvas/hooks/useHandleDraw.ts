@@ -152,9 +152,9 @@ export const useHandleDraw = (
               ...activeHoverElement,
               selected: true,
             },
-            ...(activeHoverElement.boundingElements
+            ...((activeHoverElement.boundingElements
               ?.map((item) => staticDrawData.find((i) => i.id === item.id))
-              .filter((item) => item) as DrawData[]),
+              .filter((item) => item) as DrawData[]) ?? []),
           ];
         }
         setActiveDrawData(movingDrawData.current);
