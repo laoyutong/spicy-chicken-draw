@@ -9,7 +9,21 @@ export const useHandleKeyPress = (
     setDrawData((pre) => pre.map((item) => ({ ...item, selected: true })))
   );
 
-  useKeyPress(["Backspace"], () =>
-    setDrawData((pre) => pre.filter((item) => !item.selected))
-  );
+  useKeyPress(["Backspace"], () => {
+    const boundingElements: string[] = [];
+    setDrawData((pre) =>
+      pre.filter((item) => {
+        if (item.selected) {
+          boundingElements.push(
+            ...(item.boundingElements?.map((i) => i.id) ?? [])
+          );
+          return false;
+        }
+        return true;
+      })
+    );
+    setDrawData((pre) =>
+      pre.filter((item) => !boundingElements.some((i) => i === item.id))
+    );
+  });
 };
