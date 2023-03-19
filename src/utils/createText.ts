@@ -7,7 +7,8 @@ import { Coordinate, DrawData } from "@/types";
 
 export type TextOnChangeEvent = (
   value: string,
-  container: DrawData | null
+  container: DrawData | null,
+  existElement: DrawData | null
 ) => void;
 
 const createTextAreaElement = () => {
@@ -22,6 +23,7 @@ const createTextAreaElement = () => {
 const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
   container: DrawData | null,
+  existElement: DrawData | null,
   {
     oninput,
     onChange,
@@ -40,7 +42,7 @@ const addTextAreaEvent = (
   };
 
   textarea.onblur = (e: Event) => {
-    onChange((e.target as HTMLInputElement).value, container);
+    onChange((e.target as HTMLInputElement).value, container, existElement);
     document.body.removeChild(textarea);
   };
 
@@ -68,37 +70,51 @@ const setTextAreaStyle = (
     ...style,
   });
 
-export const createText = (
+const getTextStyle = (
   { x, y }: Coordinate,
   container: DrawData | null,
-  onChange: TextOnChangeEvent
+  existElement?: DrawData
+) => {
+  if (!container) {
+    return {
+      top: (existElement?.y ?? y) + "px",
+      left: (existElement?.x ?? x) + "px",
+      width: `${window.innerWidth - x}px`,
+      whiteSpace: "nowrap",
+    };
+  }
+
+  return {
+    top: container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + "px",
+    left: container.x - (container.width < 0 ? container.width : 0) + "px",
+    width: container.width + "px",
+    height: TEXTAREA_PER_HEIGHT + "px",
+    textAlign: "center",
+  };
+};
+
+export const createText = (
+  { x, y }: Coordinate,
+  onChange: TextOnChangeEvent,
+  container: DrawData | null,
+  existElement?: DrawData
 ) => {
   const textAreaElement = createTextAreaElement();
   if (!textAreaElement) {
     return;
   }
 
+  if (existElement && existElement.content) {
+    textAreaElement.value = existElement.content;
+    textAreaElement.setSelectionRange(0, existElement.content.length);
+  }
+
   setTextAreaStyle(
     textAreaElement,
-    container
-      ? {
-          top:
-            container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + "px",
-          left:
-            container.x - (container.width < 0 ? container.width : 0) + "px",
-          width: container.width + "px",
-          height: TEXTAREA_PER_HEIGHT + "px",
-          textAlign: "center",
-        }
-      : {
-          top: y + "px",
-          left: x + "px",
-          width: `${window.innerWidth - x}px`,
-          whiteSpace: "nowrap",
-        }
+    getTextStyle({ x, y }, container, existElement)
   );
 
-  addTextAreaEvent(textAreaElement, container, {
+  addTextAreaEvent(textAreaElement, container, existElement ?? null, {
     onChange,
   });
 

@@ -140,3 +140,16 @@ export const getTextContainer = (
   });
   return result;
 };
+
+export const getExistTextElement = (
+  { x, y }: Coordinate,
+  drawData: DrawData[]
+) =>
+  drawData.find(
+    (item) =>
+      item.type === DrawType.text &&
+      x >= item.x &&
+      y >= item.y &&
+      x <= item.x + item.width &&
+      y <= item.y + item.height
+  );
