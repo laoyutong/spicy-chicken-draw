@@ -9,7 +9,7 @@ import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useHandleKeyPress, useMouseEvent } from ".";
 import { nanoid } from "nanoid";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtom } from "jotai";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
@@ -34,11 +34,11 @@ const getInitialDrawData = () => {
 
 export const useHandleDraw = (
   activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
-  statisCanvasCtx: RefObject<CanvasRenderingContext2D>
+  staticCanvasCtx: RefObject<CanvasRenderingContext2D>
 ) => {
   const { startCoordinate, moveCoordinate } = useMouseEvent();
 
-  const drawType = useAtomValue(drawTypeAtom);
+  const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
   const [cursorPoint, setCursorPoint] = useAtom(cursorPointAtom);
 
@@ -61,8 +61,8 @@ export const useHandleDraw = (
       );
       let maxWidth = 0;
       lines.forEach((line) => {
-        if (statisCanvasCtx.current) {
-          const { width } = statisCanvasCtx.current.measureText(line);
+        if (staticCanvasCtx.current) {
+          const { width } = staticCanvasCtx.current.measureText(line);
           if (width > maxWidth) {
             maxWidth = width;
           }
@@ -249,11 +249,15 @@ export const useHandleDraw = (
             Math.abs(workingDrawData.current.height) >= MIN_DRAW_DIS)
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
-          const copyWorkingDrawData: DrawData = workingDrawData.current;
+          const copyWorkingDrawData: DrawData = {
+            ...workingDrawData.current,
+            selected: true,
+          };
           setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
         }
         setActiveDrawData([]);
         workingDrawData.current = null;
+        setDrawType(DrawType.selection);
       }
       return false;
     }
@@ -374,10 +378,12 @@ export const useHandleDraw = (
   }, [activeDrawData]);
 
   useEffect(() => {
-    if (statisCanvasCtx.current) {
-      drawCanvas(statisCanvasCtx.current, staticDrawData);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(staticDrawData));
+    if (!staticCanvasCtx.current) {
+      return;
     }
+
+    drawCanvas(staticCanvasCtx.current, staticDrawData);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(staticDrawData));
   }, [staticDrawData]);
 
   useEventListener(
@@ -385,8 +391,8 @@ export const useHandleDraw = (
     () => {
       activeCanvasCtx.current &&
         drawCanvas(activeCanvasCtx.current, activeDrawData);
-      statisCanvasCtx.current &&
-        drawCanvas(statisCanvasCtx.current, staticDrawData);
+      staticCanvasCtx.current &&
+        drawCanvas(staticCanvasCtx.current, staticDrawData);
     },
     { target: window }
   );
