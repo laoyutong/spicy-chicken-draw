@@ -239,7 +239,7 @@ const drawSelectedBorder = (
   const hasMultiSelectedELements = selectedList.length > 1;
 
   if (hasMultiSelectedELements) {
-    const [maxX, minX, maxY, minY] = getContentArea(data);
+    const [maxX, minX, maxY, minY] = getContentArea(selectedList);
 
     drawSelectedArea(
       ctx,
