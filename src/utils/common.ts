@@ -1,3 +1,4 @@
+import { CALCULATE_SELECTION_GAP } from "@/config";
 import { DrawData } from "@/types";
 
 export const splitContent = (content: string): string[] =>
@@ -17,3 +18,13 @@ export const getDrawDataDis = (
   getMinDis(drawData.y, drawData.height),
   getMaxDis(drawData.y, drawData.height),
 ];
+
+
+export const getValueWithoutGap = (x: number) =>
+  x > CALCULATE_SELECTION_GAP ? x - CALCULATE_SELECTION_GAP : 0;
+
+export const getValueWithGap = (x: number) => x + CALCULATE_SELECTION_GAP;
+
+export const isInRange = (value: number, small: number, large?: number) =>
+  value >= getValueWithoutGap(small) &&
+  value <= getValueWithGap(large ?? small);

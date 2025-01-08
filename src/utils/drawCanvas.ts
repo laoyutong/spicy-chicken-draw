@@ -2,46 +2,51 @@ import {
   ARROW_DEG,
   ARROW_LENGTH,
   SELECTION_AREA_BG_COLOR,
-  SELECTION_GAP,
+  DRAW_SELECTION_GAP,
   SELECTION_RECT_WIDTH,
   TEXT_FONT_FAMILY,
   TEXT_FONT_SIZE,
+  SELECTION_LINE_DASH,
 } from "@/config";
 import { DrawData, DrawType } from "@/types";
-import { splitContent } from ".";
+import { getDrawDataDis, splitContent } from ".";
 
-type DrawDetailTypeFn = (
+type BaseDrawFn<T extends keyof DrawData> = (
   ctx: CanvasRenderingContext2D,
-  drawData: DrawData
+  drawData: Pick<DrawData, T>
 ) => void;
 
-const getDrawRectParams = (
-  x: number,
-  y: number,
-  width: number,
-  height: number
-) => ({ x, y, width, height } as DrawData);
+type DrawGraphFn = BaseDrawFn<"x" | "y" | "width" | "height">;
 
-/** 绘制selected的选择框 */
-const drawSelectedArea: DrawDetailTypeFn = (
-  ctx,
-  { x, y, width, height, type }
+type DrawTextFn = BaseDrawFn<"x" | "y" | "content">;
+
+const drawResizeRect = (
+  ctx: CanvasRenderingContext2D,
+  {
+    x,
+    y,
+    width,
+    height,
+    type,
+  }: Pick<DrawData, "x" | "y" | "width" | "height" | "type">
 ) => {
-  const gapX = width > 0 ? SELECTION_GAP : -SELECTION_GAP;
-  const gapY = height > 0 ? SELECTION_GAP : -SELECTION_GAP;
+  const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
+  const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const x1 = x - gapX;
   const x2 = x + width + gapX;
   const y1 = y - gapY;
   const y2 = y + height + gapY;
 
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y1);
-  ctx.lineTo(x2, y2);
-  ctx.lineTo(x1, y2);
-  ctx.closePath();
-
   const rectWidth = width > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
   const rectHeight = height > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+
+  const getDrawRectParams = (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => ({ x, y, width, height });
+
   if (type !== DrawType.text) {
     drawRect(ctx, getDrawRectParams(x1, y1, -rectWidth, -rectHeight));
     drawRect(ctx, getDrawRectParams(x2, y2, rectWidth, rectHeight));
@@ -52,7 +57,39 @@ const drawSelectedArea: DrawDetailTypeFn = (
   }
 };
 
-const drawRect: DrawDetailTypeFn = (ctx, { x, y, width, height }) => {
+/** 绘制selected的选择框 */
+const drawSelectedArea: (
+  ctx: CanvasRenderingContext2D,
+  drawData: Pick<DrawData, "x" | "y" | "width" | "height" | "type">,
+  options?: {
+    withoutResizeRect?: boolean;
+    isDashLine?: boolean;
+  }
+) => void = (ctx, { x, y, width, height, type }, options) => {
+  const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
+  const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
+  const x1 = x - gapX;
+  const x2 = x + width + gapX;
+  const y1 = y - gapY;
+  const y2 = y + height + gapY;
+
+  ctx.beginPath();
+  options?.isDashLine && ctx.setLineDash(SELECTION_LINE_DASH);
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y1);
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x1, y2);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+  !options?.withoutResizeRect &&
+    drawResizeRect(ctx, { x, y, width, height, type });
+  ctx.stroke();
+};
+
+const drawRect: DrawGraphFn = (ctx, { x, y, width, height }) => {
   ctx.moveTo(x, y);
   ctx.lineTo(x + width, y);
   ctx.lineTo(x + width, y + height);
@@ -60,7 +97,7 @@ const drawRect: DrawDetailTypeFn = (ctx, { x, y, width, height }) => {
   ctx.closePath();
 };
 
-const drawCircle: DrawDetailTypeFn = (ctx, { x, y, width, height }) => {
+const drawCircle: DrawGraphFn = (ctx, { x, y, width, height }) => {
   const centerX = x + width / 2;
   const centerY = y + height / 2;
   const halfWidth = Math.abs(width / 2);
@@ -77,7 +114,7 @@ const drawCircle: DrawDetailTypeFn = (ctx, { x, y, width, height }) => {
   ctx.closePath();
 };
 
-const drawDiamond: DrawDetailTypeFn = (
+const drawDiamond: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
   { x, y, width, height }
 ) => {
@@ -88,7 +125,7 @@ const drawDiamond: DrawDetailTypeFn = (
   ctx.closePath();
 };
 
-const drawSelection: DrawDetailTypeFn = (
+const drawSelection: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
   { x, y, width, height }
 ) => {
@@ -98,7 +135,7 @@ const drawSelection: DrawDetailTypeFn = (
   ctx.restore();
 };
 
-const drawArrow: DrawDetailTypeFn = (
+const drawArrow: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
   { x, y, width, height }
 ) => {
@@ -126,7 +163,7 @@ const drawArrow: DrawDetailTypeFn = (
   ctx.lineTo(x2, y2);
 };
 
-const drawText: DrawDetailTypeFn = (ctx, { x, y, content }) => {
+const drawText: DrawTextFn = (ctx, { x, y, content }) => {
   if (!content?.trim()) {
     return;
   }
@@ -161,13 +198,71 @@ const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
   }
 };
 
+const getContentArea = (data: DrawData[]): [number, number, number, number] => {
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  let x2 = Infinity;
+  let y2 = Infinity;
+
+  data.forEach((d) => {
+    const [minX, maxX, minY, maxY] = getDrawDataDis(d);
+
+    if (maxX > x1) {
+      x1 = maxX;
+    }
+    if (maxY > y1) {
+      y1 = maxY;
+    }
+    if (minX < x2) {
+      x2 = minX;
+    }
+    if (minY < y2) {
+      y2 = minY;
+    }
+  });
+
+  return [x1, x2, y1, y2];
+};
+
+const drawGraphs = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
+  ctx.beginPath();
+  data.forEach((item) => drawGraph(ctx, item));
+  ctx.stroke();
+};
+
+const drawSelectedBorder = (
+  ctx: CanvasRenderingContext2D,
+  data: DrawData[]
+) => {
+  const selectedList = data.filter((item) => item.selected);
+
+  const hasMultiSelectedELements = selectedList.length > 1;
+
+  if (hasMultiSelectedELements) {
+    const [maxX, minX, maxY, minY] = getContentArea(data);
+
+    drawSelectedArea(
+      ctx,
+      {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+        type: DrawType.selection,
+      },
+      { isDashLine: true }
+    );
+  }
+
+  selectedList.forEach((item) => {
+    drawSelectedArea(ctx, item, {
+      withoutResizeRect: hasMultiSelectedELements,
+    });
+  });
+};
+
 export const drawCanvas = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-  ctx.beginPath();
-  data.forEach((item) => {
-    item.selected && drawSelectedArea(ctx, item);
-    drawGraph(ctx, item);
-  });
-  ctx.stroke();
+  drawSelectedBorder(ctx, data);
+  drawGraphs(ctx, data);
 };

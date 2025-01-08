@@ -1,19 +1,15 @@
 import { Coordinate, DrawData, DrawType } from "@/types";
-import { getDrawDataDis } from "./common";
+import {
+  getDrawDataDis,
+  isInRange,
+  getValueWithGap,
+  getValueWithoutGap,
+} from "./common";
 import {
   HAS_BOUNDING_ELEMENTS_LIST,
-  SELECTION_GAP,
+  CALCULATE_SELECTION_GAP,
   TEXT_BOUND_GAP,
 } from "@/config";
-
-const getValueWithoutGap = (x: number) =>
-  x > SELECTION_GAP ? x - SELECTION_GAP : 0;
-
-const getValueWithGap = (x: number) => x + SELECTION_GAP;
-
-const isInRange = (value: number, small: number, large?: number) =>
-  value >= getValueWithoutGap(small) &&
-  value <= getValueWithGap(large ?? small);
 
 /**
  * 获取两个坐标点之间的距离
@@ -100,8 +96,8 @@ export const getHoverElement = (
       );
 
       if (
-        active >= target - SELECTION_GAP / 2 &&
-        active <= target + SELECTION_GAP / 2
+        active >= target - CALCULATE_SELECTION_GAP / 2 &&
+        active <= target + CALCULATE_SELECTION_GAP / 2
       ) {
         return graphItem;
       }
