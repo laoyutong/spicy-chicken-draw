@@ -7,6 +7,7 @@ import {
   TEXT_FONT_FAMILY,
   TEXT_FONT_SIZE,
   SELECTION_LINE_DASH,
+  SELECTION_BORDER_COLOR,
 } from "@/config";
 import { DrawData, DrawType } from "@/types";
 import { getDrawDataDis, splitContent } from ".";
@@ -73,6 +74,8 @@ const drawSelectedArea: (
   const y1 = y - gapY;
   const y2 = y + height + gapY;
 
+  ctx.strokeStyle = SELECTION_BORDER_COLOR;
+
   ctx.beginPath();
   options?.isDashLine && ctx.setLineDash(SELECTION_LINE_DASH);
   ctx.moveTo(x1, y1);
@@ -87,6 +90,8 @@ const drawSelectedArea: (
   !options?.withoutResizeRect &&
     drawResizeRect(ctx, { x, y, width, height, type });
   ctx.stroke();
+
+  ctx.strokeStyle = "#000";
 };
 
 const drawRect: DrawGraphFn = (ctx, { x, y, width, height }) => {

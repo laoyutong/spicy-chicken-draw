@@ -4,7 +4,9 @@ export const ARROW_DEG = 30;
 
 export const ARROW_LENGTH = 30;
 
-export const SELECTION_AREA_BG_COLOR = "rgba(255,165,0,0.5)";
+export const SELECTION_AREA_BG_COLOR = "rgb(224, 223, 255)";
+
+export const SELECTION_BORDER_COLOR = "rgb(105, 101, 219)";
 
 export const TEXT_FONT_SIZE = 15;
 
@@ -22,7 +24,7 @@ export const MIN_DRAW_DIS = 3;
 
 export const SELECTION_RECT_WIDTH = 8;
 
-export const SELECTION_LINE_DASH = [15, 10];
+export const SELECTION_LINE_DASH = [3, 2];
 
 export const TEXT_BOUND_GAP = 10;
 
