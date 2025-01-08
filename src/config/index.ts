@@ -14,7 +14,7 @@ export const TEXT_FONT_FAMILY = "Segoe UI Emoji";
 
 export const LOCAL_STORAGE_KEY = "SPICY_CHICKEN_DRAW";
 
-export const SELECTION_GAP = 3;
+export const SELECTION_GAP = 5;
 
 export const MIN_DRAW_DIS = 3;
 

@@ -15,6 +15,9 @@ const isInRange = (value: number, small: number, large?: number) =>
   value >= getValueWithoutGap(small) &&
   value <= getValueWithGap(large ?? small);
 
+/**
+ * 获取两个坐标点之间的距离
+ */
 const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
   Math.pow(
     Math.pow(Math.abs(x1 - x2), 2) + Math.pow(Math.abs(y1 - y2), 2),
@@ -35,64 +38,64 @@ export const getHoverElement = (
     return selectedHoverElement;
   }
 
-  for (const graghItem of drawData) {
-    const [minX, maxX, minY, maxY] = getDrawDataDis(graghItem);
+  for (const graphItem of drawData) {
+    const [minX, maxX, minY, maxY] = getDrawDataDis(graphItem);
 
-    if (graghItem.type === DrawType.text) {
+    if (graphItem.type === DrawType.text) {
       if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
-        return graghItem;
+        return graphItem;
       }
     }
 
-    if (graghItem.type === DrawType.rectangle) {
+    if (graphItem.type === DrawType.rectangle) {
       if (
         ((isInRange(x, minX) || isInRange(x, maxX)) &&
           isInRange(y, minY, maxY)) ||
         ((isInRange(y, minY) || isInRange(y, maxY)) && isInRange(x, minX, maxX))
       ) {
-        return graghItem;
+        return graphItem;
       }
     }
 
-    if (graghItem.type === DrawType.circle) {
-      const halfWidth = graghItem.width / 2;
-      const halfHeight = graghItem.height / 2;
+    if (graphItem.type === DrawType.circle) {
+      const halfWidth = graphItem.width / 2;
+      const halfHeight = graphItem.height / 2;
       const value =
-        Math.pow(x - (graghItem.x + halfWidth), 2) / Math.pow(halfWidth, 2) +
-        Math.pow(y - (graghItem.y + halfHeight), 2) / Math.pow(halfHeight, 2);
+        Math.pow(x - (graphItem.x + halfWidth), 2) / Math.pow(halfWidth, 2) +
+        Math.pow(y - (graphItem.y + halfHeight), 2) / Math.pow(halfHeight, 2);
 
-      if (value <= 1.1 && value >= 0.9) {
-        return graghItem;
+      if (value <= 1.2 && value >= 0.9) {
+        return graphItem;
       }
     }
 
-    if (graghItem.type === DrawType.diamond) {
-      const targetArea = graghItem.width * graghItem.height;
-      const disX = Math.abs(x - (graghItem.x + graghItem.width / 2));
-      const disY = Math.abs(y - (graghItem.y + graghItem.height / 2));
+    if (graphItem.type === DrawType.diamond) {
+      const targetArea = graphItem.width * graphItem.height;
+      const disX = Math.abs(x - (graphItem.x + graphItem.width / 2));
+      const disY = Math.abs(y - (graphItem.y + graphItem.height / 2));
       const maxArea =
-        (getValueWithGap(disX) * graghItem.height +
-          getValueWithGap(disY) * graghItem.width) *
+        (getValueWithGap(disX) * graphItem.height +
+          getValueWithGap(disY) * graphItem.width) *
         2;
       const minArea =
-        (getValueWithoutGap(disX) * graghItem.height +
-          getValueWithoutGap(disY) * graghItem.width) *
+        (getValueWithoutGap(disX) * graphItem.height +
+          getValueWithoutGap(disY) * graphItem.width) *
         2;
 
       if (maxArea >= targetArea && minArea <= targetArea) {
-        return graghItem;
+        return graphItem;
       }
     }
 
-    if (graghItem.type === DrawType.arrow) {
+    if (graphItem.type === DrawType.arrow) {
       const target = Math.round(getDistance(minX, maxX, minY, maxY));
       const active = Math.round(
-        getDistance(x, graghItem.x, y, graghItem.y) +
+        getDistance(x, graphItem.x, y, graphItem.y) +
           getDistance(
             x,
-            graghItem.x + graghItem.width,
+            graphItem.x + graphItem.width,
             y,
-            graghItem.y + graghItem.height
+            graphItem.y + graphItem.height
           )
       );
 
@@ -100,7 +103,7 @@ export const getHoverElement = (
         active >= target - SELECTION_GAP / 2 &&
         active <= target + SELECTION_GAP / 2
       ) {
-        return graghItem;
+        return graphItem;
       }
     }
   }
