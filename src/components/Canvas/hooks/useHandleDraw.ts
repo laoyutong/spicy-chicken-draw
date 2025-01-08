@@ -350,6 +350,7 @@ export const useHandleDraw = (
       createText(startCoordinate, createTextOnChange, textContainer);
     }
     setCursorPoint(CursorConfig.default);
+    setDrawType(DrawType.selection);
   };
 
   useTrackedEffect(
