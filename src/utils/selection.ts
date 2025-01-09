@@ -4,6 +4,7 @@ import {
   isInRange,
   getValueWithGap,
   getValueWithoutGap,
+  getContentArea,
 } from "./common";
 import {
   HAS_BOUNDING_ELEMENTS_LIST,
@@ -24,14 +25,20 @@ export const getHoverElement = (
   { x, y }: Coordinate,
   drawData: DrawData[]
 ): DrawData | null => {
-  // selected的优先级高
-  const selectedHoverElement = drawData.find((item) => {
-    const [minX, maxX, minY, maxY] = getDrawDataDis(item);
-    return item.selected && x >= minX && x <= maxX && y >= minY && y <= maxY;
-  });
-
-  if (selectedHoverElement) {
-    return selectedHoverElement;
+  const selectedList = drawData.filter((i) => i.selected);
+  if (selectedList.length) {
+    if (selectedList.length > 1) {
+      const [minX, maxX, minY, maxY] = getContentArea(selectedList);
+      if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
+        //  TODO: 需要返回整个list，外层逻辑需要同步处理
+        return selectedList[0]
+      }
+    } else {
+      const [minX, maxX, minY, maxY] = getDrawDataDis(selectedList[0]);
+      if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
+        return selectedList[0];
+      }
+    }
   }
 
   for (const graphItem of drawData) {

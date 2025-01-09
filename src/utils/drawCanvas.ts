@@ -10,7 +10,7 @@ import {
   SELECTION_BORDER_COLOR,
 } from "@/config";
 import { DrawData, DrawType } from "@/types";
-import { getDrawDataDis, splitContent } from ".";
+import { getContentArea, getDrawDataDis, splitContent } from ".";
 
 type BaseDrawFn<T extends keyof DrawData> = (
   ctx: CanvasRenderingContext2D,
@@ -203,32 +203,6 @@ const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
   }
 };
 
-const getContentArea = (data: DrawData[]): [number, number, number, number] => {
-  let x1 = -Infinity;
-  let y1 = -Infinity;
-  let x2 = Infinity;
-  let y2 = Infinity;
-
-  data.forEach((d) => {
-    const [minX, maxX, minY, maxY] = getDrawDataDis(d);
-
-    if (maxX > x1) {
-      x1 = maxX;
-    }
-    if (maxY > y1) {
-      y1 = maxY;
-    }
-    if (minX < x2) {
-      x2 = minX;
-    }
-    if (minY < y2) {
-      y2 = minY;
-    }
-  });
-
-  return [x1, x2, y1, y2];
-};
-
 const drawGraphs = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
   ctx.beginPath();
   data.forEach((item) => drawGraph(ctx, item));
@@ -244,7 +218,7 @@ const drawSelectedBorder = (
   const hasMultiSelectedELements = selectedList.length > 1;
 
   if (hasMultiSelectedELements) {
-    const [maxX, minX, maxY, minY] = getContentArea(selectedList);
+    const [minX, maxX, minY, maxY] = getContentArea(selectedList);
 
     drawSelectedArea(
       ctx,
