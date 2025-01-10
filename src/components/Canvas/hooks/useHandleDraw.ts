@@ -117,7 +117,7 @@ export const useHandleDraw = (
   /**
    * 移动图形的处理
    */
-  const handleMoveElement = () => {
+  const handleMoveElement = (isStartCoordinateChange?: boolean) => {
     if (!startCoordinate) {
       // 结束移动
       if (movingDrawData.current.length) {
@@ -134,70 +134,78 @@ export const useHandleDraw = (
       ...activeDrawData,
     ]);
 
-    // 在点击的时候 把select的状态重置
-    if (!activeHoverElement) {
+    // 存在startCoordinate变更且有值，说明是点击的情况
+    // 重置select的状态
+    if (isStartCoordinateChange && !activeHoverElement) {
       staticDrawData.find((item) => item.selected) &&
         setStaticDrawData((pre) =>
           pre.map((item) => ({ ...item, selected: false }))
         );
     }
 
-    if (cursorPoint === CursorConfig.move) {
-      // 如果为false说明不存在selected的图形
-      if (activeHoverElement?.selected === false) {
-        // 如果hover的图形有containerId，则hover其container
-        if (activeHoverElement.containerId) {
-          const hoverElementContainer = staticDrawData.find(
-            (item) => item.id === activeHoverElement.containerId
-          );
-          if (hoverElementContainer) {
-            movingDrawData.current = [
-              {
-                ...hoverElementContainer,
-                selected: true,
-              },
-              activeHoverElement,
-            ];
-          }
-        } else {
+    if (cursorPoint !== CursorConfig.move) {
+      return false;
+    }
+
+    // 如果activeHoverElement为数组，肯定是批量selected的状态，所以仅需要判断单个的情况
+    // 当前点击到了没有selected的图形，需要设置selected状态
+    if (
+      !Array.isArray(activeHoverElement) &&
+      activeHoverElement?.selected === false
+    ) {
+      // 如果hover的图形有containerId，则hover其container
+      if (activeHoverElement.containerId) {
+        const hoverElementContainer = staticDrawData.find(
+          (item) => item.id === activeHoverElement.containerId
+        );
+        if (hoverElementContainer) {
           movingDrawData.current = [
             {
-              ...activeHoverElement,
+              ...hoverElementContainer,
               selected: true,
             },
-            ...((activeHoverElement.boundingElements
-              ?.map((item) => staticDrawData.find((i) => i.id === item.id))
-              .filter((item) => item) as DrawData[]) ?? []),
+            activeHoverElement,
           ];
         }
-        setActiveDrawData(movingDrawData.current);
-        setStaticDrawData((pre) =>
-          pre
-            .filter(
-              (item) => !movingDrawData.current.some((i) => i.id === item.id)
-            )
-            .map((item) => ({ ...item, selected: false }))
-        );
-
-        return true;
+      } else {
+        movingDrawData.current = [
+          {
+            ...activeHoverElement,
+            selected: true,
+          },
+          ...((activeHoverElement.boundingElements
+            ?.map((item) => staticDrawData.find((i) => i.id === item.id))
+            .filter((item) => item) as DrawData[]) ?? []),
+        ];
       }
+      setActiveDrawData(movingDrawData.current);
+      setStaticDrawData((pre) =>
+        pre
+          .filter(
+            (item) => !movingDrawData.current.some((i) => i.id === item.id)
+          )
+          .map((item) => ({ ...item, selected: false }))
+      );
 
-      // 对于已经selected的图形
-      if (!movingDrawData.current.length) {
-        const boudingElementIdList: string[] = [];
-        movingDrawData.current = staticDrawData.filter((item) => {
-          if (item.selected && item.boundingElements?.length) {
-            item.boundingElements.forEach((boundingElement) => {
-              boudingElementIdList.push(boundingElement.id);
-            });
-          }
-          return item.selected;
+      return true;
+    }
+
+    // 处理移动前绑定元素的selected的信息收集
+    if (!movingDrawData.current.length) {
+      const selectedList = staticDrawData.filter((item) => item.selected);
+      if (selectedList.length) {
+        const boundingElementIdList: string[] = [];
+        movingDrawData.current = selectedList;
+        selectedList.forEach((item) => {
+          item.boundingElements?.forEach((boundingElement) => {
+            boundingElementIdList.push(boundingElement.id);
+          });
         })!;
 
         movingDrawData.current.push(
-          ...(boudingElementIdList
+          ...(boundingElementIdList
             .map((item) => staticDrawData.find((i) => item === i.id))
-            .filter((item) => item) as DrawData[])
+            .filter(Boolean) as DrawData[])
         );
 
         setActiveDrawData(movingDrawData.current);
@@ -208,8 +216,10 @@ export const useHandleDraw = (
         );
         return true;
       }
+    }
 
-      // 移动图形
+    // 移动图形
+    movingDrawData.current.length &&
       setActiveDrawData((pre) =>
         pre.map((item) => {
           const activeMovingDrawItem = movingDrawData.current.find(
@@ -228,8 +238,7 @@ export const useHandleDraw = (
         })
       );
 
-      return true;
-    }
+    return true;
   };
 
   /**
@@ -307,7 +316,7 @@ export const useHandleDraw = (
   };
 
   /**
-   * 在selection时，判断cursorPoint状态
+   * 处理cursorPoint状态
    */
   const handleCursorPoint = () => {
     if (drawType === DrawType.selection) {
@@ -355,12 +364,13 @@ export const useHandleDraw = (
 
   useTrackedEffect(
     (changes) => {
-      if (drawType === DrawType.text && changes?.includes(0)) {
+      const isStartCoordinateChange = changes?.includes(0);
+      if (drawType === DrawType.text && isStartCoordinateChange) {
         handleText();
         return;
       }
 
-      if (handleMoveElement()) {
+      if (handleMoveElement(isStartCoordinateChange)) {
         return;
       }
 

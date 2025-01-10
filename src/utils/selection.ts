@@ -24,14 +24,13 @@ const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
 export const getHoverElement = (
   { x, y }: Coordinate,
   drawData: DrawData[]
-): DrawData | null => {
+): DrawData | DrawData[] | null => {
   const selectedList = drawData.filter((i) => i.selected);
   if (selectedList.length) {
     if (selectedList.length > 1) {
       const [minX, maxX, minY, maxY] = getContentArea(selectedList);
       if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
-        //  TODO: 需要返回整个list，外层逻辑需要同步处理
-        return selectedList[0]
+        return selectedList;
       }
     } else {
       const [minX, maxX, minY, maxY] = getDrawDataDis(selectedList[0]);
