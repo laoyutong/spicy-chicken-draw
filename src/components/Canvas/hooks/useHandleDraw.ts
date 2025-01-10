@@ -14,11 +14,14 @@ import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
   drawCanvas,
+  getContentArea,
   getExistTextElement,
   getHoverElement,
   getMaxDis,
   getMinDis,
+  getResizeRectData,
   getTextContainer,
+  isInRange,
   splitContent,
   TextOnChangeEvent,
 } from "@/utils";
@@ -315,16 +318,67 @@ export const useHandleDraw = (
     return true;
   };
 
+  const getResizeCursor = (
+    coordinate: Coordinate,
+    drawData: DrawData[]
+  ): CursorConfig | null => {
+    const selectedList = drawData.filter((item) => item.selected);
+    if (!selectedList.length) {
+      return null;
+    }
+
+    const getCursorConfig = (
+      resizeRectData: ReturnType<typeof getResizeRectData>
+    ) => {
+      for (const { x, width, y, height } of resizeRectData) {
+        if (
+          isInRange(coordinate.x, getMinDis(x, width), getMaxDis(x, width)) &&
+          isInRange(coordinate.y, getMinDis(y, height), getMaxDis(y, height))
+        ) {
+          return width * height > 0
+            ? CursorConfig.nwseResize
+            : CursorConfig.neswResize;
+        }
+      }
+      return null;
+    };
+
+    let cursorResult: CursorConfig | null = null;
+    if (selectedList.length === 1) {
+      const activeDrawItem = selectedList[0];
+      const resizeRectData = getResizeRectData(activeDrawItem);
+      cursorResult = getCursorConfig(resizeRectData);
+    } else {
+      const [minX, maxX, minY, maxY] = getContentArea(selectedList);
+      const resizeRectData = getResizeRectData({
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+      });
+      cursorResult = getCursorConfig(resizeRectData);
+    }
+
+    return cursorResult;
+  };
+
   /**
    * 处理cursorPoint状态
    */
   const handleCursorPoint = () => {
     if (drawType === DrawType.selection) {
+      const resizeCursor = getResizeCursor(moveCoordinate, staticDrawData);
+      if (resizeCursor) {
+        setCursorPoint(resizeCursor);
+        return;
+      }
+
       // 是否hover在图形内
       if (getHoverElement(moveCoordinate, staticDrawData)) {
         setCursorPoint(CursorConfig.move);
         return;
       }
+
       setCursorPoint(CursorConfig.default);
     } else {
       setCursorPoint(CursorConfig.crosshair);

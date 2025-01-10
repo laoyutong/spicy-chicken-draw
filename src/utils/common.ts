@@ -1,5 +1,5 @@
-import { CALCULATE_SELECTION_GAP } from "@/config";
-import { DrawData } from "@/types";
+import { CALCULATE_SELECTION_GAP, DRAW_SELECTION_GAP, SELECTION_RECT_WIDTH } from "@/config";
+import { DrawData, DrawGraphFn } from "@/types";
 
 export const splitContent = (content: string): string[] =>
   content.replace(/\r\n?/g, "\n").split("\n");
@@ -57,4 +57,36 @@ export const getContentArea = (
   });
 
   return [x2, x1, y2, y1];
+};
+
+
+export const getResizeRectData = ({
+  x,
+  y,
+  width,
+  height,
+}: Parameters<DrawGraphFn>["1"]) => {
+  const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
+  const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
+  const x1 = x - gapX;
+  const x2 = x + width + gapX;
+  const y1 = y - gapY;
+  const y2 = y + height + gapY;
+
+  const rectWidth = width > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+  const rectHeight = height > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+
+  const getDrawRectParams = (
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ) => ({ x, y, width, height });
+
+  return [
+    getDrawRectParams(x1, y1, -rectWidth, -rectHeight),
+    getDrawRectParams(x2, y2, rectWidth, rectHeight),
+    getDrawRectParams(x2, y1, rectWidth, -rectHeight),
+    getDrawRectParams(x1, y2, -rectWidth, rectHeight),
+  ];
 };

@@ -9,52 +9,26 @@ import {
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
 } from "@/config";
-import { DrawData, DrawType } from "@/types";
-import { getContentArea, getDrawDataDis, splitContent } from ".";
-
-type BaseDrawFn<T extends keyof DrawData> = (
-  ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, T>
-) => void;
-
-type DrawGraphFn = BaseDrawFn<"x" | "y" | "width" | "height">;
-
-type DrawTextFn = BaseDrawFn<"x" | "y" | "content">;
+import { DrawData, DrawType, DrawGraphFn, DrawTextFn } from "@/types";
+import { getContentArea, splitContent, getResizeRectData } from ".";
 
 const drawResizeRect = (
   ctx: CanvasRenderingContext2D,
-  {
-    x,
-    y,
-    width,
-    height,
-    type,
-  }: Pick<DrawData, "x" | "y" | "width" | "height" | "type">
+  drawData: Pick<DrawData, "x" | "y" | "width" | "height" | "type">
 ) => {
-  const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
-  const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
-  const x1 = x - gapX;
-  const x2 = x + width + gapX;
-  const y1 = y - gapY;
-  const y2 = y + height + gapY;
+  // TODO: 文本类型暂不支持resize
+  if (drawData.type === DrawType.text) {
+    return;
+  }
 
-  const rectWidth = width > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
-  const rectHeight = height > 0 ? SELECTION_RECT_WIDTH : -SELECTION_RECT_WIDTH;
+  const [startRect, endRect, xRect, yRect] =
+    getResizeRectData(drawData);
 
-  const getDrawRectParams = (
-    x: number,
-    y: number,
-    width: number,
-    height: number
-  ) => ({ x, y, width, height });
-
-  if (type !== DrawType.text) {
-    drawRect(ctx, getDrawRectParams(x1, y1, -rectWidth, -rectHeight));
-    drawRect(ctx, getDrawRectParams(x2, y2, rectWidth, rectHeight));
-    if (type !== DrawType.arrow) {
-      drawRect(ctx, getDrawRectParams(x2, y1, rectWidth, -rectHeight));
-      drawRect(ctx, getDrawRectParams(x1, y2, -rectWidth, rectHeight));
-    }
+  drawRect(ctx, startRect);
+  drawRect(ctx, endRect);
+  if (drawData.type !== DrawType.arrow) {
+    drawRect(ctx, xRect);
+    drawRect(ctx, yRect);
   }
 };
 
