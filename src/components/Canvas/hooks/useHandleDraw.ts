@@ -6,7 +6,13 @@ import {
   DrawType,
 } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
-import { RefObject, useEffect, useRef, useState } from "react";
+import {
+  MutableRefObject,
+  useEffect,
+  useRef,
+  useState,
+  RefObject,
+} from "react";
 import { useHandleKeyPress, useMouseEvent } from ".";
 import { nanoid } from "nanoid";
 import { useAtom } from "jotai";
@@ -26,6 +32,7 @@ import {
   TextOnChangeEvent,
 } from "@/utils";
 import { LOCAL_STORAGE_KEY, MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
+import { produce } from "immer";
 
 const getInitialDrawData = () => {
   let result = [];
@@ -115,6 +122,39 @@ export const useHandleDraw = (
     }
   };
 
+  // 收集selected及其绑定的内容
+  const collectSelectedElements = (
+    drawDataList: MutableRefObject<DrawData[]>
+  ) => {
+    if (!drawDataList.current.length) {
+      const selectedList = staticDrawData.filter((item) => item.selected);
+      if (selectedList.length) {
+        const boundingElementIdList: string[] = [];
+        drawDataList.current = selectedList;
+        selectedList.forEach((item) => {
+          item.boundingElements?.forEach((boundingElement) => {
+            boundingElementIdList.push(boundingElement.id);
+          });
+        })!;
+
+        drawDataList.current.push(
+          ...(boundingElementIdList
+            .map((item) => staticDrawData.find((i) => item === i.id))
+            .filter(Boolean) as DrawData[])
+        );
+
+        setActiveDrawData(drawDataList.current);
+        setStaticDrawData((pre) =>
+          pre.filter(
+            (item) => !drawDataList.current.some((i) => i.id === item.id)
+          )
+        );
+        return true;
+      }
+    }
+    return false;
+  };
+
   const movingDrawData = useRef<DrawData[]>([]);
 
   /**
@@ -156,69 +196,26 @@ export const useHandleDraw = (
       !Array.isArray(activeHoverElement) &&
       activeHoverElement?.selected === false
     ) {
-      // 如果hover的图形有containerId，则hover其container
-      if (activeHoverElement.containerId) {
-        const hoverElementContainer = staticDrawData.find(
-          (item) => item.id === activeHoverElement.containerId
-        );
-        if (hoverElementContainer) {
-          movingDrawData.current = [
-            {
-              ...hoverElementContainer,
-              selected: true,
-            },
-            activeHoverElement,
-          ];
-        }
-      } else {
-        movingDrawData.current = [
-          {
-            ...activeHoverElement,
-            selected: true,
-          },
-          ...((activeHoverElement.boundingElements
-            ?.map((item) => staticDrawData.find((i) => i.id === item.id))
-            .filter((item) => item) as DrawData[]) ?? []),
-        ];
-      }
-      setActiveDrawData(movingDrawData.current);
       setStaticDrawData((pre) =>
-        pre
-          .filter(
-            (item) => !movingDrawData.current.some((i) => i.id === item.id)
-          )
-          .map((item) => ({ ...item, selected: false }))
+        produce(pre, (draft) => {
+          const activeDrawItem = draft.find(
+            (item) =>
+              // 如果hover的图形有containerId，则hover其container
+              item.id ===
+              (activeHoverElement.containerId || activeHoverElement.id)
+          );
+          if (activeDrawItem) {
+            activeDrawItem.selected = true;
+          }
+        })
       );
 
       return true;
     }
 
-    // 处理移动前绑定元素的selected的信息收集
-    if (!movingDrawData.current.length) {
-      const selectedList = staticDrawData.filter((item) => item.selected);
-      if (selectedList.length) {
-        const boundingElementIdList: string[] = [];
-        movingDrawData.current = selectedList;
-        selectedList.forEach((item) => {
-          item.boundingElements?.forEach((boundingElement) => {
-            boundingElementIdList.push(boundingElement.id);
-          });
-        })!;
-
-        movingDrawData.current.push(
-          ...(boundingElementIdList
-            .map((item) => staticDrawData.find((i) => item === i.id))
-            .filter(Boolean) as DrawData[])
-        );
-
-        setActiveDrawData(movingDrawData.current);
-        setStaticDrawData((pre) =>
-          pre.filter(
-            (item) => !movingDrawData.current.some((i) => i.id === item.id)
-          )
-        );
-        return true;
-      }
+    const hasSelectedElement = collectSelectedElements(movingDrawData);
+    if (hasSelectedElement) {
+      return true;
     }
 
     // 移动图形
@@ -240,6 +237,41 @@ export const useHandleDraw = (
           };
         })
       );
+
+    return true;
+  };
+
+  const resizingDrawData = useRef<DrawData[]>([]);
+
+  /**
+   * 缩放图形的处理
+   */
+  const handleResizeElement = () => {
+    if (!startCoordinate) {
+      // 结束缩放
+      if (resizingDrawData.current.length) {
+        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
+        setActiveDrawData([]);
+        resizingDrawData.current = [];
+        return true;
+      }
+      return false;
+    }
+
+    if (
+      ![CursorConfig.neswResize, CursorConfig.nwseResize].includes(cursorPoint)
+    ) {
+      return false;
+    }
+
+    const hasSelectedElement = collectSelectedElements(resizingDrawData);
+    if (hasSelectedElement) {
+      return true;
+    }
+
+    if (resizingDrawData.current.length) {
+      // TODO: 缩放图形
+    }
 
     return true;
   };
@@ -297,6 +329,11 @@ export const useHandleDraw = (
       const copyWorkingDrawData = workingDrawData.current;
       setStaticDrawData((pre) =>
         pre.map((item) => {
+          // 绑定的元素不需要selected状态，在具体操作的时候处理
+          if (item.containerId) {
+            return item;
+          }
+
           const isInSelectionArea =
             getMinDis(item.x, item.width) >=
               getMinDis(copyWorkingDrawData.x, copyWorkingDrawData.width) &&
@@ -425,6 +462,10 @@ export const useHandleDraw = (
       }
 
       if (handleMoveElement(isStartCoordinateChange)) {
+        return;
+      }
+
+      if (handleResizeElement()) {
         return;
       }
 
