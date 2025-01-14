@@ -41,6 +41,10 @@ export type BaseDrawFn<T extends keyof DrawData> = (
   drawData: Pick<DrawData, T>
 ) => void;
 
-export type DrawGraphFn = BaseDrawFn<"x" | "y" | "width" | "height">;
+export type BasicGraphFields = "x" | "y" | "width" | "height";
 
-export type DrawTextFn = BaseDrawFn<"x" | "y" | "content">;
+export type DrawGraphFn = BaseDrawFn<BasicGraphFields>;
+
+export type DrawTextFn = BaseDrawFn<BasicGraphFields | "content">;
+
+export type ResizePosition = "top" | "bottom";

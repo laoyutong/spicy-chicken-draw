@@ -1,9 +1,11 @@
 import {
+  BasicGraphFields,
   BoundingElement,
   Coordinate,
   CursorConfig,
   DrawData,
   DrawType,
+  ResizePosition,
 } from "@/types";
 import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
 import {
@@ -51,6 +53,8 @@ export const useHandleDraw = (
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
   const [cursorPoint, setCursorPoint] = useAtom(cursorPointAtom);
+
+  const resizePosition = useRef<ResizePosition | null>(null);
 
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
@@ -213,8 +217,7 @@ export const useHandleDraw = (
       return true;
     }
 
-    const hasSelectedElement = collectSelectedElements(movingDrawData);
-    if (hasSelectedElement) {
+    if (collectSelectedElements(movingDrawData)) {
       return true;
     }
 
@@ -243,6 +246,42 @@ export const useHandleDraw = (
 
   const resizingDrawData = useRef<DrawData[]>([]);
 
+  const singleResize = () => {
+    const width = moveCoordinate.x - startCoordinate!.x;
+    const height = moveCoordinate.y - startCoordinate!.y;
+
+    const resizeItem = resizingDrawData.current[0];
+
+    // TODO: 待处理高度为负数的情况
+    setActiveDrawData((pre) =>
+      produce(pre, (draft) => {
+        if (cursorPoint === CursorConfig.neswResize) {
+          if (resizePosition.current === "top") {
+            draft[0].y = resizeItem.y + height;
+            draft[0].width = resizeItem.width + width;
+            draft[0].height = resizeItem.height - height;
+          } else {
+            draft[0].x = resizeItem.x + width;
+            draft[0].width = resizeItem.width - width;
+            draft[0].height = resizeItem.height + height;
+          }
+        } else if (cursorPoint === CursorConfig.nwseResize) {
+          if (resizePosition.current === "top") {
+            draft[0].x = resizeItem.x + width;
+            draft[0].y = resizeItem.y + height;
+            draft[0].width = resizeItem.width - width;
+            draft[0].height = resizeItem.height - height;
+          } else {
+            draft[0].width = resizeItem.width + width;
+            draft[0].height = resizeItem.height + height;
+          }
+        }
+      })
+    );
+  };
+
+  const multipleResize = () => {};
+
   /**
    * 缩放图形的处理
    */
@@ -264,13 +303,17 @@ export const useHandleDraw = (
       return false;
     }
 
-    const hasSelectedElement = collectSelectedElements(resizingDrawData);
-    if (hasSelectedElement) {
+    if (collectSelectedElements(resizingDrawData)) {
       return true;
     }
 
-    if (resizingDrawData.current.length) {
-      // TODO: 缩放图形
+    const { length } = resizingDrawData.current;
+    if (length) {
+      if (length === 1) {
+        singleResize();
+      } else {
+        multipleResize();
+      }
     }
 
     return true;
@@ -355,45 +398,61 @@ export const useHandleDraw = (
     return true;
   };
 
+  interface ResizeCursorResult {
+    cursorConfig: CursorConfig;
+    position: ResizePosition;
+  }
+
   const getResizeCursor = (
     coordinate: Coordinate,
     drawData: DrawData[]
-  ): CursorConfig | null => {
+  ): ResizeCursorResult | null => {
     const selectedList = drawData.filter((item) => item.selected);
     if (!selectedList.length) {
       return null;
     }
 
     const getCursorConfig = (
-      resizeRectData: ReturnType<typeof getResizeRectData>
+      resizeRectData: ReturnType<typeof getResizeRectData>,
+      graphData: Pick<DrawData, BasicGraphFields>
     ) => {
-      for (const { x, width, y, height } of resizeRectData) {
+      const { length } = resizeRectData;
+      for (let i = 0; i < length; i++) {
+        const { x, width, y, height } = resizeRectData[i];
         if (
           isInRange(coordinate.x, getMinDis(x, width), getMaxDis(x, width)) &&
           isInRange(coordinate.y, getMinDis(y, height), getMaxDis(y, height))
         ) {
-          return width * height > 0
-            ? CursorConfig.nwseResize
-            : CursorConfig.neswResize;
+          const cursorConfig =
+            width * height > 0
+              ? CursorConfig.nwseResize
+              : CursorConfig.neswResize;
+
+          const position: ResizePosition =
+            // i为0、2则表明在起始点的x轴上，用高度来判断图形绘制方向
+            [0, 2].includes(i) === graphData.height > 0 ? "top" : "bottom";
+
+          return { cursorConfig, position };
         }
       }
       return null;
     };
 
-    let cursorResult: CursorConfig | null = null;
+    let cursorResult: ResizeCursorResult | null = null;
     if (selectedList.length === 1) {
       const activeDrawItem = selectedList[0];
       const resizeRectData = getResizeRectData(activeDrawItem);
-      cursorResult = getCursorConfig(resizeRectData);
+      cursorResult = getCursorConfig(resizeRectData, activeDrawItem);
     } else {
       const [minX, maxX, minY, maxY] = getContentArea(selectedList);
-      const resizeRectData = getResizeRectData({
+      const basicGraphData = {
         x: minX,
         y: minY,
         width: maxX - minX,
         height: maxY - minY,
-      });
-      cursorResult = getCursorConfig(resizeRectData);
+      };
+      const resizeRectData = getResizeRectData(basicGraphData);
+      cursorResult = getCursorConfig(resizeRectData, basicGraphData);
     }
 
     return cursorResult;
@@ -404,9 +463,13 @@ export const useHandleDraw = (
    */
   const handleCursorPoint = () => {
     if (drawType === DrawType.selection) {
-      const resizeCursor = getResizeCursor(moveCoordinate, staticDrawData);
-      if (resizeCursor) {
-        setCursorPoint(resizeCursor);
+      const resizeCursorContent = getResizeCursor(
+        moveCoordinate,
+        staticDrawData
+      );
+      if (resizeCursorContent) {
+        setCursorPoint(resizeCursorContent.cursorConfig);
+        resizePosition.current = resizeCursorContent.position;
         return;
       }
 
