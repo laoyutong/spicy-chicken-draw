@@ -1,4 +1,8 @@
-import { CALCULATE_SELECTION_GAP, DRAW_SELECTION_GAP, SELECTION_RECT_WIDTH } from "@/config";
+import {
+  CALCULATE_SELECTION_GAP,
+  DRAW_SELECTION_GAP,
+  SELECTION_RECT_WIDTH,
+} from "@/config";
 import { DrawData, DrawGraphFn } from "@/types";
 
 export const splitContent = (content: string): string[] =>
@@ -42,7 +46,7 @@ export const getContentArea = (
     if (maxX > x1) {
       x1 = maxX;
     }
-  
+
     if (minX < x2) {
       x2 = minX;
     }
@@ -50,7 +54,7 @@ export const getContentArea = (
     if (maxY > y1) {
       y1 = maxY;
     }
-    
+
     if (minY < y2) {
       y2 = minY;
     }
@@ -58,7 +62,6 @@ export const getContentArea = (
 
   return [x2, x1, y2, y1];
 };
-
 
 export const getResizeRectData = ({
   x,
@@ -89,4 +92,19 @@ export const getResizeRectData = ({
     getDrawRectParams(x2, y1, rectWidth, -rectHeight),
     getDrawRectParams(x1, y2, -rectWidth, rectHeight),
   ];
+};
+
+// 将width和height处理为整数，便于缩放计算
+export const handleDrawItem = (drawData: DrawData) => {
+  if (drawData.width > 0 && drawData.height > 0) {
+    return drawData;
+  }
+
+  return {
+    ...drawData,
+    x: drawData.width > 0 ? drawData.x : drawData.x + drawData.width,
+    y: drawData.height > 0 ? drawData.y : drawData.y + drawData.height,
+    width: drawData.width > 0 ? drawData.width : -drawData.width,
+    height: drawData.height > 0 ? drawData.height : -drawData.height,
+  };
 };

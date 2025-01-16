@@ -32,6 +32,7 @@ import {
   isInRange,
   splitContent,
   TextOnChangeEvent,
+  handleDrawItem,
 } from "@/utils";
 import { LOCAL_STORAGE_KEY, MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
 import { produce } from "immer";
@@ -159,7 +160,7 @@ export const useHandleDraw = (
     return false;
   };
 
-  const movingDrawData = useRef<DrawData[]>([]);
+  const moveDataCache = useRef<DrawData[]>([]);
 
   /**
    * 移动图形的处理
@@ -167,10 +168,10 @@ export const useHandleDraw = (
   const handleMoveElement = (isStartCoordinateChange?: boolean) => {
     if (!startCoordinate) {
       // 结束移动
-      if (movingDrawData.current.length) {
+      if (moveDataCache.current.length) {
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
-        movingDrawData.current = [];
+        moveDataCache.current = [];
         return true;
       }
       return false;
@@ -217,15 +218,15 @@ export const useHandleDraw = (
       return true;
     }
 
-    if (collectSelectedElements(movingDrawData)) {
+    if (collectSelectedElements(moveDataCache)) {
       return true;
     }
 
     // 移动图形
-    movingDrawData.current.length &&
+    moveDataCache.current.length &&
       setActiveDrawData((pre) =>
         pre.map((item) => {
-          const activeMovingDrawItem = movingDrawData.current.find(
+          const activeMovingDrawItem = moveDataCache.current.find(
             (i) => i.id === item.id
           );
 
@@ -244,34 +245,37 @@ export const useHandleDraw = (
     return true;
   };
 
-  const resizingDrawData = useRef<DrawData[]>([]);
+  const resizeDataCache = useRef<DrawData[]>([]);
 
   const singleResize = () => {
     const width = moveCoordinate.x - startCoordinate!.x;
     const height = moveCoordinate.y - startCoordinate!.y;
 
-    const resizeItem = resizingDrawData.current[0];
+    const resizeItem = resizeDataCache.current[0];
 
-    // TODO: 待处理高度为负数的情况
     setActiveDrawData((pre) =>
       produce(pre, (draft) => {
         if (cursorPoint === CursorConfig.neswResize) {
           if (resizePosition.current === "top") {
+            // width、y的变化
             draft[0].y = resizeItem.y + height;
             draft[0].width = resizeItem.width + width;
             draft[0].height = resizeItem.height - height;
           } else {
+            // x、height的变化
             draft[0].x = resizeItem.x + width;
             draft[0].width = resizeItem.width - width;
             draft[0].height = resizeItem.height + height;
           }
         } else if (cursorPoint === CursorConfig.nwseResize) {
           if (resizePosition.current === "top") {
+            //x、y的变化
             draft[0].x = resizeItem.x + width;
             draft[0].y = resizeItem.y + height;
             draft[0].width = resizeItem.width - width;
             draft[0].height = resizeItem.height - height;
           } else {
+            // width、height的变化
             draft[0].width = resizeItem.width + width;
             draft[0].height = resizeItem.height + height;
           }
@@ -288,10 +292,13 @@ export const useHandleDraw = (
   const handleResizeElement = () => {
     if (!startCoordinate) {
       // 结束缩放
-      if (resizingDrawData.current.length) {
-        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
+      if (resizeDataCache.current.length) {
+        setStaticDrawData((pre) => [
+          ...pre,
+          ...activeDrawData.map(handleDrawItem),
+        ]);
         setActiveDrawData([]);
-        resizingDrawData.current = [];
+        resizeDataCache.current = [];
         return true;
       }
       return false;
@@ -303,11 +310,11 @@ export const useHandleDraw = (
       return false;
     }
 
-    if (collectSelectedElements(resizingDrawData)) {
+    if (collectSelectedElements(resizeDataCache)) {
       return true;
     }
 
-    const { length } = resizingDrawData.current;
+    const { length } = resizeDataCache.current;
     if (length) {
       if (length === 1) {
         singleResize();
@@ -340,7 +347,10 @@ export const useHandleDraw = (
             ...workingDrawData.current,
             selected: true,
           };
-          setStaticDrawData((pre) => [...pre, copyWorkingDrawData]);
+          setStaticDrawData((pre) => [
+            ...pre,
+            handleDrawItem(copyWorkingDrawData),
+          ]);
         }
         setActiveDrawData([]);
         workingDrawData.current = null;
