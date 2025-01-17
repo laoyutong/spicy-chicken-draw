@@ -34,7 +34,7 @@ import {
   TextOnChangeEvent,
   handleDrawItem,
 } from "@/utils";
-import { LOCAL_STORAGE_KEY, MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
+import { LOCAL_STORAGE_KEY, TEXT_FONT_SIZE, MIN_DRAW_DIS } from "@/config";
 import { produce } from "immer";
 
 const getInitialDrawData = () => {
@@ -247,44 +247,10 @@ export const useHandleDraw = (
 
   const resizeDataCache = useRef<DrawData[]>([]);
 
-  const singleResize = () => {
-    const width = moveCoordinate.x - startCoordinate!.x;
-    const height = moveCoordinate.y - startCoordinate!.y;
-
-    const resizeItem = resizeDataCache.current[0];
-
-    setActiveDrawData((pre) =>
-      produce(pre, (draft) => {
-        if (cursorPoint === CursorConfig.neswResize) {
-          if (resizePosition.current === "top") {
-            // width、y的变化
-            draft[0].y = resizeItem.y + height;
-            draft[0].width = resizeItem.width + width;
-            draft[0].height = resizeItem.height - height;
-          } else {
-            // x、height的变化
-            draft[0].x = resizeItem.x + width;
-            draft[0].width = resizeItem.width - width;
-            draft[0].height = resizeItem.height + height;
-          }
-        } else if (cursorPoint === CursorConfig.nwseResize) {
-          if (resizePosition.current === "top") {
-            //x、y的变化
-            draft[0].x = resizeItem.x + width;
-            draft[0].y = resizeItem.y + height;
-            draft[0].width = resizeItem.width - width;
-            draft[0].height = resizeItem.height - height;
-          } else {
-            // width、height的变化
-            draft[0].width = resizeItem.width + width;
-            draft[0].height = resizeItem.height + height;
-          }
-        }
-      })
-    );
-  };
-
-  const multipleResize = () => {};
+  // 缓存selected框的初始坐标，用于resize的尺寸计算
+  const startResizeContentAreaCache = useRef<
+    [number, number, number, number] | null
+  >(null);
 
   /**
    * 缩放图形的处理
@@ -299,6 +265,7 @@ export const useHandleDraw = (
         ]);
         setActiveDrawData([]);
         resizeDataCache.current = [];
+        startResizeContentAreaCache.current = null;
         return true;
       }
       return false;
@@ -314,13 +281,79 @@ export const useHandleDraw = (
       return true;
     }
 
-    const { length } = resizeDataCache.current;
-    if (length) {
-      if (length === 1) {
-        singleResize();
-      } else {
-        multipleResize();
+    if (resizeDataCache.current.length) {
+      const moveDisX = moveCoordinate.x - startCoordinate.x;
+      const moveDixY = moveCoordinate.y - startCoordinate.y;
+
+      if (!startResizeContentAreaCache.current) {
+        startResizeContentAreaCache.current = getContentArea(activeDrawData);
       }
+
+      const [minX, maxX, minY, maxY] = startResizeContentAreaCache.current;
+
+      setActiveDrawData((pre) =>
+        produce(pre, (draft) => {
+          resizeDataCache.current.forEach((resizeCacheItem) => {
+            const activeDraftItem = draft.find(
+              (item) => item.id === resizeCacheItem.id
+            );
+            if (!activeDraftItem) {
+              return;
+            }
+
+            let xDis = 0,
+              yDis = 0,
+              widthDis = 0,
+              heightDis = 0;
+
+            const baseWidthDis =
+              (resizeCacheItem.width / (maxX - minX)) * moveDisX;
+            const baseHeightDis =
+              (resizeCacheItem.height / (maxY - minY)) * moveDixY;
+
+            if (cursorPoint === CursorConfig.neswResize) {
+              if (resizePosition.current === "top") {
+                // 右上角拖动
+                xDis = resizeCacheItem.x - minX;
+                yDis = maxY - resizeCacheItem.y;
+                widthDis = baseWidthDis;
+                heightDis = -baseHeightDis;
+              } else {
+                // 右下角拖动
+                xDis = maxX - resizeCacheItem.x;
+                yDis = resizeCacheItem.y - minY;
+                widthDis = -baseWidthDis;
+                heightDis = baseHeightDis;
+              }
+            } else if (cursorPoint === CursorConfig.nwseResize) {
+              if (resizePosition.current === "top") {
+                // 左上角拖动
+                xDis = maxX - resizeCacheItem.x;
+                yDis = maxY - resizeCacheItem.y;
+                widthDis = -baseWidthDis;
+                heightDis = -baseHeightDis;
+              } else {
+                // 左下角拖动
+                xDis = resizeCacheItem.x - minX;
+                yDis = resizeCacheItem.y - minY;
+                widthDis = baseWidthDis;
+                heightDis = baseHeightDis;
+              }
+            }
+
+            activeDraftItem.x =
+              resizeCacheItem.x + (xDis / (maxX - minX)) * moveDisX;
+            activeDraftItem.y =
+              resizeCacheItem.y + (yDis / (maxY - minY)) * moveDixY;
+
+            // 文本类型仅修改坐标
+            if (activeDraftItem.type !== DrawType.text) {
+              activeDraftItem.width = resizeCacheItem.width + widthDis;
+              activeDraftItem.height = resizeCacheItem.height + heightDis;
+            }
+          });
+        })
+      );
     }
 
     return true;
