@@ -3,7 +3,7 @@ import {
   DRAW_SELECTION_GAP,
   SELECTION_RECT_WIDTH,
 } from "@/config";
-import { DrawData, DrawGraphFn } from "@/types";
+import { DrawData, DrawGraphFn, DrawType } from "@/types";
 
 export const splitContent = (content: string): string[] =>
   content.replace(/\r\n?/g, "\n").split("\n");
@@ -96,7 +96,10 @@ export const getResizeRectData = ({
 
 // 将width和height处理为整数，便于缩放计算
 export const handleDrawItem = (drawData: DrawData) => {
-  if (drawData.width > 0 && drawData.height > 0) {
+  if (
+    (drawData.width > 0 && drawData.height > 0) ||
+    drawData.type === DrawType.arrow
+  ) {
     return drawData;
   }
 
