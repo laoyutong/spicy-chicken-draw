@@ -182,9 +182,8 @@ export const useHandleDraw = (
       ...activeDrawData,
     ]);
 
-    // 存在startCoordinate变更且有值，说明是点击的情况
-    // 重置select的状态
-    if (isStartCoordinateChange && !activeHoverElement) {
+    // 存在startCoordinate变更且有值，说明是点击的情况，则重置select的状态
+    if (isStartCoordinateChange) {
       staticDrawData.find((item) => item.selected) &&
         setStaticDrawData((pre) =>
           pre.map((item) => ({ ...item, selected: false }))
