@@ -34,13 +34,14 @@ import {
   TextOnChangeEvent,
   handleDrawItem,
 } from "@/utils";
-import { LOCAL_STORAGE_KEY, TEXT_FONT_SIZE, MIN_DRAW_DIS } from "@/config";
+import { FILE_KEY, TEXT_FONT_SIZE, MIN_DRAW_DIS } from "@/config";
 import { produce } from "immer";
+import { useOperationTool } from "./useOperationTool";
 
 const getInitialDrawData = () => {
   let result = [];
   try {
-    result = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
+    result = JSON.parse(localStorage.getItem(FILE_KEY) || "[]");
   } catch {}
   return result;
 };
@@ -61,6 +62,11 @@ export const useHandleDraw = (
 
   const [staticDrawData, setStaticDrawData] =
     useState<DrawData[]>(getInitialDrawData);
+
+  useOperationTool({
+    staticDrawData,
+    setStaticDrawData,
+  });
 
   const workingDrawData = useRef<DrawData | null>(null);
 
@@ -594,7 +600,7 @@ export const useHandleDraw = (
     }
 
     drawCanvas(staticCanvasCtx.current, staticDrawData);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(staticDrawData));
+    localStorage.setItem(FILE_KEY, JSON.stringify(staticDrawData));
   }, [staticDrawData]);
 
   useEventListener(

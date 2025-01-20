@@ -8,12 +8,6 @@ import {
   ArrowRight,
 } from "@icon-park/react";
 
-export const ICON_PROPS = {
-  theme: "outline",
-  size: "20",
-  fill: "#333",
-} as const;
-
 export const ICON_LIST = [
   { type: DrawType.selection, Icon: Click },
   { type: DrawType.rectangle, Icon: RectangleOne },

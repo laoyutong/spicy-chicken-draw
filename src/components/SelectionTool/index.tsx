@@ -1,4 +1,5 @@
-import { ICON_LIST, ICON_PROPS } from "./config";
+import { ICON_LIST } from "./config";
+import { ICON_PROPS } from "@/config";
 import { useAtom, useSetAtom } from "jotai";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
 import cls from "classnames";

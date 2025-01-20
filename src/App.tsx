@@ -1,7 +1,8 @@
-import { SelectionTool, Canvas } from "@/components";
+import { SelectionTool, Canvas, OperationTool } from "@/components";
 
 const App = () => (
   <>
+    <OperationTool />
     <SelectionTool />
     <Canvas />
   </>

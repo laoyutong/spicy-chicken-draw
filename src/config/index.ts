@@ -14,7 +14,7 @@ export const TEXTAREA_PER_HEIGHT = TEXT_FONT_SIZE + 3;
 
 export const TEXT_FONT_FAMILY = "Segoe UI Emoji";
 
-export const LOCAL_STORAGE_KEY = "SPICY_CHICKEN_DRAW";
+export const FILE_KEY = "SPICY_CHICKEN_DRAW";
 
 export const CALCULATE_SELECTION_GAP = 5;
 
@@ -28,8 +28,25 @@ export const SELECTION_LINE_DASH = [3, 2];
 
 export const TEXT_BOUND_GAP = 10;
 
+export const EXPORT_IMAGE_GAP = 30;
+
+export const EXPORT_IMAGE_BACKGROUND_COLOR = "#fff";
+
 export const HAS_BOUNDING_ELEMENTS_LIST = [
   DrawType.circle,
   DrawType.diamond,
   DrawType.rectangle,
 ];
+
+export const OPERATION_TOOL_KEY = {
+  clear: "CLEAR",
+  import: "IMPORT",
+  export: "EXPORT",
+  exportImage: "EXPORT_IMAGE",
+};
+
+export const ICON_PROPS = {
+  theme: "outline",
+  size: "20",
+  fill: "#333",
+} as const;
