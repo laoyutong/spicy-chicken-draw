@@ -14,7 +14,7 @@ export const TEXTAREA_PER_HEIGHT = TEXT_FONT_SIZE + 3;
 
 export const TEXT_FONT_FAMILY = "Segoe UI Emoji";
 
-export const FILE_KEY = "SPICY_CHICKEN_DRAW";
+export const APP_KEY = "SPICY_CHICKEN_DRAW";
 
 export const CALCULATE_SELECTION_GAP = 5;
 

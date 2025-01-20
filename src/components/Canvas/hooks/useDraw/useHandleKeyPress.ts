@@ -2,6 +2,9 @@ import { DrawData } from "@/types";
 import { useKeyPress } from "ahooks";
 import { Dispatch, SetStateAction } from "react";
 
+/**
+ * 处理画布的快捷键操作
+ */
 export const useHandleKeyPress = (
   setDrawData: Dispatch<SetStateAction<DrawData[]>>
 ) => {

@@ -1,10 +1,21 @@
-import { Coordinate, DrawData, DrawType } from "@/types";
+import {
+  BasicGraphFields,
+  Coordinate,
+  CursorConfig,
+  DrawData,
+  DrawType,
+  ResizeCursorResult,
+  ResizePosition,
+} from "@/types";
 import {
   getDrawDataDis,
   isInRange,
   getValueWithGap,
   getValueWithoutGap,
   getContentArea,
+  getResizeRectData,
+  getMinDis,
+  getMaxDis,
 } from "./common";
 import {
   HAS_BOUNDING_ELEMENTS_LIST,
@@ -158,3 +169,58 @@ export const getExistTextElement = (
       x <= item.x + item.width &&
       y <= item.y + item.height
   );
+
+export const getResizeCursor = (
+  coordinate: Coordinate,
+  drawData: DrawData[]
+): ResizeCursorResult | null => {
+  const selectedList = drawData.filter((item) => item.selected);
+  if (!selectedList.length) {
+    return null;
+  }
+
+  const getCursorConfig = (
+    resizeRectData: ReturnType<typeof getResizeRectData>,
+    graphData: Pick<DrawData, BasicGraphFields>
+  ) => {
+    const { length } = resizeRectData;
+    for (let i = 0; i < length; i++) {
+      const { x, width, y, height } = resizeRectData[i];
+      if (
+        isInRange(coordinate.x, getMinDis(x, width), getMaxDis(x, width)) &&
+        isInRange(coordinate.y, getMinDis(y, height), getMaxDis(y, height))
+      ) {
+        const cursorConfig =
+          width * height > 0
+            ? CursorConfig.nwseResize
+            : CursorConfig.neswResize;
+
+        const position: ResizePosition =
+          // i为0、2则表明在起始点的x轴上，用高度来判断图形绘制方向
+          [0, 2].includes(i) === graphData.height > 0 ? "top" : "bottom";
+
+        return { cursorConfig, position };
+      }
+    }
+    return null;
+  };
+
+  let cursorResult: ResizeCursorResult | null = null;
+  if (selectedList.length === 1) {
+    const activeDrawItem = selectedList[0];
+    const resizeRectData = getResizeRectData(activeDrawItem);
+    cursorResult = getCursorConfig(resizeRectData, activeDrawItem);
+  } else {
+    const [minX, maxX, minY, maxY] = getContentArea(selectedList);
+    const basicGraphData = {
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY,
+    };
+    const resizeRectData = getResizeRectData(basicGraphData);
+    cursorResult = getCursorConfig(resizeRectData, basicGraphData);
+  }
+
+  return cursorResult;
+};

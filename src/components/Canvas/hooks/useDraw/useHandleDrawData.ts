@@ -1,74 +1,64 @@
+import { MutableRefObject, useRef } from "react";
+import { useTrackedEffect } from "ahooks";
+import { produce } from "immer";
+import { useAtom } from "jotai";
+import { nanoid } from "nanoid";
+
+import { cursorPointAtom, drawTypeAtom } from "@/store";
+import { MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
 import {
-  BasicGraphFields,
   BoundingElement,
+  CanvasCtxRef,
   Coordinate,
   CursorConfig,
   DrawData,
   DrawType,
   ResizePosition,
+  SetDrawData,
+  TextOnChangeEvent,
 } from "@/types";
-import { useEventListener, useTrackedEffect, useUpdateEffect } from "ahooks";
-import {
-  MutableRefObject,
-  useEffect,
-  useRef,
-  useState,
-  RefObject,
-} from "react";
-import { useHandleKeyPress, useMouseEvent } from ".";
-import { nanoid } from "nanoid";
-import { useAtom } from "jotai";
-import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   createText,
-  drawCanvas,
   getContentArea,
   getExistTextElement,
   getHoverElement,
   getMaxDis,
   getMinDis,
-  getResizeRectData,
+  getResizeCursor,
   getTextContainer,
-  isInRange,
-  splitContent,
-  TextOnChangeEvent,
   handleDrawItem,
+  splitContent,
 } from "@/utils";
-import { FILE_KEY, TEXT_FONT_SIZE, MIN_DRAW_DIS } from "@/config";
-import { produce } from "immer";
-import { useOperationTool } from "./useOperationTool";
 
-const getInitialDrawData = () => {
-  let result = [];
-  try {
-    result = JSON.parse(localStorage.getItem(FILE_KEY) || "[]");
-  } catch {}
-  return result;
-};
+interface UseHandleDrawDataParams {
+  staticDrawData: DrawData[];
+  activeDrawData: DrawData[];
+  startCoordinate: Coordinate | null;
+  moveCoordinate: Coordinate;
+  staticCanvasCtx: CanvasCtxRef;
+  setStaticDrawData: SetDrawData;
+  setActiveDrawData: SetDrawData;
+}
 
-export const useHandleDraw = (
-  activeCanvasCtx: RefObject<CanvasRenderingContext2D>,
-  staticCanvasCtx: RefObject<CanvasRenderingContext2D>
-) => {
-  const { startCoordinate, moveCoordinate } = useMouseEvent();
+/**
+ * 处理绘制、缩放、移动的画布数据
+ */
+export const useHandleDrawData = ({
+  startCoordinate,
+  moveCoordinate,
+  activeDrawData,
+  staticDrawData,
+  staticCanvasCtx,
+  setStaticDrawData,
+  setActiveDrawData,
+}: UseHandleDrawDataParams) => {
+  const [cursorPoint, setCursorPoint] = useAtom(cursorPointAtom);
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
-  const [cursorPoint, setCursorPoint] = useAtom(cursorPointAtom);
+  const workingDrawData = useRef<DrawData | null>(null);
 
   const resizePosition = useRef<ResizePosition | null>(null);
-
-  const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
-
-  const [staticDrawData, setStaticDrawData] =
-    useState<DrawData[]>(getInitialDrawData);
-
-  useOperationTool({
-    staticDrawData,
-    setStaticDrawData,
-  });
-
-  const workingDrawData = useRef<DrawData | null>(null);
 
   const createTextOnChange: TextOnChangeEvent = (
     textValue,
@@ -446,66 +436,6 @@ export const useHandleDraw = (
     return true;
   };
 
-  interface ResizeCursorResult {
-    cursorConfig: CursorConfig;
-    position: ResizePosition;
-  }
-
-  const getResizeCursor = (
-    coordinate: Coordinate,
-    drawData: DrawData[]
-  ): ResizeCursorResult | null => {
-    const selectedList = drawData.filter((item) => item.selected);
-    if (!selectedList.length) {
-      return null;
-    }
-
-    const getCursorConfig = (
-      resizeRectData: ReturnType<typeof getResizeRectData>,
-      graphData: Pick<DrawData, BasicGraphFields>
-    ) => {
-      const { length } = resizeRectData;
-      for (let i = 0; i < length; i++) {
-        const { x, width, y, height } = resizeRectData[i];
-        if (
-          isInRange(coordinate.x, getMinDis(x, width), getMaxDis(x, width)) &&
-          isInRange(coordinate.y, getMinDis(y, height), getMaxDis(y, height))
-        ) {
-          const cursorConfig =
-            width * height > 0
-              ? CursorConfig.nwseResize
-              : CursorConfig.neswResize;
-
-          const position: ResizePosition =
-            // i为0、2则表明在起始点的x轴上，用高度来判断图形绘制方向
-            [0, 2].includes(i) === graphData.height > 0 ? "top" : "bottom";
-
-          return { cursorConfig, position };
-        }
-      }
-      return null;
-    };
-
-    let cursorResult: ResizeCursorResult | null = null;
-    if (selectedList.length === 1) {
-      const activeDrawItem = selectedList[0];
-      const resizeRectData = getResizeRectData(activeDrawItem);
-      cursorResult = getCursorConfig(resizeRectData, activeDrawItem);
-    } else {
-      const [minX, maxX, minY, maxY] = getContentArea(selectedList);
-      const basicGraphData = {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
-      const resizeRectData = getResizeRectData(basicGraphData);
-      cursorResult = getCursorConfig(resizeRectData, basicGraphData);
-    }
-
-    return cursorResult;
-  };
-
   /**
    * 处理cursorPoint状态
    */
@@ -588,31 +518,4 @@ export const useHandleDraw = (
     },
     [startCoordinate, moveCoordinate]
   );
-
-  useUpdateEffect(() => {
-    activeCanvasCtx.current &&
-      drawCanvas(activeCanvasCtx.current, activeDrawData);
-  }, [activeDrawData]);
-
-  useEffect(() => {
-    if (!staticCanvasCtx.current) {
-      return;
-    }
-
-    drawCanvas(staticCanvasCtx.current, staticDrawData);
-    localStorage.setItem(FILE_KEY, JSON.stringify(staticDrawData));
-  }, [staticDrawData]);
-
-  useEventListener(
-    "resize",
-    () => {
-      activeCanvasCtx.current &&
-        drawCanvas(activeCanvasCtx.current, activeDrawData);
-      staticCanvasCtx.current &&
-        drawCanvas(staticCanvasCtx.current, staticDrawData);
-    },
-    { target: window }
-  );
-
-  useHandleKeyPress(setStaticDrawData);
 };

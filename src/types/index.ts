@@ -1,3 +1,5 @@
+import { Dispatch, RefObject, SetStateAction } from "react";
+
 export const enum DrawType {
   selection = "selection",
   rectangle = "rectangle",
@@ -36,6 +38,14 @@ export interface DrawData {
   boundingElements?: BoundingElement[];
 }
 
+export type TextOnChangeEvent = (
+  value: string,
+  container: DrawData | null,
+  existElement: DrawData | null
+) => void;
+
+export type SetDrawData = Dispatch<SetStateAction<DrawData[]>>;
+
 export type BaseDrawFn<T extends keyof DrawData> = (
   ctx: CanvasRenderingContext2D,
   drawData: Pick<DrawData, T>
@@ -48,3 +58,10 @@ export type DrawGraphFn = BaseDrawFn<BasicGraphFields>;
 export type DrawTextFn = BaseDrawFn<BasicGraphFields | "content">;
 
 export type ResizePosition = "top" | "bottom";
+
+export type CanvasCtxRef = RefObject<CanvasRenderingContext2D>;
+
+export interface ResizeCursorResult {
+  cursorConfig: CursorConfig;
+  position: ResizePosition;
+}

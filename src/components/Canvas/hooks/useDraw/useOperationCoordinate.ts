@@ -2,7 +2,10 @@ import { Coordinate } from "@/types";
 import { useEventListener } from "ahooks";
 import { useState } from "react";
 
-export const useMouseEvent = () => {
+/**
+ * 获取操作时的初始和移动位置
+ */
+export const useOperationCoordinate = () => {
   const [startCoordinate, setStartCoordinate] = useState<Coordinate | null>(
     null
   );

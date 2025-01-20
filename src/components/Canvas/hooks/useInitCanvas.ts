@@ -1,7 +1,7 @@
 import { useMount } from "ahooks";
 import { useRef } from "react";
 
-export const useCanvasInit = () => {
+export const useInitCanvas = () => {
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
 

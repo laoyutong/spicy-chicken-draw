@@ -1,11 +1,10 @@
-import { Dispatch, SetStateAction } from "react";
 import {
   EXPORT_IMAGE_BACKGROUND_COLOR,
   EXPORT_IMAGE_GAP,
-  FILE_KEY,
+  APP_KEY,
   OPERATION_TOOL_KEY,
 } from "@/config";
-import { DrawData } from "@/types";
+import { DrawData, SetDrawData } from "@/types";
 import {
   downLoad,
   drawCanvas,
@@ -18,10 +17,13 @@ import { message } from "antd";
 
 interface useOperationToolParams {
   staticDrawData: DrawData[];
-  setStaticDrawData: Dispatch<SetStateAction<DrawData[]>>;
+  setStaticDrawData: SetDrawData;
 }
 
-export const useOperationTool = ({
+/**
+ * 处理 OperationTool 的点击操作
+ */
+export const useOperationToolEvent = ({
   staticDrawData,
   setStaticDrawData,
 }: useOperationToolParams) => {
@@ -30,7 +32,7 @@ export const useOperationTool = ({
   };
 
   const importCanvasContent = () => {
-    const input = document.createElement("input")!;
+    const input = document.createElement("input");
     input.type = "file";
     input.style.display = "none";
     document.body.appendChild(input);
@@ -57,8 +59,7 @@ export const useOperationTool = ({
       message.info("暂无内容");
       return;
     }
-    const uri = getDownloadUri(JSON.stringify(staticDrawData));
-    downLoad(uri, FILE_KEY);
+    downLoad(getDownloadUri(JSON.stringify(staticDrawData)), APP_KEY);
   };
 
   const exportCanvasContentAsImage = () => {
@@ -67,15 +68,16 @@ export const useOperationTool = ({
       return;
     }
     const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
     const [minX, maxX, minY, maxY] = getContentArea(staticDrawData);
     const exportWidth = maxX - minX + EXPORT_IMAGE_GAP;
     const exportHeight = maxY - minY + EXPORT_IMAGE_GAP;
     canvas.width = exportWidth;
     canvas.height = exportHeight;
-    const context = canvas.getContext("2d");
-    if (!context) {
-      return;
-    }
 
     context.save();
     context.fillStyle = EXPORT_IMAGE_BACKGROUND_COLOR;
@@ -91,7 +93,7 @@ export const useOperationTool = ({
       }))
     );
     const img = canvas.toDataURL();
-    downLoad(img, FILE_KEY);
+    downLoad(img, APP_KEY);
   };
 
   useMount(() => {

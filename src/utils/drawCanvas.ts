@@ -21,8 +21,7 @@ const drawResizeRect = (
     return;
   }
 
-  const [startRect, endRect, xRect, yRect] =
-    getResizeRectData(drawData);
+  const [startRect, endRect, xRect, yRect] = getResizeRectData(drawData);
 
   drawRect(ctx, startRect);
   drawRect(ctx, endRect);

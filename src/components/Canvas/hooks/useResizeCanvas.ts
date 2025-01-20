@@ -1,9 +1,10 @@
-import { useEventListener, useMount } from "ahooks";
 import { RefObject } from "react";
+import { CanvasCtxRef } from "@/types";
+import { useEventListener, useMount } from "ahooks";
 
 export const useResizeCanvas = (
   canvasRefList: RefObject<HTMLCanvasElement>[],
-  canvasCtxList: RefObject<CanvasRenderingContext2D>[]
+  canvasCtxList: CanvasCtxRef[]
 ) => {
   const resizeCanvas = () => {
     if (

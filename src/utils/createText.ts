@@ -3,13 +3,7 @@ import {
   TEXT_FONT_FAMILY,
   TEXTAREA_PER_HEIGHT,
 } from "@/config";
-import { Coordinate, DrawData } from "@/types";
-
-export type TextOnChangeEvent = (
-  value: string,
-  container: DrawData | null,
-  existElement: DrawData | null
-) => void;
+import { Coordinate, DrawData, TextOnChangeEvent } from "@/types";
 
 const createTextAreaElement = () => {
   const oldTextarea = document.querySelector("textarea");
