@@ -21,7 +21,9 @@ export const useHandleKeyPress = ({
 }: UseHandleKeyPressParams) => {
   // 全选
   useKeyPress(["meta.a"], () =>
-    setStaticDrawData((pre) => pre.map((item) => ({ ...item, selected: true })))
+    setStaticDrawData((pre) =>
+      pre.map((item) => ({ ...item, selected: !item.containerId }))
+    )
   );
 
   // 删除
