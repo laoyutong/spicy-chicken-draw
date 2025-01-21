@@ -1,32 +1,27 @@
-import { DrawData } from "@/types";
 import { useKeyPress } from "ahooks";
-import { Dispatch, SetStateAction } from "react";
+import { DrawData, SetDrawData } from "@/types";
+import { getSelectedItems } from "@/utils";
+
+interface UseHandleKeyPressParams {
+  staticDrawData: DrawData[];
+  setStaticDrawData: SetDrawData;
+}
 
 /**
  * 处理画布的快捷键操作
  */
-export const useHandleKeyPress = (
-  setDrawData: Dispatch<SetStateAction<DrawData[]>>
-) => {
+export const useHandleKeyPress = ({
+  staticDrawData,
+  setStaticDrawData,
+}: UseHandleKeyPressParams) => {
   useKeyPress(["meta.a"], () =>
-    setDrawData((pre) => pre.map((item) => ({ ...item, selected: true })))
+    setStaticDrawData((pre) => pre.map((item) => ({ ...item, selected: true })))
   );
 
   useKeyPress(["Backspace"], () => {
-    const boundingElements: string[] = [];
-    setDrawData((pre) =>
-      pre.filter((item) => {
-        if (item.selected) {
-          boundingElements.push(
-            ...(item.boundingElements?.map((i) => i.id) ?? [])
-          );
-          return false;
-        }
-        return true;
-      })
-    );
-    setDrawData((pre) =>
-      pre.filter((item) => !boundingElements.some((i) => i === item.id))
+    const selectedItems = getSelectedItems(staticDrawData);
+    setStaticDrawData((pre) =>
+      pre.filter((item) => !selectedItems.some((i) => i.id === item.id))
     );
   });
 };

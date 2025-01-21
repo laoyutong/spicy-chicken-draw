@@ -25,6 +25,7 @@ import {
   getMaxDis,
   getMinDis,
   getResizeCursor,
+  getSelectedItems,
   getTextContainer,
   handleDrawItem,
   splitContent,
@@ -128,22 +129,9 @@ export const useHandleDrawData = ({
     drawDataList: MutableRefObject<DrawData[]>
   ) => {
     if (!drawDataList.current.length) {
-      const selectedList = staticDrawData.filter((item) => item.selected);
-      if (selectedList.length) {
-        const boundingElementIdList: string[] = [];
-        drawDataList.current = selectedList;
-        selectedList.forEach((item) => {
-          item.boundingElements?.forEach((boundingElement) => {
-            boundingElementIdList.push(boundingElement.id);
-          });
-        })!;
+      drawDataList.current = getSelectedItems(staticDrawData);
 
-        drawDataList.current.push(
-          ...(boundingElementIdList
-            .map((item) => staticDrawData.find((i) => item === i.id))
-            .filter(Boolean) as DrawData[])
-        );
-
+      if (drawDataList.current.length) {
         setActiveDrawData(drawDataList.current);
         setStaticDrawData((pre) =>
           pre.filter(

@@ -111,3 +111,20 @@ export const handleDrawItem = (drawData: DrawData) => {
     height: drawData.height > 0 ? drawData.height : -drawData.height,
   };
 };
+
+export const getSelectedItems = (drawData: DrawData[]) => {
+  const result: DrawData[] = [];
+  drawData.forEach((drawItem) => {
+    if (drawItem.selected) {
+      result.push(drawItem);
+
+      drawItem.boundingElements?.forEach((boundingElement) => {
+        const activeItem = drawData.find((i) => boundingElement.id === i.id);
+        if (activeItem) {
+          result.push(activeItem);
+        }
+      });
+    }
+  });
+  return result;
+};
