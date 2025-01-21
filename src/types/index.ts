@@ -22,7 +22,8 @@ export type Coordinate = Record<"x" | "y", number>;
 
 export interface BoundingElement {
   id: string;
-  type: DrawType.text | DrawType.arrow;
+  // TODO: 待支持 arrow 的绑定能力
+  type: DrawType.text;
 }
 
 export interface DrawData {

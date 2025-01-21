@@ -39,7 +39,7 @@ export const useDraw = (
     setStaticDrawData,
   });
 
-  useHandleKeyPress({ staticDrawData, setStaticDrawData });
+  useHandleKeyPress({ staticDrawData, setStaticDrawData, moveCoordinate });
 
   useDrawCanvas({
     staticDrawData,
