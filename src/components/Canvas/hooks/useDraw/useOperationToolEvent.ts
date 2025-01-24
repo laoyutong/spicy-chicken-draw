@@ -1,3 +1,5 @@
+import { useMemoizedFn, useMount } from "ahooks";
+import { message } from "antd";
 import {
   EXPORT_IMAGE_BACKGROUND_COLOR,
   EXPORT_IMAGE_GAP,
@@ -10,10 +12,9 @@ import {
   drawCanvas,
   getContentArea,
   getDownloadUri,
+  history,
   mitt,
 } from "@/utils";
-import { useMount } from "ahooks";
-import { message } from "antd";
 
 interface useOperationToolParams {
   staticDrawData: DrawData[];
@@ -27,11 +28,12 @@ export const useOperationToolEvent = ({
   staticDrawData,
   setStaticDrawData,
 }: useOperationToolParams) => {
-  const clearCanvasContent = () => {
+  const clearCanvasContent = useMemoizedFn(() => {
+    history.collectRemoveRecord(staticDrawData);
     setStaticDrawData([]);
-  };
+  });
 
-  const importCanvasContent = () => {
+  const importCanvasContent = useMemoizedFn(() => {
     const input = document.createElement("input");
     input.type = "file";
     input.style.display = "none";
@@ -52,17 +54,17 @@ export const useOperationToolEvent = ({
       reader.readAsText(file);
       document.body.removeChild(input);
     };
-  };
+  });
 
-  const exportCanvasContent = () => {
+  const exportCanvasContent = useMemoizedFn(() => {
     if (!staticDrawData.length) {
       message.info("暂无内容");
       return;
     }
     downLoad(getDownloadUri(JSON.stringify(staticDrawData)), APP_KEY);
-  };
+  });
 
-  const exportCanvasContentAsImage = () => {
+  const exportCanvasContentAsImage = useMemoizedFn(() => {
     if (!staticDrawData.length) {
       message.info("暂无内容");
       return;
@@ -94,7 +96,7 @@ export const useOperationToolEvent = ({
     );
     const img = canvas.toDataURL();
     downLoad(img, APP_KEY);
-  };
+  });
 
   useMount(() => {
     mitt.on(OPERATION_TOOL_KEY.clear, clearCanvasContent);

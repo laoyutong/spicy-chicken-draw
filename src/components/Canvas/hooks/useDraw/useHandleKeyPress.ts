@@ -3,7 +3,7 @@ import { message } from "antd";
 import { nanoid } from "nanoid";
 import { useKeyPress } from "ahooks";
 import { Coordinate, DrawData, SetDrawData } from "@/types";
-import { getContentArea, getSelectedItems } from "@/utils";
+import { getContentArea, getSelectedItems, history } from "@/utils";
 
 interface UseHandleKeyPressParams {
   staticDrawData: DrawData[];
@@ -29,6 +29,9 @@ export const useHandleKeyPress = ({
   // 删除
   useKeyPress(["Backspace"], () => {
     const selectedItems = getSelectedItems(staticDrawData);
+
+    history.collectRemoveRecord(selectedItems);
+
     setStaticDrawData((pre) =>
       pre.filter((item) => !selectedItems.some((i) => i.id === item.id))
     );
@@ -84,5 +87,16 @@ export const useHandleKeyPress = ({
       ...pre.map((item) => ({ ...item, selected: false })),
       ...pasteData,
     ]);
+  });
+
+  // 撤回
+  useKeyPress(["meta.z"], () => {
+    const result = history.undo(staticDrawData);
+    result && setStaticDrawData(result);
+  });
+
+  // 重做
+  useKeyPress(["meta.shift.z"], () => {
+    // TODO
   });
 };

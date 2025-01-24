@@ -66,3 +66,18 @@ export interface ResizeCursorResult {
   cursorConfig: CursorConfig;
   position: ResizePosition;
 }
+
+type HistoryOperationMapValue = {
+  payload?: Partial<DrawData>;
+  deleted?: Partial<DrawData>;
+};
+
+export type HistoryOperationMap = Map<string, HistoryOperationMapValue>;
+
+export type HistoryRecord = {
+  added?: HistoryOperationMap;
+  removed?: HistoryOperationMap;
+  updated?: HistoryOperationMap;
+};
+
+export type HistoryStack = HistoryRecord[];
