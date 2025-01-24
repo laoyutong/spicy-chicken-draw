@@ -13,6 +13,7 @@ import {
   CursorConfig,
   DrawData,
   DrawType,
+  HistoryUpdatedRecordData,
   ResizePosition,
   SetDrawData,
   TextOnChangeEvent,
@@ -28,6 +29,7 @@ import {
   getSelectedItems,
   getTextContainer,
   handleDrawItem,
+  history,
   splitContent,
 } from "@/utils";
 
@@ -92,35 +94,71 @@ export const useHandleDrawData = ({
         ? { x: existElement.x, y: existElement.y }
         : startCoordinate!;
 
-      const newTextId = nanoid();
+      const newTextId = existElement ? existElement.id : nanoid();
 
-      setStaticDrawData((pre) => [
-        ...pre.filter((item) => item.id !== container?.id),
-        ...(container
-          ? [
-              {
-                ...container,
-                boundingElements: [
-                  ...(container?.boundingElements ?? []),
-                  {
-                    type: DrawType.text,
-                    id: newTextId,
-                  } as BoundingElement,
-                ],
-              },
-            ]
-          : []),
+      const textElement = {
+        id: newTextId,
+        type: DrawType.text,
+        content: textValue,
+        width: maxWidth,
+        selected: false,
+        height: textareaHeight,
+        ...textProperty,
+        ...(container ? { containerId: container.id } : {}),
+      };
+
+      const updatedHistoryValue: HistoryUpdatedRecordData = [];
+      const newContainerBoundingElements = [
+        ...(container?.boundingElements || []),
         {
           id: newTextId,
           type: DrawType.text,
-          content: textValue,
-          width: maxWidth,
-          selected: false,
-          height: textareaHeight,
-          ...textProperty,
-          ...(container ? { containerId: container.id } : {}),
-        },
-      ]);
+        } as BoundingElement,
+      ];
+
+      if (existElement) {
+        updatedHistoryValue.push({
+          id: newTextId,
+          value: {
+            deleted: {
+              content: existElement.content,
+            },
+            payload: {
+              content: textElement.content,
+            },
+          },
+        });
+        history.collectUpdatedRecord(updatedHistoryValue);
+      } else {
+        if (container) {
+          updatedHistoryValue.push({
+            id: container.id,
+            value: {
+              deleted: {
+                boundingElements: container.boundingElements,
+              },
+              payload: {
+                boundingElements: newContainerBoundingElements,
+              },
+            },
+          });
+        }
+        history.collectAddedRecord([textElement], updatedHistoryValue);
+      }
+
+      setStaticDrawData((pre) => {
+        const preDrawData = container
+          ? [
+              ...pre.filter((item) => item.id !== container.id),
+              {
+                ...container,
+                boundingElements: newContainerBoundingElements,
+              },
+            ]
+          : pre;
+
+        return [...preDrawData, textElement];
+      });
     }
   };
 
@@ -144,6 +182,33 @@ export const useHandleDrawData = ({
     return false;
   };
 
+  const handleUpdatedHistoryRecord = (
+    dataCache: MutableRefObject<DrawData[]>,
+    handleDrawItem: (drawItem: DrawData) => Partial<DrawData>
+  ) => {
+    const updatedHistoryData: HistoryUpdatedRecordData = [];
+
+    dataCache.current.forEach((dataItem) => {
+      const activeDrawItem = activeDrawData.find(
+        (item) => dataItem.id === item.id
+      );
+
+      if (!activeDrawItem) {
+        return;
+      }
+
+      updatedHistoryData.push({
+        id: dataItem.id,
+        value: {
+          payload: handleDrawItem(activeDrawItem),
+          deleted: handleDrawItem(dataItem),
+        },
+      });
+    });
+
+    history.collectUpdatedRecord(updatedHistoryData);
+  };
+
   const moveDataCache = useRef<DrawData[]>([]);
 
   /**
@@ -153,6 +218,13 @@ export const useHandleDrawData = ({
     if (!startCoordinate) {
       // 结束移动
       if (moveDataCache.current.length) {
+        const getFilterFields = (drawItem: DrawData) => ({
+          x: drawItem.x,
+          y: drawItem.y,
+        });
+
+        handleUpdatedHistoryRecord(moveDataCache, getFilterFields);
+
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
         moveDataCache.current = [];
@@ -242,6 +314,15 @@ export const useHandleDrawData = ({
     if (!startCoordinate) {
       // 结束缩放
       if (resizeDataCache.current.length) {
+        const getFilterFields = (drawItem: DrawData) => ({
+          x: drawItem.x,
+          y: drawItem.y,
+          width: drawItem.width,
+          height: drawItem.height,
+        });
+
+        handleUpdatedHistoryRecord(resizeDataCache, getFilterFields);
+
         setStaticDrawData((pre) => [
           ...pre,
           ...activeDrawData.map(handleDrawItem),
@@ -363,10 +444,11 @@ export const useHandleDrawData = ({
             ...workingDrawData.current,
             selected: true,
           };
-          setStaticDrawData((pre) => [
-            ...pre,
-            handleDrawItem(copyWorkingDrawData),
-          ]);
+
+          const handledDrawItem = handleDrawItem(copyWorkingDrawData);
+          history.collectAddedRecord([handledDrawItem]);
+
+          setStaticDrawData((pre) => [...pre, handledDrawItem]);
         }
         setActiveDrawData([]);
         workingDrawData.current = null;

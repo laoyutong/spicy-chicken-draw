@@ -3,6 +3,7 @@ import {
   HistoryRecord,
   DrawData,
   HistoryOperationMap,
+  HistoryUpdatedRecordData,
 } from "@/types";
 
 class History {
@@ -31,33 +32,76 @@ class History {
 
     const { added, removed, updated } = undoRecord;
 
-    const finalDrawData = {
-      value: drawData.map((item) => ({ ...item, selected: false })),
-    };
+    let result = drawData.map((item) => ({ ...item, selected: false }));
 
-    removed?.forEach((removeRecord) => {
-      finalDrawData.value.push({
-        ...removeRecord.deleted,
-        selected: true,
+    // 处理新增的情况
+    const addedIds = [...(added?.keys?.() || [])];
+    result = result.filter((item) =>
+      addedIds.length ? !addedIds.includes(item.id) : true
+    );
+
+    // 处理删除的情况
+    removed?.forEach((removedRecord) => {
+      result.push({
+        ...removedRecord.deleted,
+        selected: !removedRecord.deleted?.containerId,
       } as DrawData);
     });
 
-    added?.forEach(() => {
-      // TODO
-    });
+    // 处理更新的情况
+    if (updated?.size) {
+      result = result.map((item) => {
+        const updatedContent = updated.get(item.id);
+        if (!updatedContent) {
+          return item;
+        }
+        const finalItem = {
+          ...item,
+          ...updatedContent.deleted,
+        };
+        return {
+          ...finalItem,
+          selected: !finalItem.containerId,
+        };
+      });
+    }
 
-    updated?.forEach(() => {
-      // TODO
-    });
-
-    return finalDrawData.value;
+    return result;
   }
-  collectRemoveRecord(drawData: DrawData[]) {
+  collectRemovedRecord(drawData: DrawData[]) {
     const map: HistoryOperationMap = new Map();
     drawData.forEach((item) => {
       map.set(item.id, { deleted: item });
     });
     this.#record({ removed: map });
+  }
+  transformUpdatedRecordData(
+    value: HistoryUpdatedRecordData
+  ): HistoryOperationMap {
+    const map: HistoryOperationMap = new Map();
+    value.forEach((item) => {
+      map.set(item.id, item.value);
+    });
+    return map;
+  }
+  collectAddedRecord(
+    drawData: DrawData[],
+    updatedValue?: HistoryUpdatedRecordData
+  ) {
+    const map: HistoryOperationMap = new Map();
+    drawData.forEach((item) => {
+      map.set(item.id, { payload: item });
+    });
+    this.#record({
+      added: map,
+      updated: updatedValue
+        ? this.transformUpdatedRecordData(updatedValue)
+        : undefined,
+    });
+  }
+
+  collectUpdatedRecord(value: HistoryUpdatedRecordData) {
+    this.#record({ updated: this.transformUpdatedRecordData(value) });
   }
 }
 

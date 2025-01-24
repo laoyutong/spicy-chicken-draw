@@ -74,6 +74,11 @@ type HistoryOperationMapValue = {
 
 export type HistoryOperationMap = Map<string, HistoryOperationMapValue>;
 
+export type HistoryUpdatedRecordData = {
+  id: string;
+  value: HistoryOperationMapValue;
+}[];
+
 export type HistoryRecord = {
   added?: HistoryOperationMap;
   removed?: HistoryOperationMap;

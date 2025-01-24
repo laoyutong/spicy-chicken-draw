@@ -29,7 +29,7 @@ export const useOperationToolEvent = ({
   setStaticDrawData,
 }: useOperationToolParams) => {
   const clearCanvasContent = useMemoizedFn(() => {
-    history.collectRemoveRecord(staticDrawData);
+    history.collectRemovedRecord(staticDrawData);
     setStaticDrawData([]);
   });
 
@@ -48,6 +48,7 @@ export const useOperationToolEvent = ({
           const result = JSON.parse(
             (event.target as FileReader).result as string
           );
+          history.collectAddedRecord(result);
           setStaticDrawData(result);
         } catch (_) {}
       };

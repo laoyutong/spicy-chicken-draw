@@ -30,7 +30,7 @@ export const useHandleKeyPress = ({
   useKeyPress(["Backspace"], () => {
     const selectedItems = getSelectedItems(staticDrawData);
 
-    history.collectRemoveRecord(selectedItems);
+    history.collectRemovedRecord(selectedItems);
 
     setStaticDrawData((pre) =>
       pre.filter((item) => !selectedItems.some((i) => i.id === item.id))
@@ -82,6 +82,8 @@ export const useHandleKeyPress = ({
           id: idsMap[item.id],
         })),
       }));
+
+    history.collectAddedRecord(pasteData);
 
     setStaticDrawData((pre) => [
       ...pre.map((item) => ({ ...item, selected: false })),
