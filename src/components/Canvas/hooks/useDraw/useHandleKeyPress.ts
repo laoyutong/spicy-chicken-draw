@@ -1,9 +1,9 @@
-import { useRef } from "react";
-import { message } from "antd";
-import { nanoid } from "nanoid";
-import { useKeyPress } from "ahooks";
-import { Coordinate, DrawData, SetDrawData } from "@/types";
-import { getContentArea, getSelectedItems, history } from "@/utils";
+import { useRef } from 'react';
+import { message } from 'antd';
+import { nanoid } from 'nanoid';
+import { useKeyPress } from 'ahooks';
+import { Coordinate, DrawData, SetDrawData } from '@/types';
+import { getContentArea, getSelectedItems, history } from '@/utils';
 
 interface UseHandleKeyPressParams {
   staticDrawData: DrawData[];
@@ -20,35 +20,35 @@ export const useHandleKeyPress = ({
   moveCoordinate,
 }: UseHandleKeyPressParams) => {
   // 全选
-  useKeyPress(["meta.a"], () =>
+  useKeyPress(['meta.a'], () =>
     setStaticDrawData((pre) =>
-      pre.map((item) => ({ ...item, selected: !item.containerId }))
-    )
+      pre.map((item) => ({ ...item, selected: !item.containerId })),
+    ),
   );
 
   // 删除
-  useKeyPress(["Backspace"], () => {
+  useKeyPress(['Backspace'], () => {
     const selectedItems = getSelectedItems(staticDrawData);
 
     history.collectRemovedRecord(selectedItems);
 
     setStaticDrawData((pre) =>
-      pre.filter((item) => !selectedItems.some((i) => i.id === item.id))
+      pre.filter((item) => !selectedItems.some((i) => i.id === item.id)),
     );
   });
 
   const copyData = useRef<DrawData[]>([]);
   // 复制
-  useKeyPress(["meta.c"], () => {
+  useKeyPress(['meta.c'], () => {
     const selectedItems = getSelectedItems(staticDrawData);
     copyData.current = selectedItems;
     if (selectedItems.length) {
-      message.success("复制成功");
+      message.success('复制成功');
     }
   });
 
   // 粘贴
-  useKeyPress(["meta.v"], () => {
+  useKeyPress(['meta.v'], () => {
     if (!copyData.current.length) {
       return;
     }
@@ -92,13 +92,16 @@ export const useHandleKeyPress = ({
   });
 
   // 撤回
-  useKeyPress(["meta.z"], () => {
+  useKeyPress(['meta.z'], (e) => {
+    e.preventDefault();
     const result = history.undo(staticDrawData);
     result && setStaticDrawData(result);
   });
 
   // 重做
-  useKeyPress(["meta.shift.z"], () => {
-    // TODO
+  useKeyPress(['meta.y'], (e) => {
+    e.preventDefault();
+    const result = history.redo(staticDrawData);
+    result && setStaticDrawData(result);
   });
 };

@@ -67,7 +67,7 @@ export interface ResizeCursorResult {
   position: ResizePosition;
 }
 
-type HistoryOperationMapValue = {
+export type HistoryOperationMapValue = {
   payload?: Partial<DrawData>;
   deleted?: Partial<DrawData>;
 };

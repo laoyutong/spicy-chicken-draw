@@ -4,7 +4,12 @@ import {
   DrawData,
   HistoryOperationMap,
   HistoryUpdatedRecordData,
-} from "@/types";
+  HistoryOperationMapValue,
+} from '@/types';
+
+interface HistoryHandleValue {
+  value: DrawData[];
+}
 
 class History {
   #redoStack: HistoryStack = [];
@@ -12,15 +17,79 @@ class History {
 
   #record(data: HistoryRecord) {
     this.#undoStack.push(data);
+    this.#redoStack = [];
+  }
+
+  // 处理删除的情况
+  #handleRemoved(handledValue: HistoryHandleValue, map?: HistoryOperationMap) {
+    const removedIds = [...(map?.keys?.() || [])];
+    if (removedIds.length) {
+      handledValue.value = handledValue.value.filter(
+        (item) => !removedIds.includes(item.id),
+      );
+    }
+  }
+
+  // 处理删除的情况
+  #handleAdded(
+    handledValue: HistoryHandleValue,
+    field: keyof HistoryOperationMapValue,
+    map?: HistoryOperationMap,
+  ) {
+    map?.forEach((addedRecord) => {
+      handledValue.value.push({
+        ...addedRecord[field],
+        selected: !addedRecord[field]?.containerId,
+      } as DrawData);
+    });
+  }
+
+  // 处理更新的情况
+  #handleUpdated(
+    handledValue: HistoryHandleValue,
+    field: keyof HistoryOperationMapValue,
+    map?: HistoryOperationMap,
+  ) {
+    if (map?.size) {
+      handledValue.value = handledValue.value.map((item) => {
+        const updatedContent = map.get(item.id);
+        if (!updatedContent) {
+          return item;
+        }
+        const finalItem = {
+          ...item,
+          ...updatedContent[field],
+        };
+        return {
+          ...finalItem,
+          selected: !finalItem.containerId,
+        };
+      });
+    }
   }
 
   // 恢复
-  redo() {
+  redo(drawData: DrawData[]): DrawData[] | null {
     const redoRecord = this.#redoStack.pop();
     if (!redoRecord) {
-      return;
+      return null;
     }
-    // TODO
+
+    this.#undoStack.push(redoRecord);
+
+    const { added, removed, updated } = redoRecord;
+
+    const result = {
+      value: drawData.map((item) => ({ ...item, selected: false })),
+    };
+
+    this.#handleAdded(result, 'payload', added);
+
+    this.#handleRemoved(result, removed);
+
+    this.#handleUpdated(result, 'payload', updated);
+
+    return result.value;
   }
 
   // 撤回
@@ -30,44 +99,23 @@ class History {
       return null;
     }
 
+    this.#redoStack.push(undoRecord);
+
     const { added, removed, updated } = undoRecord;
 
-    let result = drawData.map((item) => ({ ...item, selected: false }));
+    const result = {
+      value: drawData.map((item) => ({ ...item, selected: false })),
+    };
 
-    // 处理新增的情况
-    const addedIds = [...(added?.keys?.() || [])];
-    result = result.filter((item) =>
-      addedIds.length ? !addedIds.includes(item.id) : true
-    );
+    this.#handleAdded(result, 'deleted', removed);
 
-    // 处理删除的情况
-    removed?.forEach((removedRecord) => {
-      result.push({
-        ...removedRecord.deleted,
-        selected: !removedRecord.deleted?.containerId,
-      } as DrawData);
-    });
+    this.#handleRemoved(result, added);
 
-    // 处理更新的情况
-    if (updated?.size) {
-      result = result.map((item) => {
-        const updatedContent = updated.get(item.id);
-        if (!updatedContent) {
-          return item;
-        }
-        const finalItem = {
-          ...item,
-          ...updatedContent.deleted,
-        };
-        return {
-          ...finalItem,
-          selected: !finalItem.containerId,
-        };
-      });
-    }
+    this.#handleUpdated(result, 'deleted', updated);
 
-    return result;
+    return result.value;
   }
+
   collectRemovedRecord(drawData: DrawData[]) {
     const map: HistoryOperationMap = new Map();
     drawData.forEach((item) => {
@@ -75,8 +123,9 @@ class History {
     });
     this.#record({ removed: map });
   }
+
   transformUpdatedRecordData(
-    value: HistoryUpdatedRecordData
+    value: HistoryUpdatedRecordData,
   ): HistoryOperationMap {
     const map: HistoryOperationMap = new Map();
     value.forEach((item) => {
@@ -84,9 +133,10 @@ class History {
     });
     return map;
   }
+
   collectAddedRecord(
     drawData: DrawData[],
-    updatedValue?: HistoryUpdatedRecordData
+    updatedValue?: HistoryUpdatedRecordData,
   ) {
     const map: HistoryOperationMap = new Map();
     drawData.forEach((item) => {
