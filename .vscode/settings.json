@@ -1,5 +1,5 @@
 {
-  "cSpell.words": ["ahooks", "nesw"],
+  "cSpell.words": ["ahooks", "nesw", "rsbuild"],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode" // 如果你使用 Prettier
 }
