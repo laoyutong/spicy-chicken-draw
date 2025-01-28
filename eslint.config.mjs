@@ -28,4 +28,15 @@ export default [
     },
   },
   { ignores: ['dist/'] },
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { caughtErrorsIgnorePattern: '^_' },
+      ],
+      'no-empty': {
+        allowEmptyCatch: true,
+      },
+    },
+  },
 ];

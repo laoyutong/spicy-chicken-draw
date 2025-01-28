@@ -3,10 +3,8 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
+    "dev": "rsbuild dev",
     "build": "rsbuild build",
-    "dev": "rsbuild dev --open",
-    "format": "prettier --write .",
-    "lint": "eslint .",
     "preview": "rsbuild preview"
   },
   "dependencies": {
