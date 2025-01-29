@@ -1,13 +1,10 @@
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import './index.css'
+import './index.css';
+import '@icon-park/react/styles/index.css';
 
-const rootEl = document.getElementById('root');
-if (rootEl) {
-  const root = ReactDOM.createRoot(rootEl);
-  root.render(
-    // <React.StrictMode>
-      <App />
-    // </React.StrictMode>,
-  );
-}
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  // <React.StrictMode>
+  <App />,
+  // </React.StrictMode>
+);
