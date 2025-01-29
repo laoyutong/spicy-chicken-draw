@@ -1,10 +1,11 @@
-import { ICON_LIST } from "./config";
-import { ICON_PROPS } from "@/config";
-import { useAtom, useSetAtom } from "jotai";
-import { cursorPointAtom, drawTypeAtom } from "@/store";
-import cls from "classnames";
-import { useKeyPress, useUpdateEffect } from "ahooks";
-import { CursorConfig, DrawType } from "@/types";
+import type { JSX } from 'react';
+import { ICON_LIST } from './config';
+import { ICON_PROPS } from '@/config';
+import { useAtom, useSetAtom } from 'jotai';
+import { cursorPointAtom, drawTypeAtom } from '@/store';
+import cls from 'classnames';
+import { useKeyPress, useUpdateEffect } from 'ahooks';
+import { CursorConfig, DrawType } from '@/types';
 
 export const SelectionTool = (): JSX.Element => {
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
@@ -15,7 +16,7 @@ export const SelectionTool = (): JSX.Element => {
     (event) => {
       const activeDrawType = ICON_LIST[Number(event.key) - 1];
       activeDrawType && setDrawType(activeDrawType.type);
-    }
+    },
   );
 
   useUpdateEffect(() => {
@@ -28,8 +29,8 @@ export const SelectionTool = (): JSX.Element => {
         <div
           key={type}
           className={cls(
-            "w-11 h-10 flex items-center justify-center flex-col cursor-pointer",
-            drawType === type ? "bg-slate-300" : "hover:bg-slate-200"
+            'w-11 h-10 flex items-center justify-center flex-col cursor-pointer',
+            drawType === type ? 'bg-slate-300' : 'hover:bg-slate-200',
           )}
           onClick={() => setDrawType(type)}
         >

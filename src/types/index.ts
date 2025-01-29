@@ -60,7 +60,7 @@ export type DrawTextFn = BaseDrawFn<BasicGraphFields | 'content'>;
 
 export type ResizePosition = 'top' | 'bottom';
 
-export type CanvasCtxRef = RefObject<CanvasRenderingContext2D>;
+export type CanvasCtxRef = RefObject<CanvasRenderingContext2D | null>;
 
 export interface ResizeCursorResult {
   cursorConfig: CursorConfig;

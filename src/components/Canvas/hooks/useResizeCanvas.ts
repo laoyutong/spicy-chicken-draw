@@ -1,10 +1,10 @@
-import { RefObject } from "react";
-import { CanvasCtxRef } from "@/types";
-import { useEventListener, useMount } from "ahooks";
+import { RefObject } from 'react';
+import { CanvasCtxRef } from '@/types';
+import { useEventListener, useMount } from 'ahooks';
 
 export const useResizeCanvas = (
-  canvasRefList: RefObject<HTMLCanvasElement>[],
-  canvasCtxList: CanvasCtxRef[]
+  canvasRefList: RefObject<HTMLCanvasElement | null>[],
+  canvasCtxList: CanvasCtxRef[],
 ) => {
   const resizeCanvas = () => {
     if (
@@ -22,19 +22,19 @@ export const useResizeCanvas = (
       const { innerWidth, innerHeight, devicePixelRatio } = window;
       item.current.width = innerWidth;
       item.current.height = innerHeight;
-      item.current.style.width = innerWidth + "px";
-      item.current.style.height = innerHeight + "px";
+      item.current.style.width = innerWidth + 'px';
+      item.current.style.height = innerHeight + 'px';
       // 高清屏上物理像素和设备独立像素不一致 解决文本绘制模糊的问题
       item.current.width = devicePixelRatio * innerWidth;
       item.current.height = devicePixelRatio * innerHeight;
       canvasCtxList[index]?.current?.scale?.(
         devicePixelRatio,
-        devicePixelRatio
+        devicePixelRatio,
       );
     });
   };
 
   useMount(resizeCanvas);
 
-  useEventListener("resize", resizeCanvas, { target: window });
+  useEventListener('resize', resizeCanvas, { target: window });
 };

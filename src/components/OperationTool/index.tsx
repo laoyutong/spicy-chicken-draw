@@ -1,33 +1,34 @@
-import { ICON_PROPS, OPERATION_TOOL_KEY } from "@/config";
+import type { JSX } from 'react';
+import { ICON_PROPS, OPERATION_TOOL_KEY } from '@/config';
 import {
   DownloadFour,
   Delete,
   FolderCode,
   AddPic,
   ListBottom,
-} from "@icon-park/react";
-import { Dropdown } from "antd";
-import { mitt } from "@/utils";
+} from '@icon-park/react';
+import { Dropdown } from 'antd';
+import { mitt } from '@/utils';
 
 const OPERATION_CONFIG = [
   {
     icon: FolderCode,
-    label: "打开",
+    label: '打开',
     key: OPERATION_TOOL_KEY.import,
   },
   {
     icon: DownloadFour,
-    label: "保存画布数据",
+    label: '保存画布数据',
     key: OPERATION_TOOL_KEY.export,
   },
   {
     icon: AddPic,
-    label: "导出图片",
+    label: '导出图片',
     key: OPERATION_TOOL_KEY.exportImage,
   },
   {
     icon: Delete,
-    label: "重置画布",
+    label: '重置画布',
     key: OPERATION_TOOL_KEY.clear,
   },
 ];
@@ -48,7 +49,7 @@ export const OperationTool = (): JSX.Element => {
 
   return (
     <div className="absolute top-3 left-3 rounded bg-slate-50 shadow p-1">
-      <Dropdown menu={{ items }} overlayClassName="mt-8" trigger={["click"]}>
+      <Dropdown menu={{ items }} overlayClassName="mt-8" trigger={['click']}>
         <ListBottom {...ICON_PROPS} />
       </Dropdown>
     </div>
