@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { CanvasCtxRef, DrawData } from "@/types";
-import { APP_KEY } from "@/config";
+import { useState } from 'react';
+import { CanvasCtxRef, DrawData } from '@/types';
+import { APP_KEY } from '@/config';
 
-import { useOperationCoordinate } from "./useOperationCoordinate";
-import { useOperationToolEvent } from "./useOperationToolEvent";
-import { useHandleKeyPress } from "./useHandleKeyPress";
-import { useDrawCanvas } from "./useDrawCanvas";
-import { useHandleDrawData } from "./useHandleDrawData";
+import { useOperationCoordinate } from './useOperationCoordinate';
+import { useOperationToolEvent } from './useOperationToolEvent';
+import { useHandleKeyPress } from './useHandleKeyPress';
+import { useDrawCanvas } from './useDrawCanvas';
+import { useHandleDrawData } from './useHandleDrawData';
 
 export const useDraw = (
   activeCanvasCtx: CanvasCtxRef,
-  staticCanvasCtx: CanvasCtxRef
+  staticCanvasCtx: CanvasCtxRef,
 ) => {
   const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
 
   const [staticDrawData, setStaticDrawData] = useState<DrawData[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem(APP_KEY) || "[]");
+      return JSON.parse(localStorage.getItem(APP_KEY) || '[]');
     } catch {
       return [];
     }
@@ -29,7 +29,6 @@ export const useDraw = (
     moveCoordinate,
     staticDrawData,
     activeDrawData,
-    staticCanvasCtx,
     setStaticDrawData,
     setActiveDrawData,
   });

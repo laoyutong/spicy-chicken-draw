@@ -5,10 +5,9 @@ import { useAtom } from 'jotai';
 import { nanoid } from 'nanoid';
 
 import { cursorPointAtom, drawTypeAtom } from '@/store';
-import { MIN_DRAW_DIS, TEXT_FONT_SIZE } from '@/config';
+import { MIN_DRAW_DIS, TEXT_FONT_FAMILY, TEXT_FONT_SIZE } from '@/config';
 import {
   BoundingElement,
-  CanvasCtxRef,
   Coordinate,
   CursorConfig,
   DrawData,
@@ -38,7 +37,6 @@ interface UseHandleDrawDataParams {
   activeDrawData: DrawData[];
   startCoordinate: Coordinate | null;
   moveCoordinate: Coordinate;
-  staticCanvasCtx: CanvasCtxRef;
   setStaticDrawData: SetDrawData;
   setActiveDrawData: SetDrawData;
 }
@@ -51,7 +49,6 @@ export const useHandleDrawData = ({
   moveCoordinate,
   activeDrawData,
   staticDrawData,
-  staticCanvasCtx,
   setStaticDrawData,
   setActiveDrawData,
 }: UseHandleDrawDataParams) => {
@@ -74,9 +71,15 @@ export const useHandleDrawData = ({
         (item, index) => !!item.trim() || index !== textList.length - 1,
       );
       let maxWidth = 0;
+      const canvas = document.createElement('canvas');
+      const canvasCtx = canvas.getContext('2d');
+      if (canvasCtx) {
+        canvasCtx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
+      }
+
       lines.forEach((line) => {
-        if (staticCanvasCtx.current) {
-          const { width } = staticCanvasCtx.current.measureText(line);
+        if (canvasCtx) {
+          const { width } = canvasCtx.measureText(line);
           if (width > maxWidth) {
             maxWidth = width;
           }
@@ -185,14 +188,15 @@ export const useHandleDrawData = ({
 
   const batchUpdatedHistoryRecord = useRef<HistoryUpdatedRecordData>([]);
 
-  const handleBatchUpdatedHistoryRecord = () => {
+  // 在结束move or resize操作的时候统一记录
+  const recordBatchUpdatedHistoryRecord = () => {
     if (batchUpdatedHistoryRecord.current.length) {
       history.collectUpdatedRecord(batchUpdatedHistoryRecord.current);
       batchUpdatedHistoryRecord.current = [];
     }
   };
 
-  const handleUpdatedHistoryRecord = (
+  const collectUpdatedHistoryRecord = (
     dataCache: MutableRefObject<DrawData[]>,
     handleDrawItem: (drawItem: DrawData) => Partial<DrawData>,
   ) => {
@@ -233,14 +237,14 @@ export const useHandleDrawData = ({
           y: drawItem.y,
         });
 
-        handleUpdatedHistoryRecord(moveDataCache, getFilterFields);
+        collectUpdatedHistoryRecord(moveDataCache, getFilterFields);
 
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
         moveDataCache.current = [];
         result = true;
       }
-      handleBatchUpdatedHistoryRecord();
+      recordBatchUpdatedHistoryRecord();
       return result;
     }
 
@@ -361,7 +365,7 @@ export const useHandleDrawData = ({
           height: drawItem.height,
         });
 
-        handleUpdatedHistoryRecord(resizeDataCache, getFilterFields);
+        collectUpdatedHistoryRecord(resizeDataCache, getFilterFields);
 
         setStaticDrawData((pre) => [
           ...pre,
@@ -372,7 +376,7 @@ export const useHandleDrawData = ({
         startResizeContentAreaCache.current = null;
         result = true;
       }
-      handleBatchUpdatedHistoryRecord();
+      recordBatchUpdatedHistoryRecord();
       return result;
     }
 
