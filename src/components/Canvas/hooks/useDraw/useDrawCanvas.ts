@@ -1,8 +1,8 @@
-import { useEffect } from "react";
-import { APP_KEY } from "@/config";
-import { CanvasCtxRef, DrawData } from "@/types";
-import { drawCanvas } from "@/utils";
-import { useEventListener, useUpdateEffect } from "ahooks";
+import { useEffect } from 'react';
+import { APP_KEY } from '@/config';
+import { CanvasCtxRef, DrawData } from '@/types';
+import { drawCanvas } from '@/utils';
+import { useEventListener, useUpdateEffect } from 'ahooks';
 
 interface UseDrawCanvasParams {
   staticDrawData: DrawData[];
@@ -32,16 +32,17 @@ export const useDrawCanvas = ({
 
     drawCanvas(staticCanvasCtx.current, staticDrawData);
     localStorage.setItem(APP_KEY, JSON.stringify(staticDrawData));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [staticDrawData]);
 
   useEventListener(
-    "resize",
+    'resize',
     () => {
       activeCanvasCtx.current &&
         drawCanvas(activeCanvasCtx.current, activeDrawData);
       staticCanvasCtx.current &&
         drawCanvas(staticCanvasCtx.current, staticDrawData);
     },
-    { target: window }
+    { target: window },
   );
 };

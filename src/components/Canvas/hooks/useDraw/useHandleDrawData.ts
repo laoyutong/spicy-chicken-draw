@@ -255,23 +255,24 @@ export const useHandleDrawData = ({
       staticDrawData.find((item) => item.selected)
     ) {
       const historyUpdatedRecord: HistoryUpdatedRecordData = [];
-      const newStaticDrawData = staticDrawData.map((item) => {
-        if (!item.selected) {
-          return item;
-        }
 
-        historyUpdatedRecord.push({
-          id: item.id,
-          value: {
-            payload: { selected: false },
-            deleted: { selected: true },
-          },
-        });
+      setStaticDrawData((pre) =>
+        pre.map((item) => {
+          if (!item.selected) {
+            return item;
+          }
 
-        return { ...item, selected: false };
-      });
+          historyUpdatedRecord.push({
+            id: item.id,
+            value: {
+              payload: { selected: false },
+              deleted: { selected: true },
+            },
+          });
 
-      setStaticDrawData(newStaticDrawData);
+          return { ...item, selected: false };
+        }),
+      );
       // 异步执行，如果后续存在move or resize则不记录
       resetSelectedHistoryRecordTimer.current = setTimeout(() => {
         history.collectUpdatedRecord(historyUpdatedRecord);
@@ -290,24 +291,24 @@ export const useHandleDrawData = ({
     ) {
       // 如果hover的图形有containerId，则hover其container
       const activeId = activeHoverElement.containerId || activeHoverElement.id;
-      const newStaticDrawData = staticDrawData.map((item) => {
-        if (item.id === activeId) {
-          batchUpdatedHistoryRecord.current.push({
-            id: item.id,
-            value: {
-              payload: { selected: true },
-              deleted: { selected: false },
-            },
-          });
-          return {
-            ...item,
-            selected: true,
-          };
-        }
-        return item;
-      });
-      setStaticDrawData(newStaticDrawData);
-
+      setStaticDrawData((pre) =>
+        pre.map((item) => {
+          if (item.id === activeId) {
+            batchUpdatedHistoryRecord.current.push({
+              id: item.id,
+              value: {
+                payload: { selected: true },
+                deleted: { selected: false },
+              },
+            });
+            return {
+              ...item,
+              selected: true,
+            };
+          }
+          return item;
+        }),
+      );
       return true;
     }
 
