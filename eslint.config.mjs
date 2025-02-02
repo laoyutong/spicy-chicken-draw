@@ -34,9 +34,13 @@ export default [
         'error',
         { caughtErrorsIgnorePattern: '^_' },
       ],
-      'no-empty': {
-        allowEmptyCatch: true,
-      },
+      'no-empty': [
+        'error',
+        {
+          allowEmptyCatch: true,
+        },
+      ],
+      '@typescript-eslint/no-unused-expressions': 'off',
     },
   },
 ];

@@ -3,18 +3,17 @@ import {
   ARROW_LENGTH,
   SELECTION_AREA_BG_COLOR,
   DRAW_SELECTION_GAP,
-  SELECTION_RECT_WIDTH,
   TEXT_FONT_FAMILY,
   TEXT_FONT_SIZE,
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
-} from "@/config";
-import { DrawData, DrawType, DrawGraphFn, DrawTextFn } from "@/types";
-import { getContentArea, splitContent, getResizeRectData } from ".";
+} from '@/config';
+import { DrawData, DrawType, DrawGraphFn, DrawTextFn } from '@/types';
+import { getContentArea, splitContent, getResizeRectData } from '.';
 
 const drawResizeRect = (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, "x" | "y" | "width" | "height" | "type">
+  drawData: Pick<DrawData, 'x' | 'y' | 'width' | 'height' | 'type'>,
 ) => {
   // TODO: 文本类型暂不支持resize
   if (drawData.type === DrawType.text) {
@@ -34,11 +33,11 @@ const drawResizeRect = (
 /** 绘制selected的选择框 */
 const drawSelectedArea: (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, "x" | "y" | "width" | "height" | "type">,
+  drawData: Pick<DrawData, 'x' | 'y' | 'width' | 'height' | 'type'>,
   options?: {
     withoutResizeRect?: boolean;
     isDashLine?: boolean;
-  }
+  },
 ) => void = (ctx, { x, y, width, height, type }, options) => {
   const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
@@ -64,7 +63,7 @@ const drawSelectedArea: (
     drawResizeRect(ctx, { x, y, width, height, type });
   ctx.stroke();
 
-  ctx.strokeStyle = "#000";
+  ctx.strokeStyle = '#000';
 };
 
 const drawRect: DrawGraphFn = (ctx, { x, y, width, height }) => {
@@ -86,7 +85,7 @@ const drawCircle: DrawGraphFn = (ctx, { x, y, width, height }) => {
   for (let i = 0; i < Math.PI * 2; i += step) {
     ctx.lineTo(
       centerX + halfWidth * Math.cos(i),
-      centerY + halfHeight * Math.sin(i)
+      centerY + halfHeight * Math.sin(i),
     );
   }
   ctx.closePath();
@@ -94,7 +93,7 @@ const drawCircle: DrawGraphFn = (ctx, { x, y, width, height }) => {
 
 const drawDiamond: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
-  { x, y, width, height }
+  { x, y, width, height },
 ) => {
   ctx.moveTo(x + width / 2, y + height);
   ctx.lineTo(x + width, y + height / 2);
@@ -105,7 +104,7 @@ const drawDiamond: DrawGraphFn = (
 
 const drawSelection: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
-  { x, y, width, height }
+  { x, y, width, height },
 ) => {
   ctx.save();
   ctx.fillStyle = SELECTION_AREA_BG_COLOR;
@@ -115,11 +114,11 @@ const drawSelection: DrawGraphFn = (
 
 const drawArrow: DrawGraphFn = (
   ctx: CanvasRenderingContext2D,
-  { x, y, width, height }
+  { x, y, width, height },
 ) => {
   const arrowLength = Math.min(
     Math.pow(width * width + height * height, 1 / 2) / 2,
-    ARROW_LENGTH
+    ARROW_LENGTH,
   );
   const directionLength = height < 0 ? -arrowLength : arrowLength;
 
@@ -145,7 +144,7 @@ const drawText: DrawTextFn = (ctx, { x, y, content }) => {
   if (!content?.trim()) {
     return;
   }
-  ctx.textBaseline = "bottom";
+  ctx.textBaseline = 'bottom';
   ctx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
   const lines = splitContent(content);
   lines.forEach((line, index) => {
@@ -184,7 +183,7 @@ const drawGraphs = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
 
 const drawSelectedBorder = (
   ctx: CanvasRenderingContext2D,
-  data: DrawData[]
+  data: DrawData[],
 ) => {
   const selectedList = data.filter((item) => item.selected);
 
@@ -202,7 +201,7 @@ const drawSelectedBorder = (
         height: maxY - minY,
         type: DrawType.selection,
       },
-      { isDashLine: true }
+      { isDashLine: true },
     );
   }
 

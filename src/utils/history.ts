@@ -16,6 +16,7 @@ class History {
   #undoStack: HistoryStack = [];
 
   #record(data: HistoryRecord) {
+    console.log('history record data:::', data);
     this.#undoStack.push(data);
     this.#redoStack = [];
   }
@@ -56,13 +57,12 @@ class History {
         if (!updatedContent) {
           return item;
         }
-        const finalItem = {
-          ...item,
-          ...updatedContent[field],
-        };
+
+        const updatedFieldItem = updatedContent[field];
         return {
-          ...finalItem,
-          selected: !finalItem.containerId,
+          ...item,
+          ...updatedFieldItem,
+          selected: updatedFieldItem?.selected ?? !item.containerId,
         };
       });
     }
@@ -74,6 +74,7 @@ class History {
     if (!redoRecord) {
       return null;
     }
+    console.log('redoRecord:::', redoRecord);
 
     this.#undoStack.push(redoRecord);
 
@@ -98,6 +99,7 @@ class History {
     if (!undoRecord) {
       return null;
     }
+    console.log('undoRecord:::', undoRecord);
 
     this.#redoStack.push(undoRecord);
 
@@ -129,7 +131,21 @@ class History {
   ): HistoryOperationMap {
     const map: HistoryOperationMap = new Map();
     value.forEach((item) => {
-      map.set(item.id, item.value);
+      const oldContent = map.get(item.id);
+      if (oldContent) {
+        map.set(item.id, {
+          payload: {
+            ...oldContent.payload,
+            ...item.value.payload,
+          },
+          deleted: {
+            ...oldContent.deleted,
+            ...item.value.deleted,
+          },
+        });
+      } else {
+        map.set(item.id, item.value);
+      }
     });
     return map;
   }

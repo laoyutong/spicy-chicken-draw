@@ -1,11 +1,11 @@
-import { MutableRefObject, useRef } from "react";
-import { useTrackedEffect } from "ahooks";
-import { produce } from "immer";
-import { useAtom } from "jotai";
-import { nanoid } from "nanoid";
+import { MutableRefObject, useRef } from 'react';
+import { useTrackedEffect } from 'ahooks';
+import { produce } from 'immer';
+import { useAtom } from 'jotai';
+import { nanoid } from 'nanoid';
 
-import { cursorPointAtom, drawTypeAtom } from "@/store";
-import { MIN_DRAW_DIS, TEXT_FONT_SIZE } from "@/config";
+import { cursorPointAtom, drawTypeAtom } from '@/store';
+import { MIN_DRAW_DIS, TEXT_FONT_SIZE } from '@/config';
 import {
   BoundingElement,
   CanvasCtxRef,
@@ -17,7 +17,7 @@ import {
   ResizePosition,
   SetDrawData,
   TextOnChangeEvent,
-} from "@/types";
+} from '@/types';
 import {
   createText,
   getContentArea,
@@ -31,7 +31,7 @@ import {
   handleDrawItem,
   history,
   splitContent,
-} from "@/utils";
+} from '@/utils';
 
 interface UseHandleDrawDataParams {
   staticDrawData: DrawData[];
@@ -66,12 +66,12 @@ export const useHandleDrawData = ({
   const createTextOnChange: TextOnChangeEvent = (
     textValue,
     container,
-    existElement
+    existElement,
   ) => {
     if (textValue.trim() && (startCoordinate || existElement)) {
       const textList = splitContent(textValue);
       const lines = textList.filter(
-        (item, index) => !!item.trim() || index !== textList.length - 1
+        (item, index) => !!item.trim() || index !== textList.length - 1,
       );
       let maxWidth = 0;
       lines.forEach((line) => {
@@ -91,8 +91,8 @@ export const useHandleDrawData = ({
             y: container.y + container.height / 2 - textareaHeight / 2,
           }
         : existElement
-        ? { x: existElement.x, y: existElement.y }
-        : startCoordinate!;
+          ? { x: existElement.x, y: existElement.y }
+          : startCoordinate!;
 
       const newTextId = existElement ? existElement.id : nanoid();
 
@@ -164,17 +164,18 @@ export const useHandleDrawData = ({
 
   // 收集selected及其绑定的内容
   const collectSelectedElements = (
-    drawDataList: MutableRefObject<DrawData[]>
+    drawDataList: MutableRefObject<DrawData[]>,
   ) => {
     if (!drawDataList.current.length) {
+      console.log('execute collectSelectedElements');
       drawDataList.current = getSelectedItems(staticDrawData);
 
       if (drawDataList.current.length) {
         setActiveDrawData(drawDataList.current);
         setStaticDrawData((pre) =>
           pre.filter(
-            (item) => !drawDataList.current.some((i) => i.id === item.id)
-          )
+            (item) => !drawDataList.current.some((i) => i.id === item.id),
+          ),
         );
         return true;
       }
@@ -182,22 +183,29 @@ export const useHandleDrawData = ({
     return false;
   };
 
+  const batchUpdatedHistoryRecord = useRef<HistoryUpdatedRecordData>([]);
+
+  const handleBatchUpdatedHistoryRecord = () => {
+    if (batchUpdatedHistoryRecord.current.length) {
+      history.collectUpdatedRecord(batchUpdatedHistoryRecord.current);
+      batchUpdatedHistoryRecord.current = [];
+    }
+  };
+
   const handleUpdatedHistoryRecord = (
     dataCache: MutableRefObject<DrawData[]>,
-    handleDrawItem: (drawItem: DrawData) => Partial<DrawData>
+    handleDrawItem: (drawItem: DrawData) => Partial<DrawData>,
   ) => {
-    const updatedHistoryData: HistoryUpdatedRecordData = [];
-
     dataCache.current.forEach((dataItem) => {
       const activeDrawItem = activeDrawData.find(
-        (item) => dataItem.id === item.id
+        (item) => dataItem.id === item.id,
       );
 
       if (!activeDrawItem) {
         return;
       }
 
-      updatedHistoryData.push({
+      batchUpdatedHistoryRecord.current.push({
         id: dataItem.id,
         value: {
           payload: handleDrawItem(activeDrawItem),
@@ -205,17 +213,19 @@ export const useHandleDrawData = ({
         },
       });
     });
-
-    history.collectUpdatedRecord(updatedHistoryData);
   };
 
   const moveDataCache = useRef<DrawData[]>([]);
+
+  const resetSelectedHistoryRecordTimer =
+    useRef<ReturnType<typeof setTimeout>>();
 
   /**
    * 移动图形的处理
    */
   const handleMoveElement = (isStartCoordinateChange?: boolean) => {
     if (!startCoordinate) {
+      let result = false;
       // 结束移动
       if (moveDataCache.current.length) {
         const getFilterFields = (drawItem: DrawData) => ({
@@ -228,9 +238,10 @@ export const useHandleDrawData = ({
         setStaticDrawData((pre) => [...pre, ...activeDrawData]);
         setActiveDrawData([]);
         moveDataCache.current = [];
-        return true;
+        result = true;
       }
-      return false;
+      handleBatchUpdatedHistoryRecord();
+      return result;
     }
 
     const activeHoverElement = getHoverElement(startCoordinate, [
@@ -239,11 +250,32 @@ export const useHandleDrawData = ({
     ]);
 
     // 存在startCoordinate变更且有值，说明是点击的情况，则重置select的状态
-    if (isStartCoordinateChange) {
-      staticDrawData.find((item) => item.selected) &&
-        setStaticDrawData((pre) =>
-          pre.map((item) => ({ ...item, selected: false }))
-        );
+    if (
+      isStartCoordinateChange &&
+      staticDrawData.find((item) => item.selected)
+    ) {
+      const historyUpdatedRecord: HistoryUpdatedRecordData = [];
+      const newStaticDrawData = staticDrawData.map((item) => {
+        if (!item.selected) {
+          return item;
+        }
+
+        historyUpdatedRecord.push({
+          id: item.id,
+          value: {
+            payload: { selected: false },
+            deleted: { selected: true },
+          },
+        });
+
+        return { ...item, selected: false };
+      });
+
+      setStaticDrawData(newStaticDrawData);
+      // 异步执行，如果后续存在move or resize则不记录
+      resetSelectedHistoryRecordTimer.current = setTimeout(() => {
+        history.collectUpdatedRecord(historyUpdatedRecord);
+      });
     }
 
     if (cursorPoint !== CursorConfig.move) {
@@ -256,19 +288,25 @@ export const useHandleDrawData = ({
       !Array.isArray(activeHoverElement) &&
       activeHoverElement?.selected === false
     ) {
-      setStaticDrawData((pre) =>
-        produce(pre, (draft) => {
-          const activeDrawItem = draft.find(
-            (item) =>
-              // 如果hover的图形有containerId，则hover其container
-              item.id ===
-              (activeHoverElement.containerId || activeHoverElement.id)
-          );
-          if (activeDrawItem) {
-            activeDrawItem.selected = true;
-          }
-        })
-      );
+      // 如果hover的图形有containerId，则hover其container
+      const activeId = activeHoverElement.containerId || activeHoverElement.id;
+      const newStaticDrawData = staticDrawData.map((item) => {
+        if (item.id === activeId) {
+          batchUpdatedHistoryRecord.current.push({
+            id: item.id,
+            value: {
+              payload: { selected: true },
+              deleted: { selected: false },
+            },
+          });
+          return {
+            ...item,
+            selected: true,
+          };
+        }
+        return item;
+      });
+      setStaticDrawData(newStaticDrawData);
 
       return true;
     }
@@ -282,7 +320,7 @@ export const useHandleDrawData = ({
       setActiveDrawData((pre) =>
         pre.map((item) => {
           const activeMovingDrawItem = moveDataCache.current.find(
-            (i) => i.id === item.id
+            (i) => i.id === item.id,
           );
 
           if (!activeMovingDrawItem) {
@@ -294,7 +332,7 @@ export const useHandleDrawData = ({
             x: activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
             y: activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
           };
-        })
+        }),
       );
 
     return true;
@@ -312,6 +350,7 @@ export const useHandleDrawData = ({
    */
   const handleResizeElement = () => {
     if (!startCoordinate) {
+      let result = false;
       // 结束缩放
       if (resizeDataCache.current.length) {
         const getFilterFields = (drawItem: DrawData) => ({
@@ -330,9 +369,10 @@ export const useHandleDrawData = ({
         setActiveDrawData([]);
         resizeDataCache.current = [];
         startResizeContentAreaCache.current = null;
-        return true;
+        result = true;
       }
-      return false;
+      handleBatchUpdatedHistoryRecord();
+      return result;
     }
 
     if (
@@ -359,7 +399,7 @@ export const useHandleDrawData = ({
         produce(pre, (draft) => {
           resizeDataCache.current.forEach((resizeCacheItem) => {
             const activeDraftItem = draft.find(
-              (item) => item.id === resizeCacheItem.id
+              (item) => item.id === resizeCacheItem.id,
             );
             if (!activeDraftItem) {
               return;
@@ -376,7 +416,7 @@ export const useHandleDrawData = ({
               (resizeCacheItem.height / (maxY - minY)) * moveDixY;
 
             if (cursorPoint === CursorConfig.neswResize) {
-              if (resizePosition.current === "top") {
+              if (resizePosition.current === 'top') {
                 // 右上角拖动
                 xDis = resizeCacheItem.x - minX;
                 yDis = maxY - resizeCacheItem.y;
@@ -390,7 +430,7 @@ export const useHandleDrawData = ({
                 heightDis = baseHeightDis;
               }
             } else if (cursorPoint === CursorConfig.nwseResize) {
-              if (resizePosition.current === "top") {
+              if (resizePosition.current === 'top') {
                 // 左上角拖动
                 xDis = maxX - resizeCacheItem.x;
                 yDis = maxY - resizeCacheItem.y;
@@ -416,7 +456,7 @@ export const useHandleDrawData = ({
               activeDraftItem.height = resizeCacheItem.height + heightDis;
             }
           });
-        })
+        }),
       );
     }
 
@@ -430,11 +470,10 @@ export const useHandleDrawData = ({
     if (!startCoordinate) {
       // 处理绘制结果
       if (workingDrawData.current) {
-        // selection不需要绘制
-        // text在createTextOnChange里绘制
+        // selection不需要绘制、text在createTextOnChange里绘制
         if (
           ![DrawType.selection, DrawType.text].includes(
-            workingDrawData.current.type
+            workingDrawData.current.type,
           ) &&
           (Math.abs(workingDrawData.current.width) >= MIN_DRAW_DIS ||
             Math.abs(workingDrawData.current.height) >= MIN_DRAW_DIS)
@@ -450,6 +489,24 @@ export const useHandleDrawData = ({
 
           setStaticDrawData((pre) => [...pre, handledDrawItem]);
         }
+
+        if (workingDrawData.current.type === DrawType.selection) {
+          const selectedList = staticDrawData.filter((item) => item.selected);
+          if (selectedList.length) {
+            const historyUpdatedRecordData: HistoryUpdatedRecordData = [];
+            selectedList.forEach((selectedItem) => {
+              historyUpdatedRecordData.push({
+                id: selectedItem.id,
+                value: {
+                  payload: { selected: true },
+                  deleted: { selected: false },
+                },
+              });
+            });
+            history.collectUpdatedRecord(historyUpdatedRecordData);
+          }
+        }
+
         setActiveDrawData([]);
         workingDrawData.current = null;
         setDrawType(DrawType.selection);
@@ -499,7 +556,7 @@ export const useHandleDrawData = ({
             ...item,
             selected: isInSelectionArea,
           };
-        })
+        }),
       );
     }
 
@@ -513,7 +570,7 @@ export const useHandleDrawData = ({
     if (drawType === DrawType.selection) {
       const resizeCursorContent = getResizeCursor(
         moveCoordinate,
-        staticDrawData
+        staticDrawData,
       );
       if (resizeCursorContent) {
         setCursorPoint(resizeCursorContent.cursorConfig);
@@ -540,7 +597,7 @@ export const useHandleDrawData = ({
 
     const existTextElement = getExistTextElement(
       startCoordinate,
-      staticDrawData
+      staticDrawData,
     );
 
     if (existTextElement) {
@@ -548,13 +605,13 @@ export const useHandleDrawData = ({
         startCoordinate,
         createTextOnChange,
         staticDrawData.find(
-          (item) => item.id === existTextElement?.containerId
+          (item) => item.id === existTextElement?.containerId,
         ) ?? null,
-        existTextElement
+        existTextElement,
       );
 
       setStaticDrawData((pre) =>
-        pre.filter((item) => item.id !== existTextElement.id)
+        pre.filter((item) => item.id !== existTextElement.id),
       );
     } else {
       const textContainer = getTextContainer(startCoordinate, staticDrawData);
@@ -573,10 +630,12 @@ export const useHandleDrawData = ({
       }
 
       if (handleMoveElement(isStartCoordinateChange)) {
+        clearTimeout(resetSelectedHistoryRecordTimer.current);
         return;
       }
 
       if (handleResizeElement()) {
+        clearTimeout(resetSelectedHistoryRecordTimer.current);
         return;
       }
 
@@ -586,6 +645,6 @@ export const useHandleDrawData = ({
 
       handleCursorPoint();
     },
-    [startCoordinate, moveCoordinate]
+    [startCoordinate, moveCoordinate],
   );
 };
