@@ -16,4 +16,5 @@ export default defineConfig({
   html: {
     title: '辣鸡绘图',
   },
+  performance: { removeConsole: true },
 });
