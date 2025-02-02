@@ -2,20 +2,21 @@ import {
   TEXT_FONT_SIZE,
   TEXT_FONT_FAMILY,
   TEXTAREA_PER_HEIGHT,
-} from "@/config";
-import { Coordinate, DrawData, TextOnChangeEvent } from "@/types";
+} from '@/config';
+import { Coordinate, DrawData, TextOnChangeEvent } from '@/types';
 
 const createTextAreaElement = () => {
-  const oldTextarea = document.querySelector("textarea");
+  const oldTextarea = document.querySelector('textarea');
   if (oldTextarea) {
     return null;
   }
 
-  return document.createElement("textarea");
+  return document.createElement('textarea');
 };
 
 const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
+  coordinate: Coordinate,
   container: DrawData | null,
   existElement: DrawData | null,
   {
@@ -24,19 +25,24 @@ const addTextAreaEvent = (
   }: {
     oninput?: () => void;
     onChange: TextOnChangeEvent;
-  }
+  },
 ) => {
   textarea.onkeydown = (e) => {
     e.stopPropagation();
   };
 
   textarea.oninput = () => {
-    textarea.style.height = textarea.scrollHeight + "px";
+    textarea.style.height = textarea.scrollHeight + 'px';
     oninput?.();
   };
 
   textarea.onblur = (e: Event) => {
-    onChange((e.target as HTMLInputElement).value, container, existElement);
+    onChange(
+      (e.target as HTMLInputElement).value,
+      coordinate,
+      container,
+      existElement,
+    );
     document.body.removeChild(textarea);
   };
 
@@ -47,51 +53,51 @@ const addTextAreaEvent = (
 
 const setTextAreaStyle = (
   textArea: HTMLTextAreaElement,
-  style: Record<string, unknown>
+  style: Record<string, unknown>,
 ) =>
   Object.assign(textArea.style, {
-    position: "absolute",
+    position: 'absolute',
     margin: 0,
     padding: 0,
     border: 0,
     outline: 0,
-    background: "transparent",
-    resize: "none",
-    fontSize: TEXT_FONT_SIZE + "px",
-    lineHeight: "1em",
+    background: 'transparent',
+    resize: 'none',
+    fontSize: TEXT_FONT_SIZE + 'px',
+    lineHeight: '1em',
     fontFamily: TEXT_FONT_FAMILY,
-    overflow: "hidden",
+    overflow: 'hidden',
     ...style,
   });
 
 const getTextStyle = (
   { x, y }: Coordinate,
   container: DrawData | null,
-  existElement?: DrawData
+  existElement?: DrawData,
 ) => {
   if (!container) {
     return {
-      top: (existElement?.y ?? y) + "px",
-      left: (existElement?.x ?? x) + "px",
+      top: (existElement?.y ?? y) + 'px',
+      left: (existElement?.x ?? x) + 'px',
       width: `${window.innerWidth - x}px`,
-      whiteSpace: "nowrap",
+      whiteSpace: 'nowrap',
     };
   }
 
   return {
-    top: container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + "px",
-    left: container.x - (container.width < 0 ? container.width : 0) + "px",
-    width: container.width + "px",
-    height: TEXTAREA_PER_HEIGHT + "px",
-    textAlign: "center",
+    top: container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + 'px',
+    left: container.x - (container.width < 0 ? container.width : 0) + 'px',
+    width: container.width + 'px',
+    height: TEXTAREA_PER_HEIGHT + 'px',
+    textAlign: 'center',
   };
 };
 
 export const createText = (
-  { x, y }: Coordinate,
+  coordinate: Coordinate,
   onChange: TextOnChangeEvent,
   container: DrawData | null,
-  existElement?: DrawData
+  existElement?: DrawData,
 ) => {
   const textAreaElement = createTextAreaElement();
   if (!textAreaElement) {
@@ -105,12 +111,18 @@ export const createText = (
 
   setTextAreaStyle(
     textAreaElement,
-    getTextStyle({ x, y }, container, existElement)
+    getTextStyle(coordinate, container, existElement),
   );
 
-  addTextAreaEvent(textAreaElement, container, existElement ?? null, {
-    onChange,
-  });
+  addTextAreaEvent(
+    textAreaElement,
+    coordinate,
+    container,
+    existElement ?? null,
+    {
+      onChange,
+    },
+  );
 
   document.body.appendChild(textAreaElement);
 };

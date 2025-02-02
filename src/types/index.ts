@@ -41,6 +41,7 @@ export interface DrawData {
 
 export type TextOnChangeEvent = (
   value: string,
+  coordinate: Coordinate | null,
   container: DrawData | null,
   existElement: DrawData | null,
 ) => void;

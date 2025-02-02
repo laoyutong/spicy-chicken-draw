@@ -1,5 +1,5 @@
 import { MutableRefObject, useRef } from 'react';
-import { useTrackedEffect } from 'ahooks';
+import { useEventListener, useTrackedEffect } from 'ahooks';
 import { produce } from 'immer';
 import { useAtom } from 'jotai';
 import { nanoid } from 'nanoid';
@@ -62,10 +62,11 @@ export const useHandleDrawData = ({
 
   const createTextOnChange: TextOnChangeEvent = (
     textValue,
+    coordinate,
     container,
     existElement,
   ) => {
-    if (textValue.trim() && (startCoordinate || existElement)) {
+    if (textValue.trim() && (coordinate || existElement)) {
       const textList = splitContent(textValue);
       const lines = textList.filter(
         (item, index) => !!item.trim() || index !== textList.length - 1,
@@ -75,16 +76,13 @@ export const useHandleDrawData = ({
       const canvasCtx = canvas.getContext('2d');
       if (canvasCtx) {
         canvasCtx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
-      }
-
-      lines.forEach((line) => {
-        if (canvasCtx) {
+        lines.forEach((line) => {
           const { width } = canvasCtx.measureText(line);
           if (width > maxWidth) {
             maxWidth = width;
           }
-        }
-      });
+        });
+      }
 
       const textareaHeight = TEXT_FONT_SIZE * lines.length;
 
@@ -95,7 +93,7 @@ export const useHandleDrawData = ({
           }
         : existElement
           ? { x: existElement.x, y: existElement.y }
-          : startCoordinate!;
+          : (coordinate as Coordinate);
 
       const newTextId = existElement ? existElement.id : nanoid();
 
@@ -595,19 +593,19 @@ export const useHandleDrawData = ({
     }
   };
 
-  const handleText = () => {
-    if (!startCoordinate) {
+  const handleText = (coordinate: Coordinate | null) => {
+    if (!coordinate) {
       return;
     }
 
-    const existTextElement = getExistTextElement(
-      startCoordinate,
-      staticDrawData,
-    );
-
+    // 双击时会触发collectSelectedElements，所以也需要将activeDrawData包含在内
+    const existTextElement = getExistTextElement(coordinate, [
+      ...staticDrawData,
+      ...activeDrawData,
+    ]);
     if (existTextElement) {
       createText(
-        startCoordinate,
+        coordinate,
         createTextOnChange,
         staticDrawData.find(
           (item) => item.id === existTextElement?.containerId,
@@ -619,18 +617,27 @@ export const useHandleDrawData = ({
         pre.filter((item) => item.id !== existTextElement.id),
       );
     } else {
-      const textContainer = getTextContainer(startCoordinate, staticDrawData);
-      createText(startCoordinate, createTextOnChange, textContainer);
+      const textContainer = getTextContainer(coordinate, staticDrawData);
+      createText(coordinate, createTextOnChange, textContainer);
     }
     setCursorPoint(CursorConfig.default);
     setDrawType(DrawType.selection);
   };
 
+  useEventListener('dblclick', (e: MouseEvent) => {
+    if (drawType !== DrawType.selection) {
+      return;
+    }
+
+    const { pageX, pageY } = e;
+    handleText({ x: pageX, y: pageY });
+  });
+
   useTrackedEffect(
     (changes) => {
       const isStartCoordinateChange = changes?.includes(0);
       if (drawType === DrawType.text && isStartCoordinateChange) {
-        handleText();
+        handleText(startCoordinate);
         return;
       }
 
