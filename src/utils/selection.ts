@@ -6,7 +6,7 @@ import {
   DrawType,
   ResizeCursorResult,
   ResizePosition,
-} from "@/types";
+} from '@/types';
 import {
   getDrawDataDis,
   isInRange,
@@ -16,12 +16,12 @@ import {
   getResizeRectData,
   getMinDis,
   getMaxDis,
-} from "./common";
+} from './common';
 import {
   HAS_BOUNDING_ELEMENTS_LIST,
   CALCULATE_SELECTION_GAP,
   TEXT_BOUND_GAP,
-} from "@/config";
+} from '@/config';
 
 /**
  * 获取两个坐标点之间的距离
@@ -29,12 +29,12 @@ import {
 const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
   Math.pow(
     Math.pow(Math.abs(x1 - x2), 2) + Math.pow(Math.abs(y1 - y2), 2),
-    1 / 2
+    1 / 2,
   );
 
 export const getHoverElement = (
   { x, y }: Coordinate,
-  drawData: DrawData[]
+  drawData: DrawData[],
 ): DrawData | DrawData[] | null => {
   const selectedList = drawData.filter((i) => i.selected);
   if (selectedList.length) {
@@ -108,8 +108,8 @@ export const getHoverElement = (
             x,
             graphItem.x + graphItem.width,
             y,
-            graphItem.y + graphItem.height
-          )
+            graphItem.y + graphItem.height,
+          ),
       );
 
       if (
@@ -126,7 +126,7 @@ export const getHoverElement = (
 
 export const getTextContainer = (
   { x, y }: Coordinate,
-  drawData: DrawData[]
+  drawData: DrawData[],
 ): DrawData | null => {
   let result: DrawData | null = null;
   drawData.forEach((item) => {
@@ -159,7 +159,7 @@ export const getTextContainer = (
 
 export const getExistTextElement = (
   { x, y }: Coordinate,
-  drawData: DrawData[]
+  drawData: DrawData[],
 ) =>
   drawData.find(
     (item) =>
@@ -167,12 +167,12 @@ export const getExistTextElement = (
       x >= item.x &&
       y >= item.y &&
       x <= item.x + item.width &&
-      y <= item.y + item.height
+      y <= item.y + item.height,
   );
 
 export const getResizeCursor = (
   coordinate: Coordinate,
-  drawData: DrawData[]
+  drawData: DrawData[],
 ): ResizeCursorResult | null => {
   const selectedList = drawData.filter((item) => item.selected);
   if (!selectedList.length) {
@@ -181,7 +181,7 @@ export const getResizeCursor = (
 
   const getCursorConfig = (
     resizeRectData: ReturnType<typeof getResizeRectData>,
-    graphData: Pick<DrawData, BasicGraphFields>
+    graphData: Pick<DrawData, BasicGraphFields>,
   ) => {
     const { length } = resizeRectData;
     for (let i = 0; i < length; i++) {
@@ -197,7 +197,7 @@ export const getResizeCursor = (
 
         const position: ResizePosition =
           // i为0、2则表明在起始点的x轴上，用高度来判断图形绘制方向
-          [0, 2].includes(i) === graphData.height > 0 ? "top" : "bottom";
+          [0, 2].includes(i) === graphData.height > 0 ? 'top' : 'bottom';
 
         return { cursorConfig, position };
       }
@@ -205,11 +205,13 @@ export const getResizeCursor = (
     return null;
   };
 
-  let cursorResult: ResizeCursorResult | null = null;
   if (selectedList.length === 1) {
     const activeDrawItem = selectedList[0];
+    if (activeDrawItem.type === DrawType.text) {
+      return null;
+    }
     const resizeRectData = getResizeRectData(activeDrawItem);
-    cursorResult = getCursorConfig(resizeRectData, activeDrawItem);
+    return getCursorConfig(resizeRectData, activeDrawItem);
   } else {
     const [minX, maxX, minY, maxY] = getContentArea(selectedList);
     const basicGraphData = {
@@ -219,8 +221,6 @@ export const getResizeCursor = (
       height: maxY - minY,
     };
     const resizeRectData = getResizeRectData(basicGraphData);
-    cursorResult = getCursorConfig(resizeRectData, basicGraphData);
+    return getCursorConfig(resizeRectData, basicGraphData);
   }
-
-  return cursorResult;
 };
