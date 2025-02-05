@@ -10,12 +10,13 @@ import {
   BoundingElement,
   Coordinate,
   CursorConfig,
-  DrawData,
+  GraphItem,
   DrawType,
   HistoryUpdatedRecordData,
   ResizePosition,
   SetDrawData,
   TextOnChangeEvent,
+  NormalGraphItem,
 } from '@/types';
 import {
   createText,
@@ -33,8 +34,8 @@ import {
 } from '@/utils';
 
 interface UseHandleDrawDataParams {
-  staticDrawData: DrawData[];
-  activeDrawData: DrawData[];
+  staticDrawData: GraphItem[];
+  activeDrawData: GraphItem[];
   startCoordinate: Coordinate | null;
   moveCoordinate: Coordinate;
   setStaticDrawData: SetDrawData;
@@ -56,7 +57,7 @@ export const useHandleDrawData = ({
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
-  const workingDrawData = useRef<DrawData | null>(null);
+  const workingDrawData = useRef<GraphItem | null>(null);
 
   const resizePosition = useRef<ResizePosition | null>(null);
 
@@ -165,7 +166,7 @@ export const useHandleDrawData = ({
 
   // 收集selected及其绑定的内容
   const collectSelectedElements = (
-    drawDataList: MutableRefObject<DrawData[]>,
+    drawDataList: MutableRefObject<GraphItem[]>,
   ) => {
     if (!drawDataList.current.length) {
       console.log('execute collectSelectedElements');
@@ -195,8 +196,8 @@ export const useHandleDrawData = ({
   };
 
   const collectUpdatedHistoryRecord = (
-    dataCache: MutableRefObject<DrawData[]>,
-    handleDrawItem: (drawItem: DrawData) => Partial<DrawData>,
+    dataCache: MutableRefObject<GraphItem[]>,
+    handleDrawItem: (drawItem: GraphItem) => Partial<GraphItem>,
   ) => {
     dataCache.current.forEach((dataItem) => {
       const activeDrawItem = activeDrawData.find(
@@ -217,7 +218,7 @@ export const useHandleDrawData = ({
     });
   };
 
-  const moveDataCache = useRef<DrawData[]>([]);
+  const moveDataCache = useRef<GraphItem[]>([]);
 
   const resetSelectedHistoryRecordTimer =
     useRef<ReturnType<typeof setTimeout>>();
@@ -230,7 +231,7 @@ export const useHandleDrawData = ({
       let result = false;
       // 结束移动
       if (moveDataCache.current.length) {
-        const getFilterFields = (drawItem: DrawData) => ({
+        const getFilterFields = (drawItem: GraphItem) => ({
           x: drawItem.x,
           y: drawItem.y,
         });
@@ -292,7 +293,11 @@ export const useHandleDrawData = ({
       activeHoverElement?.selected === false
     ) {
       // 如果hover的图形有containerId，则hover其container
-      const activeId = activeHoverElement.containerId || activeHoverElement.id;
+      const activeId =
+        ('containerId' in activeHoverElement
+          ? activeHoverElement.containerId
+          : activeHoverElement.id) || activeHoverElement.id;
+
       setStaticDrawData((pre) =>
         pre.map((item) => {
           if (item.id === activeId) {
@@ -341,7 +346,7 @@ export const useHandleDrawData = ({
     return true;
   };
 
-  const resizeDataCache = useRef<DrawData[]>([]);
+  const resizeDataCache = useRef<GraphItem[]>([]);
 
   // 缓存selected框的初始坐标，用于resize的尺寸计算
   const startResizeContentAreaCache = useRef<
@@ -356,7 +361,7 @@ export const useHandleDrawData = ({
       let result = false;
       // 结束缩放
       if (resizeDataCache.current.length) {
-        const getFilterFields = (drawItem: DrawData) => ({
+        const getFilterFields = (drawItem: GraphItem) => ({
           x: drawItem.x,
           y: drawItem.y,
           width: drawItem.width,
@@ -482,7 +487,7 @@ export const useHandleDrawData = ({
             Math.abs(workingDrawData.current.height) >= MIN_DRAW_DIS)
         ) {
           // 缓存下 不然 setState 的时候已经是 null 了
-          const copyWorkingDrawData: DrawData = {
+          const copyWorkingDrawData: GraphItem = {
             ...workingDrawData.current,
             selected: true,
           };
@@ -541,7 +546,7 @@ export const useHandleDrawData = ({
       setStaticDrawData((pre) =>
         pre.map((item) => {
           // 绑定的元素不需要selected状态，在具体操作的时候处理
-          if (item.containerId) {
+          if ('containerId' in item && item.containerId) {
             return item;
           }
 
@@ -607,9 +612,9 @@ export const useHandleDrawData = ({
       createText(
         coordinate,
         createTextOnChange,
-        staticDrawData.find(
+        (staticDrawData.find(
           (item) => item.id === existTextElement?.containerId,
-        ) ?? null,
+        ) as NormalGraphItem) ?? null,
         existTextElement,
       );
 

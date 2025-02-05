@@ -26,38 +26,63 @@ export interface BoundingElement {
   type: DrawType.text;
 }
 
-export interface DrawData {
+interface BaseGraphItem {
   id: string;
-  type: DrawType;
   x: number;
   y: number;
   width: number;
   height: number;
-  content?: string;
   selected: boolean;
-  containerId?: string;
+}
+
+export interface SelectionGraphItem extends BaseGraphItem {
+  type: DrawType.selection;
+}
+
+export interface NormalGraphItem extends BaseGraphItem {
+  type: DrawType.circle | DrawType.diamond | DrawType.rectangle;
   boundingElements?: BoundingElement[];
 }
+
+// TODO: 目前仅支持单纯的绘制能力
+export interface ArrowGraphItem extends BaseGraphItem {
+  type: DrawType.arrow;
+}
+
+export interface TextGraphItem extends BaseGraphItem {
+  type: DrawType.text;
+  content?: string;
+  containerId?: string;
+}
+
+export type GraphItem =
+  | TextGraphItem
+  | NormalGraphItem
+  | SelectionGraphItem
+  | ArrowGraphItem;
 
 export type TextOnChangeEvent = (
   value: string,
   coordinate: Coordinate | null,
-  container: DrawData | null,
-  existElement: DrawData | null,
+  container: NormalGraphItem | null,
+  existElement: TextGraphItem | null,
 ) => void;
 
-export type SetDrawData = Dispatch<SetStateAction<DrawData[]>>;
+export type SetDrawData = Dispatch<SetStateAction<GraphItem[]>>;
 
-export type BaseDrawFn<T extends keyof DrawData> = (
+export type BaseDrawFn<T extends GraphItem, K extends keyof T> = (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, T>,
+  drawData: Pick<T, K>,
 ) => void;
 
 export type BasicGraphFields = 'x' | 'y' | 'width' | 'height';
 
-export type DrawGraphFn = BaseDrawFn<BasicGraphFields>;
+export type DrawGraphFn = BaseDrawFn<NormalGraphItem, BasicGraphFields>;
 
-export type DrawTextFn = BaseDrawFn<BasicGraphFields | 'content'>;
+export type DrawTextFn = BaseDrawFn<
+  TextGraphItem,
+  BasicGraphFields | 'content'
+>;
 
 export type ResizePosition = 'top' | 'bottom';
 
@@ -69,8 +94,8 @@ export interface ResizeCursorResult {
 }
 
 export type HistoryOperationMapValue = {
-  payload?: Partial<DrawData>;
-  deleted?: Partial<DrawData>;
+  payload?: Partial<GraphItem>;
+  deleted?: Partial<GraphItem>;
 };
 
 export type HistoryOperationMap = Map<string, HistoryOperationMapValue>;

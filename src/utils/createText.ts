@@ -3,7 +3,13 @@ import {
   TEXT_FONT_FAMILY,
   TEXTAREA_PER_HEIGHT,
 } from '@/config';
-import { Coordinate, DrawData, TextOnChangeEvent } from '@/types';
+import {
+  Coordinate,
+  GraphItem,
+  NormalGraphItem,
+  TextGraphItem,
+  TextOnChangeEvent,
+} from '@/types';
 
 const createTextAreaElement = () => {
   const oldTextarea = document.querySelector('textarea');
@@ -17,8 +23,8 @@ const createTextAreaElement = () => {
 const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
   coordinate: Coordinate,
-  container: DrawData | null,
-  existElement: DrawData | null,
+  container: NormalGraphItem | null,
+  existElement: TextGraphItem | null,
   {
     oninput,
     onChange,
@@ -72,8 +78,8 @@ const setTextAreaStyle = (
 
 const getTextStyle = (
   { x, y }: Coordinate,
-  container: DrawData | null,
-  existElement?: DrawData,
+  container: GraphItem | null,
+  existElement?: GraphItem,
 ) => {
   if (!container) {
     return {
@@ -96,8 +102,8 @@ const getTextStyle = (
 export const createText = (
   coordinate: Coordinate,
   onChange: TextOnChangeEvent,
-  container: DrawData | null,
-  existElement?: DrawData,
+  container: NormalGraphItem | null,
+  existElement?: TextGraphItem,
 ) => {
   const textAreaElement = createTextAreaElement();
   if (!textAreaElement) {

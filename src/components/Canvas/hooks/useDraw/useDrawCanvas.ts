@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { APP_KEY } from '@/config';
-import { CanvasCtxRef, DrawData } from '@/types';
+import { CanvasCtxRef, GraphItem } from '@/types';
 import { drawCanvas } from '@/utils';
 import { useEventListener, useUpdateEffect } from 'ahooks';
 
 interface UseDrawCanvasParams {
-  staticDrawData: DrawData[];
-  activeDrawData: DrawData[];
+  staticDrawData: GraphItem[];
+  activeDrawData: GraphItem[];
   activeCanvasCtx: CanvasCtxRef;
   staticCanvasCtx: CanvasCtxRef;
 }

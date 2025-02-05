@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CanvasCtxRef, DrawData } from '@/types';
+import { CanvasCtxRef, GraphItem } from '@/types';
 import { APP_KEY } from '@/config';
 
 import { useOperationCoordinate } from './useOperationCoordinate';
@@ -12,9 +12,9 @@ export const useDraw = (
   activeCanvasCtx: CanvasCtxRef,
   staticCanvasCtx: CanvasCtxRef,
 ) => {
-  const [activeDrawData, setActiveDrawData] = useState<DrawData[]>([]);
+  const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
 
-  const [staticDrawData, setStaticDrawData] = useState<DrawData[]>(() => {
+  const [staticDrawData, setStaticDrawData] = useState<GraphItem[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(APP_KEY) || '[]');
     } catch {

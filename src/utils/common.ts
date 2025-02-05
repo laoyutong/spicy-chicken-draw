@@ -2,11 +2,11 @@ import {
   CALCULATE_SELECTION_GAP,
   DRAW_SELECTION_GAP,
   SELECTION_RECT_WIDTH,
-} from "@/config";
-import { DrawData, DrawGraphFn, DrawType } from "@/types";
+} from '@/config';
+import { GraphItem, DrawGraphFn, DrawType } from '@/types';
 
 export const splitContent = (content: string): string[] =>
-  content.replace(/\r\n?/g, "\n").split("\n");
+  content.replace(/\r\n?/g, '\n').split('\n');
 
 export const getMaxDis = (position: number, value: number) =>
   Math.max(position, position + value);
@@ -15,7 +15,7 @@ export const getMinDis = (position: number, value: number) =>
   Math.min(position, position + value);
 
 export const getDrawDataDis = (
-  drawData: DrawData
+  drawData: GraphItem,
 ): [minX: number, maxX: number, minY: number, maxY: number] => [
   getMinDis(drawData.x, drawData.width),
   getMaxDis(drawData.x, drawData.width),
@@ -33,7 +33,7 @@ export const isInRange = (value: number, small: number, large?: number) =>
   value <= getValueWithGap(large ?? small);
 
 export const getContentArea = (
-  data: DrawData[]
+  data: GraphItem[],
 ): [number, number, number, number] => {
   let x1 = -Infinity;
   let y1 = -Infinity;
@@ -68,7 +68,7 @@ export const getResizeRectData = ({
   y,
   width,
   height,
-}: Parameters<DrawGraphFn>["1"]) => {
+}: Parameters<DrawGraphFn>['1']) => {
   const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const x1 = x - gapX;
@@ -83,7 +83,7 @@ export const getResizeRectData = ({
     x: number,
     y: number,
     width: number,
-    height: number
+    height: number,
   ) => ({ x, y, width, height });
 
   return [
@@ -95,7 +95,7 @@ export const getResizeRectData = ({
 };
 
 // 将width和height处理为整数，便于缩放计算
-export const handleDrawItem = (drawData: DrawData) => {
+export const handleDrawItem = (drawData: GraphItem) => {
   if (
     (drawData.width > 0 && drawData.height > 0) ||
     drawData.type === DrawType.arrow
@@ -112,18 +112,20 @@ export const handleDrawItem = (drawData: DrawData) => {
   };
 };
 
-export const getSelectedItems = (drawData: DrawData[]) => {
-  const result: DrawData[] = [];
+export const getSelectedItems = (drawData: GraphItem[]) => {
+  const result: GraphItem[] = [];
   drawData.forEach((drawItem) => {
     if (drawItem.selected) {
       result.push(drawItem);
 
-      drawItem.boundingElements?.forEach((boundingElement) => {
-        const activeItem = drawData.find((i) => boundingElement.id === i.id);
-        if (activeItem) {
-          result.push(activeItem);
-        }
-      });
+      if ('boundingElements' in drawItem) {
+        drawItem.boundingElements?.forEach((boundingElement) => {
+          const activeItem = drawData.find((i) => boundingElement.id === i.id);
+          if (activeItem) {
+            result.push(activeItem);
+          }
+        });
+      }
     }
   });
   return result;

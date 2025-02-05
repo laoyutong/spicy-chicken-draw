@@ -2,11 +2,11 @@ import { useRef } from 'react';
 import { message } from 'antd';
 import { nanoid } from 'nanoid';
 import { useKeyPress } from 'ahooks';
-import { Coordinate, DrawData, SetDrawData } from '@/types';
+import { Coordinate, GraphItem, SetDrawData } from '@/types';
 import { getContentArea, getSelectedItems, history } from '@/utils';
 
 interface UseHandleKeyPressParams {
-  staticDrawData: DrawData[];
+  staticDrawData: GraphItem[];
   setStaticDrawData: SetDrawData;
   moveCoordinate: Coordinate;
 }
@@ -22,7 +22,10 @@ export const useHandleKeyPress = ({
   // 全选
   useKeyPress(['meta.a'], () =>
     setStaticDrawData((pre) =>
-      pre.map((item) => ({ ...item, selected: !item.containerId })),
+      pre.map((item) => ({
+        ...item,
+        selected: 'containerId' in item ? !item.containerId : true,
+      })),
     ),
   );
 
@@ -37,7 +40,7 @@ export const useHandleKeyPress = ({
     );
   });
 
-  const copyData = useRef<DrawData[]>([]);
+  const copyData = useRef<GraphItem[]>([]);
   // 复制
   useKeyPress(['meta.c'], () => {
     const selectedItems = getSelectedItems(staticDrawData);
@@ -70,17 +73,23 @@ export const useHandleKeyPress = ({
           id: newId,
           x: item.x + offsetX,
           y: item.y + offsetY,
-          selected: !item.containerId,
+          selected: 'containerId' in item ? !item.containerId : true,
         };
       })
       // 替换容器和绑定元素的id
       .map((item) => ({
         ...item,
-        containerId: item.containerId ? idsMap[item.containerId] : undefined,
-        boundingElements: item.boundingElements?.map((item) => ({
-          ...item,
-          id: idsMap[item.id],
-        })),
+        containerId:
+          'containerId' in item && item.containerId
+            ? idsMap[item.containerId]
+            : undefined,
+        boundingElements:
+          'boundingElements' in item
+            ? item.boundingElements?.map((item) => ({
+                ...item,
+                id: idsMap[item.id],
+              }))
+            : undefined,
       }));
 
     history.collectAddedRecord(pasteData);

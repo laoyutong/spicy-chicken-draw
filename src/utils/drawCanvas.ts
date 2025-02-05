@@ -8,12 +8,12 @@ import {
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
 } from '@/config';
-import { DrawData, DrawType, DrawGraphFn, DrawTextFn } from '@/types';
+import { GraphItem, DrawType, DrawGraphFn, DrawTextFn } from '@/types';
 import { getContentArea, splitContent, getResizeRectData } from '.';
 
 const drawResizeRect = (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, 'x' | 'y' | 'width' | 'height' | 'type'>,
+  drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
 ) => {
   // TODO: 文本类型暂不支持resize
   if (drawData.type === DrawType.text) {
@@ -33,7 +33,7 @@ const drawResizeRect = (
 /** 绘制selected的选择框 */
 const drawSelectedArea: (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<DrawData, 'x' | 'y' | 'width' | 'height' | 'type'>,
+  drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
   options?: {
     withoutResizeRect?: boolean;
     isDashLine?: boolean;
@@ -152,7 +152,7 @@ const drawText: DrawTextFn = (ctx, { x, y, content }) => {
   });
 };
 
-const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
+const drawGraph = (ctx: CanvasRenderingContext2D, drawData: GraphItem) => {
   switch (drawData.type) {
     case DrawType.selection:
       drawSelection(ctx, drawData);
@@ -175,7 +175,7 @@ const drawGraph = (ctx: CanvasRenderingContext2D, drawData: DrawData) => {
   }
 };
 
-const drawGraphs = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
+const drawGraphs = (ctx: CanvasRenderingContext2D, data: GraphItem[]) => {
   ctx.beginPath();
   data.forEach((item) => drawGraph(ctx, item));
   ctx.stroke();
@@ -183,7 +183,7 @@ const drawGraphs = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
 
 const drawSelectedBorder = (
   ctx: CanvasRenderingContext2D,
-  data: DrawData[],
+  data: GraphItem[],
 ) => {
   const selectedList = data.filter((item) => item.selected);
 
@@ -212,7 +212,10 @@ const drawSelectedBorder = (
   });
 };
 
-export const drawCanvas = (ctx: CanvasRenderingContext2D, data: DrawData[]) => {
+export const drawCanvas = (
+  ctx: CanvasRenderingContext2D,
+  data: GraphItem[],
+) => {
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   drawSelectedBorder(ctx, data);
   drawGraphs(ctx, data);

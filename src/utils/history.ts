@@ -1,14 +1,14 @@
 import {
   HistoryStack,
   HistoryRecord,
-  DrawData,
+  GraphItem,
   HistoryOperationMap,
   HistoryUpdatedRecordData,
   HistoryOperationMapValue,
 } from '@/types';
 
 interface HistoryHandleValue {
-  value: DrawData[];
+  value: GraphItem[];
 }
 
 class History {
@@ -38,10 +38,15 @@ class History {
     map?: HistoryOperationMap,
   ) {
     map?.forEach((addedRecord) => {
+      const recordItem = addedRecord[field];
+      if (!recordItem) {
+        return;
+      }
+
       handledValue.value.push({
-        ...addedRecord[field],
-        selected: !addedRecord[field]?.containerId,
-      } as DrawData);
+        ...recordItem,
+        selected: 'containerId' in recordItem ? !recordItem?.containerId : true,
+      } as GraphItem);
     });
   }
 
@@ -62,14 +67,16 @@ class History {
         return {
           ...item,
           ...updatedFieldItem,
-          selected: updatedFieldItem?.selected ?? !item.containerId,
+          selected:
+            updatedFieldItem?.selected ??
+            ('containerId' in item ? !item.containerId : true),
         };
       });
     }
   }
 
   // 恢复
-  redo(drawData: DrawData[]): DrawData[] | null {
+  redo(drawData: GraphItem[]): GraphItem[] | null {
     const redoRecord = this.#redoStack.pop();
     if (!redoRecord) {
       return null;
@@ -94,7 +101,7 @@ class History {
   }
 
   // 撤回
-  undo(drawData: DrawData[]): DrawData[] | null {
+  undo(drawData: GraphItem[]): GraphItem[] | null {
     const undoRecord = this.#undoStack.pop();
     if (!undoRecord) {
       return null;
@@ -118,7 +125,7 @@ class History {
     return result.value;
   }
 
-  collectRemovedRecord(drawData: DrawData[]) {
+  collectRemovedRecord(drawData: GraphItem[]) {
     const map: HistoryOperationMap = new Map();
     drawData.forEach((item) => {
       map.set(item.id, { deleted: item });
@@ -151,7 +158,7 @@ class History {
   }
 
   collectAddedRecord(
-    drawData: DrawData[],
+    drawData: GraphItem[],
     updatedValue?: HistoryUpdatedRecordData,
   ) {
     const map: HistoryOperationMap = new Map();

@@ -2,10 +2,12 @@ import {
   BasicGraphFields,
   Coordinate,
   CursorConfig,
-  DrawData,
+  GraphItem,
   DrawType,
   ResizeCursorResult,
   ResizePosition,
+  TextGraphItem,
+  NormalGraphItem,
 } from '@/types';
 import {
   getDrawDataDis,
@@ -34,8 +36,8 @@ const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
 
 export const getHoverElement = (
   { x, y }: Coordinate,
-  drawData: DrawData[],
-): DrawData | DrawData[] | null => {
+  drawData: GraphItem[],
+): GraphItem | GraphItem[] | null => {
   const selectedList = drawData.filter((i) => i.selected);
   if (selectedList.length) {
     if (selectedList.length > 1) {
@@ -126,13 +128,15 @@ export const getHoverElement = (
 
 export const getTextContainer = (
   { x, y }: Coordinate,
-  drawData: DrawData[],
-): DrawData | null => {
-  let result: DrawData | null = null;
+  drawData: GraphItem[],
+): NormalGraphItem | null => {
+  let result: NormalGraphItem | null = null;
   drawData.forEach((item) => {
     if (!HAS_BOUNDING_ELEMENTS_LIST.includes(item.type)) {
       return;
     }
+
+    const typedItem = item as NormalGraphItem;
 
     const [middleX, middleY] = [
       item.x + item.width / 2,
@@ -147,10 +151,10 @@ export const getTextContainer = (
     ) {
       if (result) {
         if (item.width < result.width) {
-          result = item;
+          result = typedItem;
         }
       } else {
-        result = item;
+        result = typedItem;
       }
     }
   });
@@ -159,7 +163,7 @@ export const getTextContainer = (
 
 export const getExistTextElement = (
   { x, y }: Coordinate,
-  drawData: DrawData[],
+  drawData: GraphItem[],
 ) =>
   drawData.find(
     (item) =>
@@ -168,11 +172,11 @@ export const getExistTextElement = (
       y >= item.y &&
       x <= item.x + item.width &&
       y <= item.y + item.height,
-  );
+  ) as TextGraphItem;
 
 export const getResizeCursor = (
   coordinate: Coordinate,
-  drawData: DrawData[],
+  drawData: GraphItem[],
 ): ResizeCursorResult | null => {
   const selectedList = drawData.filter((item) => item.selected);
   if (!selectedList.length) {
@@ -181,7 +185,7 @@ export const getResizeCursor = (
 
   const getCursorConfig = (
     resizeRectData: ReturnType<typeof getResizeRectData>,
-    graphData: Pick<DrawData, BasicGraphFields>,
+    graphData: Pick<GraphItem, BasicGraphFields>,
   ) => {
     const { length } = resizeRectData;
     for (let i = 0; i < length; i++) {

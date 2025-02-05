@@ -1,12 +1,12 @@
-import { useMemoizedFn, useMount } from "ahooks";
-import { message } from "antd";
+import { useMemoizedFn, useMount } from 'ahooks';
+import { message } from 'antd';
 import {
   EXPORT_IMAGE_BACKGROUND_COLOR,
   EXPORT_IMAGE_GAP,
   APP_KEY,
   OPERATION_TOOL_KEY,
-} from "@/config";
-import { DrawData, SetDrawData } from "@/types";
+} from '@/config';
+import { GraphItem, SetDrawData } from '@/types';
 import {
   downLoad,
   drawCanvas,
@@ -14,10 +14,10 @@ import {
   getDownloadUri,
   history,
   mitt,
-} from "@/utils";
+} from '@/utils';
 
 interface useOperationToolParams {
-  staticDrawData: DrawData[];
+  staticDrawData: GraphItem[];
   setStaticDrawData: SetDrawData;
 }
 
@@ -34,9 +34,9 @@ export const useOperationToolEvent = ({
   });
 
   const importCanvasContent = useMemoizedFn(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.style.display = "none";
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.style.display = 'none';
     document.body.appendChild(input);
     input.click();
     input.onchange = (e: Event) => {
@@ -46,7 +46,7 @@ export const useOperationToolEvent = ({
       reader.onload = (event) => {
         try {
           const result = JSON.parse(
-            (event.target as FileReader).result as string
+            (event.target as FileReader).result as string,
           );
           history.collectAddedRecord(result);
           setStaticDrawData(result);
@@ -59,7 +59,7 @@ export const useOperationToolEvent = ({
 
   const exportCanvasContent = useMemoizedFn(() => {
     if (!staticDrawData.length) {
-      message.info("暂无内容");
+      message.info('暂无内容');
       return;
     }
     downLoad(getDownloadUri(JSON.stringify(staticDrawData)), APP_KEY);
@@ -67,11 +67,11 @@ export const useOperationToolEvent = ({
 
   const exportCanvasContentAsImage = useMemoizedFn(() => {
     if (!staticDrawData.length) {
-      message.info("暂无内容");
+      message.info('暂无内容');
       return;
     }
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
     if (!context) {
       return;
     }
@@ -93,7 +93,7 @@ export const useOperationToolEvent = ({
         ...d,
         x: d.x - minX + EXPORT_IMAGE_GAP / 2,
         y: d.y - minY + EXPORT_IMAGE_GAP / 2,
-      }))
+      })),
     );
     const img = canvas.toDataURL();
     downLoad(img, APP_KEY);
