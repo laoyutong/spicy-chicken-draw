@@ -5,8 +5,15 @@ import {
 } from '@/config';
 import { GraphItem, DrawGraphFn, DrawType } from '@/types';
 
-export const splitContent = (content: string): string[] =>
+const splitContent = (content: string): string[] =>
   content.replace(/\r\n?/g, '\n').split('\n');
+
+export const getTextLines = (content: string) => {
+  const textList = splitContent(content);
+  return textList.filter(
+    (item, index) => !!item.trim() || index !== textList.length - 1,
+  );
+};
 
 export const getMaxDis = (position: number, value: number) =>
   Math.max(position, position + value);

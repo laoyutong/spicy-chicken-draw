@@ -5,7 +5,6 @@ import {
 } from '@/config';
 import {
   Coordinate,
-  GraphItem,
   NormalGraphItem,
   TextGraphItem,
   TextOnChangeEvent,
@@ -69,7 +68,6 @@ const setTextAreaStyle = (
     outline: 0,
     background: 'transparent',
     resize: 'none',
-    fontSize: DEFAULT_TEXT_FONT_SIZE + 'px',
     lineHeight: '1em',
     fontFamily: TEXT_FONT_FAMILY,
     overflow: 'hidden',
@@ -78,15 +76,18 @@ const setTextAreaStyle = (
 
 const getTextStyle = (
   { x, y }: Coordinate,
-  container: GraphItem | null,
-  existElement?: GraphItem,
+  container: NormalGraphItem | null,
+  existElement?: TextGraphItem,
 ) => {
+  const finalFontSize = existElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
+
   if (!container) {
     return {
       top: (existElement?.y ?? y) + 'px',
       left: (existElement?.x ?? x) + 'px',
       width: `${window.innerWidth - x}px`,
       whiteSpace: 'nowrap',
+      fontSize: finalFontSize + 'px',
     };
   }
 
@@ -96,6 +97,7 @@ const getTextStyle = (
     width: container.width + 'px',
     height: TEXTAREA_PER_HEIGHT + 'px',
     textAlign: 'center',
+    fontSize: finalFontSize + 'px',
   };
 };
 

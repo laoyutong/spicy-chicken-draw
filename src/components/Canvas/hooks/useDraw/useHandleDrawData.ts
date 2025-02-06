@@ -34,9 +34,9 @@ import {
   getResizeCursor,
   getSelectedItems,
   getTextContainer,
+  getTextLines,
   handleDrawItem,
   history,
-  splitContent,
 } from '@/utils';
 
 interface UseHandleDrawDataParams {
@@ -76,16 +76,16 @@ export const useHandleDrawData = ({
     existElement,
   ) => {
     if (textValue.trim() && (coordinate || existElement)) {
-      const textList = splitContent(textValue);
-      const lines = textList.filter(
-        (item, index) => !!item.trim() || index !== textList.length - 1,
-      );
       let maxWidth = 0;
       const canvas = document.createElement('canvas');
       const canvasCtx = canvas.getContext('2d');
+      const lines = getTextLines(textValue);
+
+      const finalFontSizeValue =
+        existElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
 
       if (canvasCtx) {
-        canvasCtx.font = `${DEFAULT_TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
+        canvasCtx.font = `${finalFontSizeValue}px  ${TEXT_FONT_FAMILY}`;
         lines.forEach((line) => {
           const { width } = canvasCtx.measureText(line);
           if (width > maxWidth) {
@@ -94,7 +94,7 @@ export const useHandleDrawData = ({
         });
       }
 
-      const textareaHeight = DEFAULT_TEXT_FONT_SIZE * lines.length;
+      const textareaHeight = finalFontSizeValue * lines.length;
 
       const textProperty = container
         ? {
@@ -114,7 +114,7 @@ export const useHandleDrawData = ({
         width: maxWidth,
         selected: false,
         height: textareaHeight,
-        fontSize: DEFAULT_TEXT_FONT_SIZE,
+        fontSize: finalFontSizeValue,
         ...textProperty,
         ...(container ? { containerId: container.id } : {}),
       };
@@ -476,11 +476,19 @@ export const useHandleDrawData = ({
                 resizeCacheItem.y + (yDis / contentAreaHeight) * disY;
 
               activeDraftItem.width = resizeCacheItem.width + widthDis;
-              activeDraftItem.height = resizeCacheItem.height + heightDis;
+
+              const activeItemHeight = resizeCacheItem.height + heightDis;
+              activeDraftItem.height = activeItemHeight;
+
+              // 文本类型需要同步更改字体大小
+              if (activeDraftItem.type === DrawType.text) {
+                const lines = getTextLines(activeDraftItem.content);
+                activeDraftItem.fontSize = activeItemHeight / lines.length;
+              }
             };
 
             // 存在文本类型时，只支持等比缩放
-            // TODO: 待支持文本类型缩放 & 反转
+            // TODO: 待支持反转能力
             if (hasTextGraphItem) {
               const resizeRate = contentAreaWidth / contentAreaHeight;
 

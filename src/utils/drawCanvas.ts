@@ -8,7 +8,7 @@ import {
   SELECTION_BORDER_COLOR,
 } from '@/config';
 import { GraphItem, DrawType, DrawGraphFn, DrawTextFn } from '@/types';
-import { getContentArea, splitContent, getResizeRectData } from '.';
+import { getContentArea, getResizeRectData, getTextLines } from '.';
 
 const drawResizeRect = (
   ctx: CanvasRenderingContext2D,
@@ -140,7 +140,8 @@ const drawText: DrawTextFn = (ctx, { x, y, content, fontSize }) => {
   }
   ctx.textBaseline = 'bottom';
   ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
-  const lines = splitContent(content);
+
+  const lines = getTextLines(content);
   lines.forEach((line, index) => {
     ctx.fillText(line, x, y + fontSize * (index + 1));
   });
