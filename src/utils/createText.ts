@@ -5,6 +5,7 @@ import {
   TextGraphItem,
   TextOnChangeEvent,
 } from '@/types';
+import { getTextLines } from './common';
 
 const createTextAreaElement = () => {
   const oldTextarea = document.querySelector('textarea');
@@ -19,22 +20,22 @@ const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
   coordinate: Coordinate,
   container: NormalGraphItem | null,
-  existElement: TextGraphItem | null,
   {
-    oninput,
+    onInput,
     onChange,
   }: {
-    oninput?: () => void;
+    onInput?: (value: string) => void;
     onChange: TextOnChangeEvent;
   },
+  existElement?: TextGraphItem,
 ) => {
   textarea.onkeydown = (e) => {
     e.stopPropagation();
   };
 
-  textarea.oninput = () => {
+  textarea.oninput = (e: Event) => {
     textarea.style.height = textarea.scrollHeight + 'px';
-    oninput?.();
+    onInput?.((e.target as HTMLInputElement).value);
   };
 
   textarea.onblur = (e: Event) => {
@@ -87,11 +88,17 @@ const getTextStyle = (
     };
   }
 
+  const textLines = existElement
+    ? getTextLines(existElement.content).length
+    : 1;
+
+  const textElementHeight = textLines * finalFontSize;
+
   return {
-    top: container.y + container.height / 2 - finalFontSize / 2 + 'px',
+    top: container.y + container.height / 2 - textElementHeight / 2 + 'px',
     left: container.x - (container.width < 0 ? container.width : 0) + 'px',
     width: container.width + 'px',
-    height: finalFontSize + 'px',
+    height: textElementHeight + 'px',
     textAlign: 'center',
     fontSize: finalFontSize + 'px',
   };
@@ -101,6 +108,7 @@ export const createText = (
   coordinate: Coordinate,
   onChange: TextOnChangeEvent,
   container: NormalGraphItem | null,
+  onInput?: (value: string) => void,
   existElement?: TextGraphItem,
 ) => {
   const textAreaElement = createTextAreaElement();
@@ -108,7 +116,7 @@ export const createText = (
     return;
   }
 
-  if (existElement && existElement.content) {
+  if (existElement?.content) {
     textAreaElement.value = existElement.content;
     textAreaElement.setSelectionRange(0, existElement.content.length);
   }
@@ -122,10 +130,11 @@ export const createText = (
     textAreaElement,
     coordinate,
     container,
-    existElement ?? null,
     {
       onChange,
+      onInput,
     },
+    existElement,
   );
 
   document.body.appendChild(textAreaElement);

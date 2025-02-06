@@ -54,6 +54,7 @@ export interface ArrowGraphItem extends BaseGraphItem {
   type: DrawType.arrow;
 }
 
+// TODO: 待增加textAlign属性
 export interface TextGraphItem extends BaseGraphItem {
   type: DrawType.text;
   content: string;
@@ -71,7 +72,7 @@ export type TextOnChangeEvent = (
   value: string,
   coordinate: Coordinate | null,
   container: NormalGraphItem | null,
-  existElement: TextGraphItem | null,
+  existElement?: TextGraphItem,
 ) => void;
 
 export type SetDrawData = Dispatch<SetStateAction<GraphItem[]>>;
