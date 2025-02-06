@@ -732,7 +732,8 @@ export const useHandleDrawData = ({
       createText(
         coordinate,
         createTextOnChange,
-        (staticDrawData.find(
+        // 兼容双击的情况
+        ([...staticDrawData, ...activeDrawData].find(
           (item) => item.id === existTextElement?.containerId,
         ) as NormalGraphItem) ?? null,
         existTextElement,
