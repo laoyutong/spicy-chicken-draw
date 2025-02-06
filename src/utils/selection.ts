@@ -211,9 +211,6 @@ export const getResizeCursor = (
 
   if (selectedList.length === 1) {
     const activeDrawItem = selectedList[0];
-    if (activeDrawItem.type === DrawType.text) {
-      return null;
-    }
     const resizeRectData = getResizeRectData(activeDrawItem);
     return getCursorConfig(resizeRectData, activeDrawItem);
   } else {

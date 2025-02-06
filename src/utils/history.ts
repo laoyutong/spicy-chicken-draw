@@ -71,7 +71,7 @@ class History {
             updatedFieldItem?.selected ??
             ('containerId' in item ? !item.containerId : true),
         };
-      });
+      }) as GraphItem[];
     }
   }
 

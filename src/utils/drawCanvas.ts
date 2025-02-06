@@ -4,7 +4,6 @@ import {
   SELECTION_AREA_BG_COLOR,
   DRAW_SELECTION_GAP,
   TEXT_FONT_FAMILY,
-  TEXT_FONT_SIZE,
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
 } from '@/config';
@@ -15,11 +14,6 @@ const drawResizeRect = (
   ctx: CanvasRenderingContext2D,
   drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
 ) => {
-  // TODO: 文本类型暂不支持resize
-  if (drawData.type === DrawType.text) {
-    return;
-  }
-
   const [startRect, endRect, xRect, yRect] = getResizeRectData(drawData);
 
   drawRect(ctx, startRect);
@@ -140,15 +134,15 @@ const drawArrow: DrawGraphFn = (
   ctx.lineTo(x2, y2);
 };
 
-const drawText: DrawTextFn = (ctx, { x, y, content }) => {
+const drawText: DrawTextFn = (ctx, { x, y, content, fontSize }) => {
   if (!content?.trim()) {
     return;
   }
   ctx.textBaseline = 'bottom';
-  ctx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
+  ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
   const lines = splitContent(content);
   lines.forEach((line, index) => {
-    ctx.fillText(line, x, y + TEXT_FONT_SIZE * (index + 1));
+    ctx.fillText(line, x, y + fontSize * (index + 1));
   });
 };
 

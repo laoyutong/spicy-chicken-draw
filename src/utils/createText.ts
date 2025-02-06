@@ -1,5 +1,5 @@
 import {
-  TEXT_FONT_SIZE,
+  DEFAULT_TEXT_FONT_SIZE,
   TEXT_FONT_FAMILY,
   TEXTAREA_PER_HEIGHT,
 } from '@/config';
@@ -69,7 +69,7 @@ const setTextAreaStyle = (
     outline: 0,
     background: 'transparent',
     resize: 'none',
-    fontSize: TEXT_FONT_SIZE + 'px',
+    fontSize: DEFAULT_TEXT_FONT_SIZE + 'px',
     lineHeight: '1em',
     fontFamily: TEXT_FONT_FAMILY,
     overflow: 'hidden',

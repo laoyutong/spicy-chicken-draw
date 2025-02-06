@@ -39,8 +39,13 @@ export interface SelectionGraphItem extends BaseGraphItem {
   type: DrawType.selection;
 }
 
+export type NormalGraphType =
+  | DrawType.circle
+  | DrawType.diamond
+  | DrawType.rectangle;
+
 export interface NormalGraphItem extends BaseGraphItem {
-  type: DrawType.circle | DrawType.diamond | DrawType.rectangle;
+  type: NormalGraphType;
   boundingElements?: BoundingElement[];
 }
 
@@ -51,7 +56,8 @@ export interface ArrowGraphItem extends BaseGraphItem {
 
 export interface TextGraphItem extends BaseGraphItem {
   type: DrawType.text;
-  content?: string;
+  content: string;
+  fontSize: number;
   containerId?: string;
 }
 
@@ -81,7 +87,7 @@ export type DrawGraphFn = BaseDrawFn<NormalGraphItem, BasicGraphFields>;
 
 export type DrawTextFn = BaseDrawFn<
   TextGraphItem,
-  BasicGraphFields | 'content'
+  BasicGraphFields | 'content' | 'fontSize'
 >;
 
 export type ResizePosition = 'top' | 'bottom';

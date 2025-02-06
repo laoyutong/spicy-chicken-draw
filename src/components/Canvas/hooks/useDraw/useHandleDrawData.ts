@@ -5,7 +5,11 @@ import { useAtom } from 'jotai';
 import { nanoid } from 'nanoid';
 
 import { cursorPointAtom, drawTypeAtom } from '@/store';
-import { MIN_DRAW_DIS, TEXT_FONT_FAMILY, TEXT_FONT_SIZE } from '@/config';
+import {
+  MIN_DRAW_DIS,
+  TEXT_FONT_FAMILY,
+  DEFAULT_TEXT_FONT_SIZE,
+} from '@/config';
 import {
   BoundingElement,
   Coordinate,
@@ -17,6 +21,8 @@ import {
   SetDrawData,
   TextOnChangeEvent,
   NormalGraphItem,
+  TextGraphItem,
+  NormalGraphType,
 } from '@/types';
 import {
   createText,
@@ -57,7 +63,9 @@ export const useHandleDrawData = ({
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
 
-  const workingDrawData = useRef<GraphItem | null>(null);
+  const workingDrawData = useRef<Exclude<GraphItem, TextGraphItem> | null>(
+    null,
+  );
 
   const resizePosition = useRef<ResizePosition | null>(null);
 
@@ -75,8 +83,9 @@ export const useHandleDrawData = ({
       let maxWidth = 0;
       const canvas = document.createElement('canvas');
       const canvasCtx = canvas.getContext('2d');
+
       if (canvasCtx) {
-        canvasCtx.font = `${TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
+        canvasCtx.font = `${DEFAULT_TEXT_FONT_SIZE}px  ${TEXT_FONT_FAMILY}`;
         lines.forEach((line) => {
           const { width } = canvasCtx.measureText(line);
           if (width > maxWidth) {
@@ -85,7 +94,7 @@ export const useHandleDrawData = ({
         });
       }
 
-      const textareaHeight = TEXT_FONT_SIZE * lines.length;
+      const textareaHeight = DEFAULT_TEXT_FONT_SIZE * lines.length;
 
       const textProperty = container
         ? {
@@ -98,13 +107,14 @@ export const useHandleDrawData = ({
 
       const newTextId = existElement ? existElement.id : nanoid();
 
-      const textElement = {
+      const textElement: TextGraphItem = {
         id: newTextId,
         type: DrawType.text,
         content: textValue,
         width: maxWidth,
         selected: false,
         height: textareaHeight,
+        fontSize: DEFAULT_TEXT_FONT_SIZE,
         ...textProperty,
         ...(container ? { containerId: container.id } : {}),
       };
@@ -403,6 +413,12 @@ export const useHandleDrawData = ({
 
       const [minX, maxX, minY, maxY] = startResizeContentAreaCache.current;
 
+      const [contentAreaWidth, contentAreaHeight] = [maxX - minX, maxY - minY];
+
+      const hasTextGraphItem = resizeDataCache.current.some(
+        (item) => item.type === DrawType.text,
+      );
+
       setActiveDrawData((pre) =>
         produce(pre, (draft) => {
           resizeDataCache.current.forEach((resizeCacheItem) => {
@@ -413,55 +429,151 @@ export const useHandleDrawData = ({
               return;
             }
 
-            let xDis = 0,
-              yDis = 0,
-              widthDis = 0,
-              heightDis = 0;
+            const handleResize = (disX: number, disY: number) => {
+              let xDis = 0,
+                yDis = 0,
+                widthDis = 0,
+                heightDis = 0;
 
-            const baseWidthDis =
-              (resizeCacheItem.width / (maxX - minX)) * moveDisX;
-            const baseHeightDis =
-              (resizeCacheItem.height / (maxY - minY)) * moveDixY;
+              const baseWidthDis =
+                (resizeCacheItem.width / contentAreaWidth) * disX;
+              const baseHeightDis =
+                (resizeCacheItem.height / contentAreaHeight) * disY;
 
-            if (cursorPoint === CursorConfig.neswResize) {
-              if (resizePosition.current === 'top') {
-                // 右上角拖动
-                xDis = resizeCacheItem.x - minX;
-                yDis = maxY - resizeCacheItem.y;
-                widthDis = baseWidthDis;
-                heightDis = -baseHeightDis;
-              } else {
-                // 右下角拖动
-                xDis = maxX - resizeCacheItem.x;
-                yDis = resizeCacheItem.y - minY;
-                widthDis = -baseWidthDis;
-                heightDis = baseHeightDis;
+              if (cursorPoint === CursorConfig.neswResize) {
+                if (resizePosition.current === 'top') {
+                  // 右上角
+                  xDis = resizeCacheItem.x - minX;
+                  yDis = maxY - resizeCacheItem.y;
+                  widthDis = baseWidthDis;
+                  heightDis = -baseHeightDis;
+                } else {
+                  // 左下角
+                  xDis = maxX - resizeCacheItem.x;
+                  yDis = resizeCacheItem.y - minY;
+                  widthDis = -baseWidthDis;
+                  heightDis = baseHeightDis;
+                }
+              } else if (cursorPoint === CursorConfig.nwseResize) {
+                if (resizePosition.current === 'top') {
+                  // 左上角
+                  xDis = maxX - resizeCacheItem.x;
+                  yDis = maxY - resizeCacheItem.y;
+                  widthDis = -baseWidthDis;
+                  heightDis = -baseHeightDis;
+                } else {
+                  // 右下角
+                  xDis = resizeCacheItem.x - minX;
+                  yDis = resizeCacheItem.y - minY;
+                  widthDis = baseWidthDis;
+                  heightDis = baseHeightDis;
+                }
               }
-            } else if (cursorPoint === CursorConfig.nwseResize) {
-              if (resizePosition.current === 'top') {
-                // 左上角拖动
-                xDis = maxX - resizeCacheItem.x;
-                yDis = maxY - resizeCacheItem.y;
-                widthDis = -baseWidthDis;
-                heightDis = -baseHeightDis;
-              } else {
-                // 左下角拖动
-                xDis = resizeCacheItem.x - minX;
-                yDis = resizeCacheItem.y - minY;
-                widthDis = baseWidthDis;
-                heightDis = baseHeightDis;
-              }
-            }
 
-            activeDraftItem.x =
-              resizeCacheItem.x + (xDis / (maxX - minX)) * moveDisX;
-            activeDraftItem.y =
-              resizeCacheItem.y + (yDis / (maxY - minY)) * moveDixY;
+              activeDraftItem.x =
+                resizeCacheItem.x + (xDis / contentAreaWidth) * disX;
+              activeDraftItem.y =
+                resizeCacheItem.y + (yDis / contentAreaHeight) * disY;
 
-            // 文本类型仅修改坐标
-            if (activeDraftItem.type !== DrawType.text) {
               activeDraftItem.width = resizeCacheItem.width + widthDis;
               activeDraftItem.height = resizeCacheItem.height + heightDis;
+            };
+
+            // 存在文本类型时，只支持等比缩放
+            // TODO: 待支持文本类型缩放 & 反转
+            if (hasTextGraphItem) {
+              const resizeRate = contentAreaWidth / contentAreaHeight;
+
+              const handleZoomOut = (isXLarger: boolean) => {
+                const smallDisX = (() => {
+                  if (!isXLarger) {
+                    return moveDisX;
+                  }
+                  const value = Math.abs(moveDixY * resizeRate);
+                  return moveDisX > 0 ? value : -value;
+                })();
+
+                const smallDisY = (() => {
+                  if (isXLarger) {
+                    return moveDixY;
+                  }
+                  const value = Math.abs(moveDisX / resizeRate);
+                  return moveDixY > 0 ? value : -value;
+                })();
+
+                handleResize(smallDisX, smallDisY);
+              };
+
+              const handleZoomIn = (
+                isXLarger: boolean,
+                xUnit: 1 | -1,
+                yUnit: 1 | -1,
+              ) => {
+                const largeDisX = (() => {
+                  if (isXLarger) {
+                    return moveDisX;
+                  }
+                  const value = Math.abs(moveDixY * resizeRate);
+                  return moveDisX > 0 ? value : -value;
+                })();
+
+                const largeDisY = (() => {
+                  if (!isXLarger) {
+                    return moveDixY;
+                  }
+                  const value = Math.abs(moveDisX / resizeRate);
+                  return moveDixY > 0 ? value : -value;
+                })();
+
+                handleResize(
+                  xUnit * Math.abs(largeDisX),
+                  yUnit * Math.abs(largeDisY),
+                );
+              };
+
+              if (cursorPoint === CursorConfig.neswResize) {
+                if (resizePosition.current === 'top') {
+                  // 右上角
+                  if (moveDisX <= 0 && moveDixY >= 0) {
+                    const isXLarger = moveDisX / resizeRate < -moveDixY;
+                    handleZoomOut(isXLarger);
+                  } else {
+                    const isXLarger = moveDisX / resizeRate > -moveDixY;
+                    handleZoomIn(isXLarger, 1, -1);
+                  }
+                } else {
+                  // 左下角
+                  if (moveDisX >= 0 && moveDixY <= 0) {
+                    const isXLarger = moveDisX / resizeRate > -moveDixY;
+                    handleZoomOut(isXLarger);
+                  } else {
+                    const isXLarger = moveDisX / resizeRate < -moveDixY;
+                    handleZoomIn(isXLarger, -1, 1);
+                  }
+                }
+              } else if (cursorPoint === CursorConfig.nwseResize) {
+                if (resizePosition.current === 'top') {
+                  // 左上角
+                  if (moveDisX >= 0 && moveDixY >= 0) {
+                    const isXLarger = moveDisX / resizeRate > moveDixY;
+                    handleZoomOut(isXLarger);
+                  } else {
+                    const isXLarger = moveDisX / resizeRate < moveDixY;
+                    handleZoomIn(isXLarger, -1, -1);
+                  }
+                } else {
+                  // 右下角
+                  if (moveDisX <= 0 && moveDixY <= 0) {
+                    const isXLarger = moveDisX / resizeRate < moveDixY;
+                    handleZoomOut(isXLarger);
+                  } else {
+                    const isXLarger = moveDisX / resizeRate > moveDixY;
+                    handleZoomIn(isXLarger, 1, 1);
+                  }
+                }
+              }
+            } else {
+              handleResize(moveDisX, moveDixY);
             }
           });
         }),
@@ -526,7 +638,7 @@ export const useHandleDrawData = ({
     if (!workingDrawData.current) {
       workingDrawData.current = {
         id: nanoid(),
-        type: drawType,
+        type: drawType as NormalGraphType,
         width: 0,
         height: 0,
         selected: false,
