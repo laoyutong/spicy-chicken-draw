@@ -1,8 +1,4 @@
-import {
-  DEFAULT_TEXT_FONT_SIZE,
-  TEXT_FONT_FAMILY,
-  TEXTAREA_PER_HEIGHT,
-} from '@/config';
+import { DEFAULT_TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from '@/config';
 import {
   Coordinate,
   NormalGraphItem,
@@ -92,10 +88,10 @@ const getTextStyle = (
   }
 
   return {
-    top: container.y + container.height / 2 - TEXTAREA_PER_HEIGHT / 2 + 'px',
+    top: container.y + container.height / 2 - finalFontSize / 2 + 'px',
     left: container.x - (container.width < 0 ? container.width : 0) + 'px',
     width: container.width + 'px',
-    height: TEXTAREA_PER_HEIGHT + 'px',
+    height: finalFontSize + 'px',
     textAlign: 'center',
     fontSize: finalFontSize + 'px',
   };

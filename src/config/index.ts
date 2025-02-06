@@ -10,8 +10,6 @@ export const SELECTION_BORDER_COLOR = 'rgb(105, 101, 219)';
 
 export const DEFAULT_TEXT_FONT_SIZE = 15;
 
-export const TEXTAREA_PER_HEIGHT = DEFAULT_TEXT_FONT_SIZE + 3;
-
 export const TEXT_FONT_FAMILY = 'Segoe UI Emoji';
 
 export const APP_KEY = 'SPICY_CHICKEN_DRAW';
