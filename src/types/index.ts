@@ -54,11 +54,11 @@ export interface ArrowGraphItem extends BaseGraphItem {
   type: DrawType.arrow;
 }
 
-// TODO: 待增加textAlign属性
 export interface TextGraphItem extends BaseGraphItem {
   type: DrawType.text;
   content: string;
   fontSize: number;
+  textAlign: TextAlign;
   containerId?: string;
 }
 
@@ -77,7 +77,7 @@ export type TextOnChangeEvent = (
 
 export type SetDrawData = Dispatch<SetStateAction<GraphItem[]>>;
 
-export type BaseDrawFn<T extends GraphItem, K extends keyof T> = (
+export type BaseDrawFn<T extends GraphItem, K extends keyof T = keyof T> = (
   ctx: CanvasRenderingContext2D,
   drawData: Pick<T, K>,
 ) => void;
@@ -86,12 +86,17 @@ export type BasicGraphFields = 'x' | 'y' | 'width' | 'height';
 
 export type DrawGraphFn = BaseDrawFn<NormalGraphItem, BasicGraphFields>;
 
-export type DrawTextFn = BaseDrawFn<
-  TextGraphItem,
-  BasicGraphFields | 'content' | 'fontSize'
->;
+export type DrawTextFn = BaseDrawFn<TextGraphItem>;
 
-export type ResizePosition = 'top' | 'bottom';
+export const enum ResizePosition {
+  top = 'TOP',
+  bottom = 'BOTTOM',
+}
+
+export const enum TextAlign {
+  left = 'left',
+  center = 'center',
+}
 
 export type CanvasCtxRef = RefObject<CanvasRenderingContext2D | null>;
 

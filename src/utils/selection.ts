@@ -201,7 +201,9 @@ export const getResizeCursor = (
 
         const position: ResizePosition =
           // i为0、2则表明在起始点的x轴上，用高度来判断图形绘制方向
-          [0, 2].includes(i) === graphData.height > 0 ? 'top' : 'bottom';
+          [0, 2].includes(i) === graphData.height > 0
+            ? ResizePosition.top
+            : ResizePosition.bottom;
 
         return { cursorConfig, position };
       }

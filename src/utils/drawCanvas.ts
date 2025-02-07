@@ -7,7 +7,13 @@ import {
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
 } from '@/config';
-import { GraphItem, DrawType, DrawGraphFn, DrawTextFn } from '@/types';
+import {
+  GraphItem,
+  DrawType,
+  DrawGraphFn,
+  DrawTextFn,
+  TextAlign,
+} from '@/types';
 import { getContentArea, getResizeRectData, getTextLines } from '.';
 
 const drawResizeRect = (
@@ -134,16 +140,31 @@ const drawArrow: DrawGraphFn = (
   ctx.lineTo(x2, y2);
 };
 
-const drawText: DrawTextFn = (ctx, { x, y, content, fontSize }) => {
+const drawText: DrawTextFn = (
+  ctx,
+  { x, y, content, width, fontSize, textAlign },
+) => {
   if (!content?.trim()) {
     return;
   }
+
   ctx.textBaseline = 'bottom';
   ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
 
   const lines = getTextLines(content);
   lines.forEach((line, index) => {
-    ctx.fillText(line, x, y + fontSize * (index + 1));
+    let xCoordinate = 0;
+
+    if (textAlign === TextAlign.left) {
+      xCoordinate = x;
+    }
+
+    if (textAlign === TextAlign.center) {
+      const { width: textWidth } = ctx.measureText(line);
+      xCoordinate = x + (width - textWidth) / 2;
+    }
+
+    ctx.fillText(line, xCoordinate, y + fontSize * (index + 1));
   });
 };
 

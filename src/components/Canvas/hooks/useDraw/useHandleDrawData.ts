@@ -23,6 +23,7 @@ import {
   NormalGraphItem,
   TextGraphItem,
   NormalGraphType,
+  TextAlign,
 } from '@/types';
 import {
   createText,
@@ -115,6 +116,9 @@ export const useHandleDrawData = ({
         selected: false,
         height: textareaHeight,
         fontSize: finalFontSizeValue,
+        textAlign:
+          existElement?.textAlign ||
+          (container ? TextAlign.center : TextAlign.left),
         ...textProperty,
         ...(container ? { containerId: container.id } : {}),
       };
@@ -442,7 +446,7 @@ export const useHandleDrawData = ({
                 (resizeCacheItem.height / contentAreaHeight) * disY;
 
               if (cursorPoint === CursorConfig.neswResize) {
-                if (resizePosition.current === 'top') {
+                if (resizePosition.current === ResizePosition.top) {
                   // 右上角
                   xDis = resizeCacheItem.x - minX;
                   yDis = maxY - resizeCacheItem.y;
@@ -456,7 +460,7 @@ export const useHandleDrawData = ({
                   heightDis = baseHeightDis;
                 }
               } else if (cursorPoint === CursorConfig.nwseResize) {
-                if (resizePosition.current === 'top') {
+                if (resizePosition.current === ResizePosition.top) {
                   // 左上角
                   xDis = maxX - resizeCacheItem.x;
                   yDis = maxY - resizeCacheItem.y;
@@ -541,7 +545,7 @@ export const useHandleDrawData = ({
               };
 
               if (cursorPoint === CursorConfig.neswResize) {
-                if (resizePosition.current === 'top') {
+                if (resizePosition.current === ResizePosition.top) {
                   // 右上角
                   if (moveDisX <= 0 && moveDixY >= 0) {
                     const isXLarger = moveDisX / resizeRate < -moveDixY;
@@ -561,7 +565,7 @@ export const useHandleDrawData = ({
                   }
                 }
               } else if (cursorPoint === CursorConfig.nwseResize) {
-                if (resizePosition.current === 'top') {
+                if (resizePosition.current === ResizePosition.top) {
                   // 左上角
                   if (moveDisX >= 0 && moveDixY >= 0) {
                     const isXLarger = moveDisX / resizeRate > moveDixY;
