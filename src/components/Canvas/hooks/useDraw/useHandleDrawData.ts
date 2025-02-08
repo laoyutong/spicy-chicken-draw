@@ -655,6 +655,7 @@ export const useHandleDrawData = ({
         width: 0,
         height: 0,
         selected: false,
+        seed: Math.ceil(Math.random() * 100000),
         ...startCoordinate,
       };
       return true;

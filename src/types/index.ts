@@ -47,13 +47,17 @@ export type NormalGraphType =
   | DrawType.diamond
   | DrawType.rectangle;
 
-export interface NormalGraphItem extends BaseGraphItem {
+export interface RoughGraphItem {
+  seed: number;
+}
+
+export interface NormalGraphItem extends BaseGraphItem, RoughGraphItem {
   type: NormalGraphType;
   boundingElements?: BoundingElement[];
 }
 
 // TODO: 目前仅支持单纯的绘制能力
-export interface ArrowGraphItem extends BaseGraphItem {
+export interface ArrowGraphItem extends BaseGraphItem, RoughGraphItem {
   type: DrawType.arrow;
 }
 
@@ -91,7 +95,7 @@ export type BasicGraphData = Pick<GraphItem, BasicGraphFields>;
 
 export type DrawGraphFn = (
   roughCanvas: RoughCanvas,
-  drawData: BasicGraphData,
+  drawData: Pick<NormalGraphItem, BasicGraphFields | 'seed'>,
 ) => void;
 
 export type DrawTextFn = (

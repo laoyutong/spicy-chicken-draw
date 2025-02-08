@@ -80,30 +80,51 @@ const drawNormalRect = (
   ctx.closePath();
 };
 
-const drawRect: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
-  roughCanvas.rectangle(x, y, width, height);
+const drawRect: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
+  roughCanvas.rectangle(x, y, width, height, {
+    seed,
+  });
 };
 
-const drawCircle: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
+const drawCircle: DrawGraphFn = (
+  roughCanvas,
+  { x, y, width, height, seed },
+) => {
   const centerX = x + width / 2;
   const centerY = y + height / 2;
-  roughCanvas.ellipse(centerX, centerY, width, height);
+  roughCanvas.ellipse(centerX, centerY, width, height, {
+    seed,
+  });
 };
 
-const drawDiamond: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
-  roughCanvas.polygon([
-    [x + width / 2, y],
-    [x + width, y + height / 2],
-    [x + width / 2, y + height],
-    [x, y + height / 2],
-  ]);
+const drawDiamond: DrawGraphFn = (
+  roughCanvas,
+  { x, y, width, height, seed },
+) => {
+  roughCanvas.polygon(
+    [
+      [x + width / 2, y],
+      [x + width, y + height / 2],
+      [x + width / 2, y + height],
+      [x, y + height / 2],
+    ],
+    {
+      seed,
+    },
+  );
 };
 
-const drawSelection: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
-  roughCanvas.rectangle(x, y, width, height, { fill: SELECTION_AREA_BG_COLOR });
+const drawSelection = (
+  ctx: CanvasRenderingContext2D,
+  { x, y, width, height }: BasicGraphData,
+) => {
+  ctx.save();
+  ctx.fillStyle = SELECTION_AREA_BG_COLOR;
+  ctx.fillRect(x, y, width, height);
+  ctx.restore();
 };
 
-const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
+const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
   const arrowLength = Math.min(
     Math.pow(width * width + height * height, 1 / 2) / 2,
     ARROW_LENGTH,
@@ -119,9 +140,10 @@ const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
   const x2 = targetX - directionLength * Math.sin((Math.PI * angleB) / 180);
   const y2 = targetY - directionLength * Math.cos((Math.PI * angleB) / 180);
 
-  roughCanvas.line(x, y, targetX, targetY);
-  roughCanvas.line(targetX, targetY, x1, y1);
-  roughCanvas.line(targetX, targetY, x2, y2);
+  const roughOptions = { seed };
+  roughCanvas.line(x, y, targetX, targetY, roughOptions);
+  roughCanvas.line(targetX, targetY, x1, y1, roughOptions);
+  roughCanvas.line(targetX, targetY, x2, y2), roughOptions;
 };
 
 const drawText: DrawTextFn = (
@@ -159,7 +181,7 @@ const drawGraph = (
 ) => {
   switch (drawData.type) {
     case DrawType.selection:
-      drawSelection(roughCanvas, drawData);
+      drawSelection(ctx, drawData);
       return;
     case DrawType.rectangle:
       drawRect(roughCanvas, drawData);
