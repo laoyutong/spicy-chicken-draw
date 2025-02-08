@@ -4,6 +4,8 @@ export const ARROW_DEG = 30;
 
 export const ARROW_LENGTH = 30;
 
+export const DEFAULT_STROKE_STYLE = '#000';
+
 export const SELECTION_AREA_BG_COLOR = 'rgb(224, 223, 255)';
 
 export const SELECTION_BORDER_COLOR = 'rgb(105, 101, 219)';

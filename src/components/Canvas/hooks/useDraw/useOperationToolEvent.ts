@@ -1,5 +1,6 @@
 import { useMemoizedFn, useMount } from 'ahooks';
 import { message } from 'antd';
+import roughjs from 'roughjs';
 import {
   EXPORT_IMAGE_BACKGROUND_COLOR,
   EXPORT_IMAGE_GAP,
@@ -72,6 +73,7 @@ export const useOperationToolEvent = ({
     }
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    const roughCanvas = roughjs.canvas(canvas);
     if (!context) {
       return;
     }
@@ -89,6 +91,7 @@ export const useOperationToolEvent = ({
 
     drawCanvas(
       context,
+      roughCanvas,
       staticDrawData.map((d) => ({
         ...d,
         x: d.x - minX + EXPORT_IMAGE_GAP / 2,

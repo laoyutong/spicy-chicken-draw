@@ -6,6 +6,7 @@ import {
   SELECTION_BORDER_COLOR,
   ARROW_DEG,
   ARROW_LENGTH,
+  DEFAULT_STROKE_STYLE,
 } from '@/config';
 import {
   GraphItem,
@@ -65,7 +66,7 @@ const drawSelectedArea: (
     drawResizeRects(ctx, { x, y, width, height, type });
   ctx.stroke();
 
-  ctx.strokeStyle = '#000';
+  ctx.strokeStyle = DEFAULT_STROKE_STYLE;
 };
 
 const drawNormalRect = (
@@ -130,7 +131,6 @@ const drawText: DrawTextFn = (
   if (!content?.trim()) {
     return;
   }
-  ctx.beginPath();
 
   ctx.textBaseline = 'bottom';
   ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
@@ -150,8 +150,6 @@ const drawText: DrawTextFn = (
 
     ctx.fillText(line, xCoordinate, y + fontSize * (index + 1));
   });
-
-  ctx.stroke();
 };
 
 const drawGraph = (
@@ -217,7 +215,10 @@ export const drawCanvas = (
   roughCanvas: RoughCanvas,
   data: GraphItem[],
 ) => {
-  ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   drawSelectedBorder(ctx, data);
+
+  ctx.beginPath();
   data.forEach((item) => drawGraph(ctx, roughCanvas, item));
+  ctx.stroke();
 };

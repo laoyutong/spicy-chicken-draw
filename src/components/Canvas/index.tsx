@@ -22,8 +22,8 @@ export const Canvas = (): JSX.Element => {
   );
 
   useDraw(
-    activeCanvasCtx,
     staticCanvasCtx,
+    activeCanvasCtx,
     staticRoughCanvas,
     activeRoughCanvas,
   );
