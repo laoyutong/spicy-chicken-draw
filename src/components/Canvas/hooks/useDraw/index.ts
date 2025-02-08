@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CanvasCtxRef, GraphItem } from '@/types';
+import { CanvasCtxRef, GraphItem, RoughCanvasRef } from '@/types';
 import { APP_KEY } from '@/config';
 
 import { useOperationCoordinate } from './useOperationCoordinate';
@@ -9,8 +9,10 @@ import { useDrawCanvas } from './useDrawCanvas';
 import { useHandleDrawData } from './useHandleDrawData';
 
 export const useDraw = (
-  activeCanvasCtx: CanvasCtxRef,
   staticCanvasCtx: CanvasCtxRef,
+  activeCanvasCtx: CanvasCtxRef,
+  staticRoughCanvas: RoughCanvasRef,
+  activeRoughCanvas: RoughCanvasRef,
 ) => {
   const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
 
@@ -45,5 +47,7 @@ export const useDraw = (
     activeDrawData,
     staticCanvasCtx,
     activeCanvasCtx,
+    staticRoughCanvas,
+    activeRoughCanvas,
   });
 };

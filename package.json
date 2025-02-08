@@ -18,7 +18,8 @@
     "mitt": "^3.0.1",
     "nanoid": "^4.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "roughjs": "^4.6.6"
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.0",

@@ -1,5 +1,4 @@
 import {
-  BasicGraphFields,
   Coordinate,
   CursorConfig,
   GraphItem,
@@ -8,6 +7,7 @@ import {
   ResizePosition,
   TextGraphItem,
   NormalGraphItem,
+  BasicGraphData,
 } from '@/types';
 import {
   getDrawDataDis,
@@ -185,7 +185,7 @@ export const getResizeCursor = (
 
   const getCursorConfig = (
     resizeRectData: ReturnType<typeof getResizeRectData>,
-    graphData: Pick<GraphItem, BasicGraphFields>,
+    graphData: BasicGraphData,
   ) => {
     const { length } = resizeRectData;
     for (let i = 0; i < length; i++) {

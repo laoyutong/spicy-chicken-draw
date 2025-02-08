@@ -7,15 +7,26 @@ import styles from './style.module.less';
 export const Canvas = (): JSX.Element => {
   const cursorPoint = useAtomValue(cursorPointAtom);
 
-  const { activeCanvasCtx, activeCanvasRef, staticCanvasCtx, staticCanvasRef } =
-    useInitCanvas();
+  const {
+    activeCanvasCtx,
+    activeCanvasRef,
+    staticCanvasCtx,
+    staticCanvasRef,
+    staticRoughCanvas,
+    activeRoughCanvas,
+  } = useInitCanvas();
 
   useResizeCanvas(
     [staticCanvasRef, activeCanvasRef],
     [staticCanvasCtx, activeCanvasCtx],
   );
 
-  useDraw(activeCanvasCtx, staticCanvasCtx);
+  useDraw(
+    activeCanvasCtx,
+    staticCanvasCtx,
+    staticRoughCanvas,
+    activeRoughCanvas,
+  );
 
   return (
     <div className={styles.canvas_container} style={{ cursor: cursorPoint }}>

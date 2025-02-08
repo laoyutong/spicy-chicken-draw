@@ -1,4 +1,7 @@
 import { Dispatch, RefObject, SetStateAction } from 'react';
+import type { RoughCanvas } from 'roughjs/bin/canvas';
+
+export type { RoughCanvas };
 
 export const enum DrawType {
   selection = 'selection',
@@ -82,11 +85,19 @@ export type BaseDrawFn<T extends GraphItem, K extends keyof T = keyof T> = (
   drawData: Pick<T, K>,
 ) => void;
 
-export type BasicGraphFields = 'x' | 'y' | 'width' | 'height';
+type BasicGraphFields = 'x' | 'y' | 'width' | 'height';
 
-export type DrawGraphFn = BaseDrawFn<NormalGraphItem, BasicGraphFields>;
+export type BasicGraphData = Pick<GraphItem, BasicGraphFields>;
 
-export type DrawTextFn = BaseDrawFn<TextGraphItem>;
+export type DrawGraphFn = (
+  roughCanvas: RoughCanvas,
+  drawData: BasicGraphData,
+) => void;
+
+export type DrawTextFn = (
+  ctx: CanvasRenderingContext2D,
+  drawData: TextGraphItem,
+) => void;
 
 export const enum ResizePosition {
   top = 'TOP',
@@ -99,6 +110,8 @@ export const enum TextAlign {
 }
 
 export type CanvasCtxRef = RefObject<CanvasRenderingContext2D | null>;
+
+export type RoughCanvasRef = RefObject<RoughCanvas | null>;
 
 export interface ResizeCursorResult {
   cursorConfig: CursorConfig;

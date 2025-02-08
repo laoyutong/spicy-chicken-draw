@@ -1,11 +1,11 @@
 import {
-  ARROW_DEG,
-  ARROW_LENGTH,
   SELECTION_AREA_BG_COLOR,
   DRAW_SELECTION_GAP,
   TEXT_FONT_FAMILY,
   SELECTION_LINE_DASH,
   SELECTION_BORDER_COLOR,
+  ARROW_DEG,
+  ARROW_LENGTH,
 } from '@/config';
 import {
   GraphItem,
@@ -13,20 +13,22 @@ import {
   DrawGraphFn,
   DrawTextFn,
   TextAlign,
+  RoughCanvas,
+  BasicGraphData,
 } from '@/types';
 import { getContentArea, getResizeRectData, getTextLines } from '.';
 
-const drawResizeRect = (
+const drawResizeRects = (
   ctx: CanvasRenderingContext2D,
   drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
 ) => {
   const [startRect, endRect, xRect, yRect] = getResizeRectData(drawData);
 
-  drawRect(ctx, startRect);
-  drawRect(ctx, endRect);
+  drawNormalRect(ctx, startRect);
+  drawNormalRect(ctx, endRect);
   if (drawData.type !== DrawType.arrow) {
-    drawRect(ctx, xRect);
-    drawRect(ctx, yRect);
+    drawNormalRect(ctx, xRect);
+    drawNormalRect(ctx, yRect);
   }
 };
 
@@ -60,13 +62,16 @@ const drawSelectedArea: (
 
   ctx.beginPath();
   !options?.withoutResizeRect &&
-    drawResizeRect(ctx, { x, y, width, height, type });
+    drawResizeRects(ctx, { x, y, width, height, type });
   ctx.stroke();
 
   ctx.strokeStyle = '#000';
 };
 
-const drawRect: DrawGraphFn = (ctx, { x, y, width, height }) => {
+const drawNormalRect = (
+  ctx: CanvasRenderingContext2D,
+  { x, y, width, height }: BasicGraphData,
+) => {
   ctx.moveTo(x, y);
   ctx.lineTo(x + width, y);
   ctx.lineTo(x + width, y + height);
@@ -74,70 +79,48 @@ const drawRect: DrawGraphFn = (ctx, { x, y, width, height }) => {
   ctx.closePath();
 };
 
-const drawCircle: DrawGraphFn = (ctx, { x, y, width, height }) => {
+const drawRect: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
+  roughCanvas.rectangle(x, y, width, height);
+};
+
+const drawCircle: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
   const centerX = x + width / 2;
   const centerY = y + height / 2;
-  const halfWidth = Math.abs(width / 2);
-  const halfHeight = Math.abs(height / 2);
-
-  const step = halfWidth > halfHeight ? 1 / halfWidth : 1 / halfHeight;
-  ctx.moveTo(centerX + halfWidth, centerY);
-  for (let i = 0; i < Math.PI * 2; i += step) {
-    ctx.lineTo(
-      centerX + halfWidth * Math.cos(i),
-      centerY + halfHeight * Math.sin(i),
-    );
-  }
-  ctx.closePath();
+  roughCanvas.ellipse(centerX, centerY, width, height);
 };
 
-const drawDiamond: DrawGraphFn = (
-  ctx: CanvasRenderingContext2D,
-  { x, y, width, height },
-) => {
-  ctx.moveTo(x + width / 2, y + height);
-  ctx.lineTo(x + width, y + height / 2);
-  ctx.lineTo(x + width / 2, y);
-  ctx.lineTo(x, y + height / 2);
-  ctx.closePath();
+const drawDiamond: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
+  roughCanvas.polygon([
+    [x + width / 2, y],
+    [x + width, y + height / 2],
+    [x + width / 2, y + height],
+    [x, y + height / 2],
+  ]);
 };
 
-const drawSelection: DrawGraphFn = (
-  ctx: CanvasRenderingContext2D,
-  { x, y, width, height },
-) => {
-  ctx.save();
-  ctx.fillStyle = SELECTION_AREA_BG_COLOR;
-  ctx.fillRect(x, y, width, height);
-  ctx.restore();
+const drawSelection: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
+  roughCanvas.rectangle(x, y, width, height, { fill: SELECTION_AREA_BG_COLOR });
 };
 
-const drawArrow: DrawGraphFn = (
-  ctx: CanvasRenderingContext2D,
-  { x, y, width, height },
-) => {
+const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height }) => {
   const arrowLength = Math.min(
     Math.pow(width * width + height * height, 1 / 2) / 2,
     ARROW_LENGTH,
   );
   const directionLength = height < 0 ? -arrowLength : arrowLength;
-
   const angle = Math.floor(180 / (Math.PI / Math.atan(width / height)));
   const angleA = angle + ARROW_DEG;
   const angleB = angle - ARROW_DEG;
   const targetX = x + width;
   const targetY = y + height;
-
   const x1 = targetX - directionLength * Math.sin((Math.PI * angleA) / 180);
   const y1 = targetY - directionLength * Math.cos((Math.PI * angleA) / 180);
   const x2 = targetX - directionLength * Math.sin((Math.PI * angleB) / 180);
   const y2 = targetY - directionLength * Math.cos((Math.PI * angleB) / 180);
 
-  ctx.moveTo(x, y);
-  ctx.lineTo(targetX, targetY);
-  ctx.lineTo(x1, y1);
-  ctx.moveTo(targetX, targetY);
-  ctx.lineTo(x2, y2);
+  roughCanvas.line(x, y, targetX, targetY);
+  roughCanvas.line(targetX, targetY, x1, y1);
+  roughCanvas.line(targetX, targetY, x2, y2);
 };
 
 const drawText: DrawTextFn = (
@@ -147,6 +130,7 @@ const drawText: DrawTextFn = (
   if (!content?.trim()) {
     return;
   }
+  ctx.beginPath();
 
   ctx.textBaseline = 'bottom';
   ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
@@ -166,35 +150,35 @@ const drawText: DrawTextFn = (
 
     ctx.fillText(line, xCoordinate, y + fontSize * (index + 1));
   });
+
+  ctx.stroke();
 };
 
-const drawGraph = (ctx: CanvasRenderingContext2D, drawData: GraphItem) => {
+const drawGraph = (
+  ctx: CanvasRenderingContext2D,
+  roughCanvas: RoughCanvas,
+  drawData: GraphItem,
+) => {
   switch (drawData.type) {
     case DrawType.selection:
-      drawSelection(ctx, drawData);
+      drawSelection(roughCanvas, drawData);
       return;
     case DrawType.rectangle:
-      drawRect(ctx, drawData);
+      drawRect(roughCanvas, drawData);
       return;
     case DrawType.circle:
-      drawCircle(ctx, drawData);
+      drawCircle(roughCanvas, drawData);
       return;
     case DrawType.diamond:
-      drawDiamond(ctx, drawData);
+      drawDiamond(roughCanvas, drawData);
       return;
     case DrawType.arrow:
-      drawArrow(ctx, drawData);
+      drawArrow(roughCanvas, drawData);
       return;
     case DrawType.text:
       drawText(ctx, drawData);
       return;
   }
-};
-
-const drawGraphs = (ctx: CanvasRenderingContext2D, data: GraphItem[]) => {
-  ctx.beginPath();
-  data.forEach((item) => drawGraph(ctx, item));
-  ctx.stroke();
 };
 
 const drawSelectedBorder = (
@@ -230,9 +214,10 @@ const drawSelectedBorder = (
 
 export const drawCanvas = (
   ctx: CanvasRenderingContext2D,
+  roughCanvas: RoughCanvas,
   data: GraphItem[],
 ) => {
   ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
   drawSelectedBorder(ctx, data);
-  drawGraphs(ctx, data);
+  data.forEach((item) => drawGraph(ctx, roughCanvas, item));
 };

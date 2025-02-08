@@ -3,7 +3,7 @@ import {
   DRAW_SELECTION_GAP,
   SELECTION_RECT_WIDTH,
 } from '@/config';
-import { GraphItem, DrawGraphFn, DrawType } from '@/types';
+import { GraphItem, DrawType, BasicGraphData } from '@/types';
 
 const splitContent = (content: string): string[] =>
   content.replace(/\r\n?/g, '\n').split('\n');
@@ -70,12 +70,7 @@ export const getContentArea = (
   return [x2, x1, y2, y1];
 };
 
-export const getResizeRectData = ({
-  x,
-  y,
-  width,
-  height,
-}: Parameters<DrawGraphFn>['1']) => {
+export const getResizeRectData = ({ x, y, width, height }: BasicGraphData) => {
   const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const x1 = x - gapX;
