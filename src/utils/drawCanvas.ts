@@ -143,7 +143,7 @@ const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
   const roughOptions = { seed };
   roughCanvas.line(x, y, targetX, targetY, roughOptions);
   roughCanvas.line(targetX, targetY, x1, y1, roughOptions);
-  roughCanvas.line(targetX, targetY, x2, y2), roughOptions;
+  roughCanvas.line(targetX, targetY, x2, y2, roughOptions);
 };
 
 const drawText: DrawTextFn = (
