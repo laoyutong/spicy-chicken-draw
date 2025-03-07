@@ -1,4 +1,4 @@
-import { Dispatch, MutableRefObject, RefObject, SetStateAction } from 'react';
+import { Dispatch, RefObject, SetStateAction } from 'react';
 import type { RoughCanvas } from 'roughjs/bin/canvas';
 
 export type { RoughCanvas };
@@ -141,14 +141,5 @@ export type HistoryRecord = {
 };
 
 export type HistoryStack = HistoryRecord[];
-
-export type CollectSelectedElementsFn = (
-  drawDataList: MutableRefObject<GraphItem[]>,
-) => boolean;
-
-export type CollectUpdatedHistoryRecord = (
-  dataCache: MutableRefObject<GraphItem[]>,
-  handleDrawItem: (drawItem: GraphItem) => Partial<GraphItem>,
-) => void;
 
 export type TimeoutValue = ReturnType<typeof setTimeout>;

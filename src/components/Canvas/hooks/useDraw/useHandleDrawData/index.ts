@@ -7,19 +7,14 @@ import {
   Coordinate,
   GraphItem,
   DrawType,
-  HistoryUpdatedRecordData,
   ResizePosition,
   SetDrawData,
-  CollectSelectedElementsFn,
-  CollectUpdatedHistoryRecord,
   TimeoutValue,
 } from '@/types';
-import { getSelectedItems, history } from '@/utils';
 import { useHandleCursorPoint } from './useHandleCursorPoint';
 import { useHandleText } from './useHandleText';
-import { useHandleMove } from './useHandleMove';
-import { useHandleResize } from './useHandleResize';
 import { useHandleDraw } from './useHandleDraw';
+import { useHandleMoveAndResize } from './useHandleMoveAndResize';
 
 interface UseHandleDrawDataParams {
   staticDrawData: GraphItem[];
@@ -71,87 +66,14 @@ export const useHandleDrawData = ({
 
   const resetSelectedHistoryRecordTimer = useRef<TimeoutValue>();
 
-  // 收集selected及其绑定的内容
-  const collectSelectedElements: CollectSelectedElementsFn = (drawDataList) => {
-    if (!drawDataList.current.length) {
-      console.log('execute collectSelectedElements');
-      drawDataList.current = getSelectedItems(staticDrawData);
-
-      if (drawDataList.current.length) {
-        setActiveDrawData(drawDataList.current);
-        setStaticDrawData((pre) =>
-          pre.filter(
-            (item) => !drawDataList.current.some((i) => i.id === item.id),
-          ),
-        );
-        return true;
-      }
-    }
-    return false;
-  };
-
-  const batchUpdatedHistoryRecord = useRef<HistoryUpdatedRecordData>([]);
-
-  const addBatchUpdatedHistoryRecord = (
-    v: HistoryUpdatedRecordData[number],
-  ) => {
-    batchUpdatedHistoryRecord.current.push(v);
-  };
-
-  // 在结束move or resize操作的时候统一记录
-  const recordBatchUpdatedHistoryRecord = () => {
-    if (batchUpdatedHistoryRecord.current.length) {
-      history.collectUpdatedRecord(batchUpdatedHistoryRecord.current);
-      batchUpdatedHistoryRecord.current = [];
-    }
-  };
-
-  const collectUpdatedHistoryRecord: CollectUpdatedHistoryRecord = (
-    dataCache,
-    handleDrawItem,
-  ) => {
-    dataCache.current.forEach((dataItem) => {
-      const activeDrawItem = activeDrawData.find(
-        (item) => dataItem.id === item.id,
-      );
-
-      if (!activeDrawItem) {
-        return;
-      }
-
-      batchUpdatedHistoryRecord.current.push({
-        id: dataItem.id,
-        value: {
-          payload: handleDrawItem(activeDrawItem),
-          deleted: handleDrawItem(dataItem),
-        },
-      });
-    });
-  };
-
-  const { handleMoveElement } = useHandleMove({
+  const { handleMoveElement, handleResizeElement } = useHandleMoveAndResize({
+    resetSelectedHistoryRecordTimer,
+    startCoordinate,
+    moveCoordinate,
     staticDrawData,
     activeDrawData,
-    startCoordinate,
-    moveCoordinate,
     setStaticDrawData,
     setActiveDrawData,
-    collectSelectedElements,
-    collectUpdatedHistoryRecord,
-    resetSelectedHistoryRecordTimer,
-    recordBatchUpdatedHistoryRecord,
-    addBatchUpdatedHistoryRecord,
-  });
-
-  const { handleResizeElement } = useHandleResize({
-    activeDrawData,
-    startCoordinate,
-    moveCoordinate,
-    setStaticDrawData,
-    setActiveDrawData,
-    collectSelectedElements,
-    collectUpdatedHistoryRecord,
-    recordBatchUpdatedHistoryRecord,
     resizePosition,
   });
 

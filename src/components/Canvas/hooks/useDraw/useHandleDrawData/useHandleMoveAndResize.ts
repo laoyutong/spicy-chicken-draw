@@ -1,45 +1,47 @@
+import { MutableRefObject, useRef } from 'react';
+import { produce } from 'immer';
+import { useAtomValue } from 'jotai';
 import { cursorPointAtom } from '@/store';
 import {
-  CollectSelectedElementsFn,
-  CollectUpdatedHistoryRecord,
   Coordinate,
   CursorConfig,
   DrawType,
   GraphItem,
+  HistoryUpdatedRecordData,
   ResizePosition,
   SetDrawData,
+  TimeoutValue,
 } from '@/types';
-import { getContentArea, getTextLines, handleDrawItem } from '@/utils';
-import { produce } from 'immer';
-import { useAtomValue } from 'jotai';
-import { MutableRefObject, useRef } from 'react';
+import {
+  getHoverElement,
+  getSelectedItems,
+  history,
+  handleDrawItem,
+  getContentArea,
+  getTextLines,
+} from '@/utils';
 
-interface UseHandleResizeParams {
+interface UseHandleMoveAndResizeParams {
   startCoordinate: Coordinate | null;
   moveCoordinate: Coordinate;
   setStaticDrawData: SetDrawData;
   setActiveDrawData: SetDrawData;
+  staticDrawData: GraphItem[];
   activeDrawData: GraphItem[];
-  collectSelectedElements: CollectSelectedElementsFn;
-  collectUpdatedHistoryRecord: CollectUpdatedHistoryRecord;
-  recordBatchUpdatedHistoryRecord: () => void;
+  resetSelectedHistoryRecordTimer: MutableRefObject<TimeoutValue | undefined>;
   resizePosition: MutableRefObject<ResizePosition | null>;
 }
 
-/**
- * 缩放图形的处理
- */
-export const useHandleResize = ({
+export const useHandleMoveAndResize = ({
   startCoordinate,
   moveCoordinate,
   setStaticDrawData,
   setActiveDrawData,
+  staticDrawData,
   activeDrawData,
-  collectSelectedElements,
-  collectUpdatedHistoryRecord,
-  recordBatchUpdatedHistoryRecord,
+  resetSelectedHistoryRecordTimer,
   resizePosition,
-}: UseHandleResizeParams) => {
+}: UseHandleMoveAndResizeParams) => {
   const cursorPoint = useAtomValue(cursorPointAtom);
   const resizeDataCache = useRef<GraphItem[]>([]);
 
@@ -47,6 +49,60 @@ export const useHandleResize = ({
   const startResizeContentAreaCache = useRef<
     [number, number, number, number] | null
   >(null);
+
+  // 收集selected及其绑定的内容
+  const collectSelectedElements = (
+    drawDataList: MutableRefObject<GraphItem[]>,
+  ) => {
+    if (!drawDataList.current.length) {
+      console.log('execute collectSelectedElements');
+      drawDataList.current = getSelectedItems(staticDrawData);
+
+      if (drawDataList.current.length) {
+        setActiveDrawData(drawDataList.current);
+        setStaticDrawData((pre) =>
+          pre.filter(
+            (item) => !drawDataList.current.some((i) => i.id === item.id),
+          ),
+        );
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const collectUpdatedHistoryRecord = (
+    dataCache: MutableRefObject<GraphItem[]>,
+    handleDrawItem: (drawItem: GraphItem) => Partial<GraphItem>,
+  ) => {
+    dataCache.current.forEach((dataItem) => {
+      const activeDrawItem = activeDrawData.find(
+        (item) => dataItem.id === item.id,
+      );
+
+      if (!activeDrawItem) {
+        return;
+      }
+
+      batchUpdatedHistoryRecord.current.push({
+        id: dataItem.id,
+        value: {
+          payload: handleDrawItem(activeDrawItem),
+          deleted: handleDrawItem(dataItem),
+        },
+      });
+    });
+  };
+
+  const batchUpdatedHistoryRecord = useRef<HistoryUpdatedRecordData>([]);
+
+  // 在结束move or resize操作的时候统一记录
+  const recordBatchUpdatedHistoryRecord = () => {
+    if (batchUpdatedHistoryRecord.current.length) {
+      history.collectUpdatedRecord(batchUpdatedHistoryRecord.current);
+      batchUpdatedHistoryRecord.current = [];
+    }
+  };
 
   const handleResizeElement = () => {
     if (!startCoordinate) {
@@ -272,5 +328,132 @@ export const useHandleResize = ({
 
     return true;
   };
-  return { handleResizeElement };
+
+  const moveDataCache = useRef<GraphItem[]>([]);
+
+  const handleMoveElement = (isStartCoordinateChange?: boolean) => {
+    if (!startCoordinate) {
+      let result = false;
+      // 结束移动
+      if (moveDataCache.current.length) {
+        const getFilterFields = (drawItem: GraphItem) => ({
+          x: drawItem.x,
+          y: drawItem.y,
+        });
+
+        collectUpdatedHistoryRecord(moveDataCache, getFilterFields);
+
+        setStaticDrawData((pre) => [...pre, ...activeDrawData]);
+        setActiveDrawData([]);
+        moveDataCache.current = [];
+        result = true;
+      }
+      recordBatchUpdatedHistoryRecord();
+      return result;
+    }
+
+    const activeHoverElement = getHoverElement(startCoordinate, [
+      ...staticDrawData,
+      ...activeDrawData,
+    ]);
+
+    // 存在startCoordinate变更且有值，说明是点击的情况，则重置select的状态
+    if (
+      isStartCoordinateChange &&
+      staticDrawData.find((item) => item.selected)
+    ) {
+      const historyUpdatedRecord: HistoryUpdatedRecordData = [];
+
+      setStaticDrawData((pre) =>
+        pre.map((item) => {
+          if (!item.selected) {
+            return item;
+          }
+
+          historyUpdatedRecord.push({
+            id: item.id,
+            value: {
+              payload: { selected: false },
+              deleted: { selected: true },
+            },
+          });
+
+          return { ...item, selected: false };
+        }),
+      );
+      // 异步执行，如果后续存在move or resize则不记录
+      resetSelectedHistoryRecordTimer.current = setTimeout(() => {
+        history.collectUpdatedRecord(historyUpdatedRecord);
+      });
+    }
+
+    if (cursorPoint !== CursorConfig.move) {
+      return false;
+    }
+
+    // 如果activeHoverElement为数组，肯定是批量selected的状态，所以仅需要判断单个的情况
+    // 当前点击到了没有selected的图形，需要设置selected状态
+    if (
+      !Array.isArray(activeHoverElement) &&
+      activeHoverElement?.selected === false
+    ) {
+      // 如果hover的图形有containerId，则hover其container
+      const activeId =
+        ('containerId' in activeHoverElement
+          ? activeHoverElement.containerId
+          : activeHoverElement.id) || activeHoverElement.id;
+
+      setStaticDrawData((pre) =>
+        pre.map((item) => {
+          if (item.id === activeId) {
+            batchUpdatedHistoryRecord.current.push({
+              id: item.id,
+              value: {
+                payload: { selected: true },
+                deleted: { selected: false },
+              },
+            });
+
+            return {
+              ...item,
+              selected: true,
+            };
+          }
+          return item;
+        }),
+      );
+      return true;
+    }
+
+    if (collectSelectedElements(moveDataCache)) {
+      return true;
+    }
+
+    // 移动图形
+    moveDataCache.current.length &&
+      setActiveDrawData((pre) =>
+        pre.map((item) => {
+          const activeMovingDrawItem = moveDataCache.current.find(
+            (i) => i.id === item.id,
+          );
+
+          if (!activeMovingDrawItem) {
+            return item;
+          }
+
+          return {
+            ...activeMovingDrawItem,
+            x: activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
+            y: activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
+          };
+        }),
+      );
+
+    return true;
+  };
+
+  return {
+    handleResizeElement,
+    handleMoveElement,
+  };
 };
