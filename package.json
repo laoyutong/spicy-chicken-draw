@@ -2,6 +2,7 @@
   "name": "spicy-chicken-draw",
   "private": true,
   "version": "1.0.0",
+  "packageManager": "pnpm@9.9.0",
   "scripts": {
     "dev": "rsbuild dev",
     "build": "rsbuild build",
