@@ -1,13 +1,13 @@
-import { cursorPointAtom, drawTypeAtom } from '@/store';
+import { useAtomValue, useSetAtom } from "jotai";
+import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
-  Coordinate,
+  type Coordinate,
   CursorConfig,
   DrawType,
-  GraphItem,
-  ResizePosition,
-} from '@/types';
-import { getHoverElement, getResizeCursor } from '@/utils';
-import { useAtomValue, useSetAtom } from 'jotai';
+  type GraphItem,
+  type ResizePosition,
+} from "@/types";
+import { getHoverElement, getResizeCursor } from "@/utils";
 
 interface UseHandleCursorPointParams {
   moveCoordinate: Coordinate;
@@ -30,7 +30,7 @@ export const useHandleCursorPoint = ({
     if (drawType === DrawType.selection) {
       const resizeCursorContent = getResizeCursor(
         moveCoordinate,
-        staticDrawData,
+        staticDrawData
       );
 
       if (resizeCursorContent) {

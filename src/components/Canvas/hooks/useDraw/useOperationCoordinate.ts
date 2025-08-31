@@ -1,6 +1,6 @@
-import { Coordinate } from "@/types";
 import { useEventListener } from "ahooks";
 import { useState } from "react";
+import type { Coordinate } from "@/types";
 
 /**
  * 获取操作时的初始和移动位置

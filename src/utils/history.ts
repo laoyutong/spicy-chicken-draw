@@ -1,11 +1,11 @@
-import {
-  HistoryStack,
-  HistoryRecord,
+import type {
   GraphItem,
   HistoryOperationMap,
-  HistoryUpdatedRecordData,
   HistoryOperationMapValue,
-} from '@/types';
+  HistoryRecord,
+  HistoryStack,
+  HistoryUpdatedRecordData,
+} from "@/types";
 
 interface HistoryHandleValue {
   value: GraphItem[];
@@ -16,7 +16,7 @@ class History {
   #undoStack: HistoryStack = [];
 
   #record(data: HistoryRecord) {
-    console.log('history record data:::', data);
+    console.log("history record data:::", data);
     this.#undoStack.push(data);
     this.#redoStack = [];
   }
@@ -26,7 +26,7 @@ class History {
     const removedIds = [...(map?.keys?.() || [])];
     if (removedIds.length) {
       handledValue.value = handledValue.value.filter(
-        (item) => !removedIds.includes(item.id),
+        (item) => !removedIds.includes(item.id)
       );
     }
   }
@@ -35,7 +35,7 @@ class History {
   #handleAdded(
     handledValue: HistoryHandleValue,
     field: keyof HistoryOperationMapValue,
-    map?: HistoryOperationMap,
+    map?: HistoryOperationMap
   ) {
     map?.forEach((addedRecord) => {
       const recordItem = addedRecord[field];
@@ -45,7 +45,7 @@ class History {
 
       handledValue.value.push({
         ...recordItem,
-        selected: 'containerId' in recordItem ? !recordItem?.containerId : true,
+        selected: "containerId" in recordItem ? !recordItem?.containerId : true,
       } as GraphItem);
     });
   }
@@ -54,7 +54,7 @@ class History {
   #handleUpdated(
     handledValue: HistoryHandleValue,
     field: keyof HistoryOperationMapValue,
-    map?: HistoryOperationMap,
+    map?: HistoryOperationMap
   ) {
     if (map?.size) {
       handledValue.value = handledValue.value.map((item) => {
@@ -69,7 +69,7 @@ class History {
           ...updatedFieldItem,
           selected:
             updatedFieldItem?.selected ??
-            ('containerId' in item ? !item.containerId : true),
+            ("containerId" in item ? !item.containerId : true),
         };
       }) as GraphItem[];
     }
@@ -81,7 +81,7 @@ class History {
     if (!redoRecord) {
       return null;
     }
-    console.log('redoRecord:::', redoRecord);
+    console.log("redoRecord:::", redoRecord);
 
     this.#undoStack.push(redoRecord);
 
@@ -91,11 +91,11 @@ class History {
       value: drawData.map((item) => ({ ...item, selected: false })),
     };
 
-    this.#handleAdded(result, 'payload', added);
+    this.#handleAdded(result, "payload", added);
 
     this.#handleRemoved(result, removed);
 
-    this.#handleUpdated(result, 'payload', updated);
+    this.#handleUpdated(result, "payload", updated);
 
     return result.value;
   }
@@ -106,7 +106,7 @@ class History {
     if (!undoRecord) {
       return null;
     }
-    console.log('undoRecord:::', undoRecord);
+    console.log("undoRecord:::", undoRecord);
 
     this.#redoStack.push(undoRecord);
 
@@ -116,11 +116,11 @@ class History {
       value: drawData.map((item) => ({ ...item, selected: false })),
     };
 
-    this.#handleAdded(result, 'deleted', removed);
+    this.#handleAdded(result, "deleted", removed);
 
     this.#handleRemoved(result, added);
 
-    this.#handleUpdated(result, 'deleted', updated);
+    this.#handleUpdated(result, "deleted", updated);
 
     return result.value;
   }
@@ -134,7 +134,7 @@ class History {
   }
 
   transformUpdatedRecordData(
-    value: HistoryUpdatedRecordData,
+    value: HistoryUpdatedRecordData
   ): HistoryOperationMap {
     const map: HistoryOperationMap = new Map();
     value.forEach((item) => {
@@ -159,7 +159,7 @@ class History {
 
   collectAddedRecord(
     drawData: GraphItem[],
-    updatedValue?: HistoryUpdatedRecordData,
+    updatedValue?: HistoryUpdatedRecordData
   ) {
     const map: HistoryOperationMap = new Map();
     drawData.forEach((item) => {

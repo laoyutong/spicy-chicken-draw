@@ -1,28 +1,28 @@
-import { DEFAULT_TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from '@/config';
-import { cursorPointAtom, drawTypeAtom } from '@/store';
+import { useSetAtom } from "jotai";
+import { nanoid } from "nanoid";
+import { useRef } from "react";
+import { DEFAULT_TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from "@/config";
+import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
-  BoundingElement,
-  Coordinate,
+  type BoundingElement,
+  type Coordinate,
   CursorConfig,
   DrawType,
-  GraphItem,
-  HistoryUpdatedRecordData,
-  NormalGraphItem,
-  SetDrawData,
+  type GraphItem,
+  type HistoryUpdatedRecordData,
+  type NormalGraphItem,
+  type SetDrawData,
   TextAlign,
-  TextGraphItem,
-  TextOnChangeEvent,
-} from '@/types';
+  type TextGraphItem,
+  type TextOnChangeEvent,
+} from "@/types";
 import {
   createText,
   getExistTextElement,
   getTextContainer,
   getTextLines,
   history,
-} from '@/utils';
-import { useSetAtom } from 'jotai';
-import { nanoid } from 'nanoid';
-import { useRef } from 'react';
+} from "@/utils";
 
 interface UseHandleTextParams {
   staticDrawData: GraphItem[];
@@ -44,12 +44,12 @@ export const useHandleText = ({
     textValue,
     coordinate,
     container,
-    existElement,
+    existElement
   ) => {
     if (textValue.trim() && (coordinate || existElement)) {
       let maxWidth = 0;
-      const canvas = document.createElement('canvas');
-      const canvasCtx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const canvasCtx = canvas.getContext("2d");
       const lines = getTextLines(textValue);
 
       const finalFontSizeValue =
@@ -160,12 +160,12 @@ export const useHandleText = ({
 
     const existTextElement = getExistTextElement(
       coordinate,
-      findTextElementDataSource,
+      findTextElementDataSource
     );
 
     const containerElement = existTextElement
       ? (findTextElementDataSource.find(
-          (item) => item.id === existTextElement?.containerId,
+          (item) => item.id === existTextElement?.containerId
         ) as NormalGraphItem) || null
       : getTextContainer(coordinate, staticDrawData);
 
@@ -176,7 +176,7 @@ export const useHandleText = ({
       }
 
       if (!textareaElement.current) {
-        const textareaSelector = document.querySelector('textarea');
+        const textareaSelector = document.querySelector("textarea");
         if (!textareaSelector) {
           return;
         }
@@ -191,7 +191,7 @@ export const useHandleText = ({
         containerElement.y +
         containerElement.height / 2 -
         (finalFontSize * lines.length) / 2 +
-        'px';
+        "px";
     };
 
     createText(
@@ -199,12 +199,12 @@ export const useHandleText = ({
       createTextOnChange,
       containerElement,
       onInput,
-      existTextElement,
+      existTextElement
     );
 
     existTextElement &&
       setStaticDrawData((pre) =>
-        pre.filter((item) => item.id !== existTextElement.id),
+        pre.filter((item) => item.id !== existTextElement.id)
       );
 
     setCursorPoint(CursorConfig.default);

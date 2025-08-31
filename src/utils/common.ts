@@ -2,16 +2,16 @@ import {
   CALCULATE_SELECTION_GAP,
   DRAW_SELECTION_GAP,
   SELECTION_RECT_WIDTH,
-} from '@/config';
-import { GraphItem, DrawType, BasicGraphData } from '@/types';
+} from "@/config";
+import { type BasicGraphData, DrawType, type GraphItem } from "@/types";
 
 const splitContent = (content: string): string[] =>
-  content.replace(/\r\n?/g, '\n').split('\n');
+  content.replace(/\r\n?/g, "\n").split("\n");
 
 export const getTextLines = (content: string) => {
   const textList = splitContent(content);
   return textList.filter(
-    (item, index) => !!item.trim() || index !== textList.length - 1,
+    (item, index) => !!item.trim() || index !== textList.length - 1
   );
 };
 
@@ -22,7 +22,7 @@ export const getMinDis = (position: number, value: number) =>
   Math.min(position, position + value);
 
 export const getDrawDataDis = (
-  drawData: GraphItem,
+  drawData: GraphItem
 ): [minX: number, maxX: number, minY: number, maxY: number] => [
   getMinDis(drawData.x, drawData.width),
   getMaxDis(drawData.x, drawData.width),
@@ -40,7 +40,7 @@ export const isInRange = (value: number, small: number, large?: number) =>
   value <= getValueWithGap(large ?? small);
 
 export const getContentArea = (
-  data: GraphItem[],
+  data: GraphItem[]
 ): [number, number, number, number] => {
   let x1 = -Infinity;
   let y1 = -Infinity;
@@ -85,7 +85,7 @@ export const getResizeRectData = ({ x, y, width, height }: BasicGraphData) => {
     x: number,
     y: number,
     width: number,
-    height: number,
+    height: number
   ) => ({ x, y, width, height });
 
   return [
@@ -120,7 +120,7 @@ export const getSelectedItems = (drawData: GraphItem[]) => {
     if (drawItem.selected) {
       result.push(drawItem);
 
-      if ('boundingElements' in drawItem) {
+      if ("boundingElements" in drawItem) {
         drawItem.boundingElements?.forEach((boundingElement) => {
           const activeItem = drawData.find((i) => boundingElement.id === i.id);
           if (activeItem) {

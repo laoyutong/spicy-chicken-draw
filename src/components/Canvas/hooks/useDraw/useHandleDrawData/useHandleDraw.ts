@@ -1,18 +1,18 @@
-import { MIN_DRAW_DIS } from '@/config';
-import { drawTypeAtom } from '@/store';
+import { useAtom } from "jotai";
+import { nanoid } from "nanoid";
+import { useRef } from "react";
+import { MIN_DRAW_DIS } from "@/config";
+import { drawTypeAtom } from "@/store";
 import {
-  Coordinate,
+  type Coordinate,
   DrawType,
-  GraphItem,
-  HistoryUpdatedRecordData,
-  NormalGraphType,
-  SetDrawData,
-  TextGraphItem,
-} from '@/types';
-import { getMaxDis, getMinDis, handleDrawItem, history } from '@/utils';
-import { useAtom } from 'jotai';
-import { nanoid } from 'nanoid';
-import { useRef } from 'react';
+  type GraphItem,
+  type HistoryUpdatedRecordData,
+  type NormalGraphType,
+  type SetDrawData,
+  type TextGraphItem,
+} from "@/types";
+import { getMaxDis, getMinDis, handleDrawItem, history } from "@/utils";
 
 interface UseHandleDrawParams {
   startCoordinate: Coordinate | null;
@@ -32,7 +32,7 @@ export const useHandleDraw = ({
   setActiveDrawData,
 }: UseHandleDrawParams) => {
   const workingDrawData = useRef<Exclude<GraphItem, TextGraphItem> | null>(
-    null,
+    null
   );
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
@@ -44,7 +44,7 @@ export const useHandleDraw = ({
         // selection不需要绘制、text在createTextOnChange里绘制
         if (
           ![DrawType.selection, DrawType.text].includes(
-            workingDrawData.current.type,
+            workingDrawData.current.type
           ) &&
           (Math.abs(workingDrawData.current.width) >= MIN_DRAW_DIS ||
             Math.abs(workingDrawData.current.height) >= MIN_DRAW_DIS)
@@ -110,7 +110,7 @@ export const useHandleDraw = ({
       setStaticDrawData((pre) =>
         pre.map((item) => {
           // 绑定的元素不需要selected状态，在具体操作的时候处理
-          if ('containerId' in item && item.containerId) {
+          if ("containerId" in item && item.containerId) {
             return item;
           }
 
@@ -128,7 +128,7 @@ export const useHandleDraw = ({
             ...item,
             selected: isInSelectionArea,
           };
-        }),
+        })
       );
     }
 

@@ -1,42 +1,39 @@
 import {
-  Coordinate,
-  CursorConfig,
-  GraphItem,
-  DrawType,
-  ResizeCursorResult,
-  ResizePosition,
-  TextGraphItem,
-  NormalGraphItem,
-  BasicGraphData,
-} from '@/types';
+  CALCULATE_SELECTION_GAP,
+  HAS_BOUNDING_ELEMENTS_LIST,
+  TEXT_BOUND_GAP,
+} from "@/config";
 import {
+  type BasicGraphData,
+  type Coordinate,
+  CursorConfig,
+  DrawType,
+  type GraphItem,
+  type NormalGraphItem,
+  type ResizeCursorResult,
+  ResizePosition,
+  type TextGraphItem,
+} from "@/types";
+import {
+  getContentArea,
   getDrawDataDis,
-  isInRange,
+  getMaxDis,
+  getMinDis,
+  getResizeRectData,
   getValueWithGap,
   getValueWithoutGap,
-  getContentArea,
-  getResizeRectData,
-  getMinDis,
-  getMaxDis,
-} from './common';
-import {
-  HAS_BOUNDING_ELEMENTS_LIST,
-  CALCULATE_SELECTION_GAP,
-  TEXT_BOUND_GAP,
-} from '@/config';
+  isInRange,
+} from "./common";
 
 /**
  * 获取两个坐标点之间的距离
  */
 const getDistance = (x1: number, x2: number, y1: number, y2: number) =>
-  Math.pow(
-    Math.pow(Math.abs(x1 - x2), 2) + Math.pow(Math.abs(y1 - y2), 2),
-    1 / 2,
-  );
+  (Math.abs(x1 - x2) ** 2 + Math.abs(y1 - y2) ** 2) ** (1 / 2);
 
 export const getHoverElement = (
   { x, y }: Coordinate,
-  drawData: GraphItem[],
+  drawData: GraphItem[]
 ): GraphItem | GraphItem[] | null => {
   const selectedList = drawData.filter((i) => i.selected);
   if (selectedList.length) {
@@ -76,8 +73,8 @@ export const getHoverElement = (
       const halfWidth = graphItem.width / 2;
       const halfHeight = graphItem.height / 2;
       const value =
-        Math.pow(x - (graphItem.x + halfWidth), 2) / Math.pow(halfWidth, 2) +
-        Math.pow(y - (graphItem.y + halfHeight), 2) / Math.pow(halfHeight, 2);
+        (x - (graphItem.x + halfWidth)) ** 2 / halfWidth ** 2 +
+        (y - (graphItem.y + halfHeight)) ** 2 / halfHeight ** 2;
 
       if (value <= 1.2 && value >= 0.9) {
         return graphItem;
@@ -110,8 +107,8 @@ export const getHoverElement = (
             x,
             graphItem.x + graphItem.width,
             y,
-            graphItem.y + graphItem.height,
-          ),
+            graphItem.y + graphItem.height
+          )
       );
 
       if (
@@ -128,7 +125,7 @@ export const getHoverElement = (
 
 export const getTextContainer = (
   { x, y }: Coordinate,
-  drawData: GraphItem[],
+  drawData: GraphItem[]
 ): NormalGraphItem | null => {
   let result: NormalGraphItem | null = null;
   drawData.forEach((item) => {
@@ -163,7 +160,7 @@ export const getTextContainer = (
 
 export const getExistTextElement = (
   { x, y }: Coordinate,
-  drawData: GraphItem[],
+  drawData: GraphItem[]
 ) =>
   drawData.find(
     (item) =>
@@ -171,12 +168,12 @@ export const getExistTextElement = (
       x >= item.x &&
       y >= item.y &&
       x <= item.x + item.width &&
-      y <= item.y + item.height,
+      y <= item.y + item.height
   ) as TextGraphItem;
 
 export const getResizeCursor = (
   coordinate: Coordinate,
-  drawData: GraphItem[],
+  drawData: GraphItem[]
 ): ResizeCursorResult | null => {
   const selectedList = drawData.filter((item) => item.selected);
   if (!selectedList.length) {
@@ -185,7 +182,7 @@ export const getResizeCursor = (
 
   const getCursorConfig = (
     resizeRectData: ReturnType<typeof getResizeRectData>,
-    graphData: BasicGraphData,
+    graphData: BasicGraphData
   ) => {
     const { length } = resizeRectData;
     for (let i = 0; i < length; i++) {

@@ -1,5 +1,8 @@
 {
   "cSpell.words": ["ahooks", "nesw", "roughjs", "rsbuild"],
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode" // 如果你使用 Prettier
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.biome": "always"
+  }
 }

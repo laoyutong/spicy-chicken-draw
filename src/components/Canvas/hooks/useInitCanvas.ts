@@ -1,8 +1,8 @@
-import { useMount } from 'ahooks';
-import { useRef } from 'react';
-import roughjs from 'roughjs';
+import { useMount } from "ahooks";
+import { useRef } from "react";
+import roughjs from "roughjs";
 
-import { RoughCanvas } from '@/types';
+import type { RoughCanvas } from "@/types";
 
 export const useInitCanvas = () => {
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,8 +16,8 @@ export const useInitCanvas = () => {
 
   useMount(() => {
     if (staticCanvasRef.current && activeCanvasRef.current) {
-      staticCanvasCtx.current = staticCanvasRef.current.getContext('2d');
-      activeCanvasCtx.current = activeCanvasRef.current.getContext('2d');
+      staticCanvasCtx.current = staticCanvasRef.current.getContext("2d");
+      activeCanvasCtx.current = activeCanvasRef.current.getContext("2d");
 
       staticRoughCanvas.current = roughjs.canvas(staticCanvasRef.current);
       activeRoughCanvas.current = roughjs.canvas(activeCanvasRef.current);

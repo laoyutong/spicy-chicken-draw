@@ -1,12 +1,12 @@
-import { DrawType } from "@/types";
 import {
+  ArrowRight,
   Click,
-  RectangleOne,
-  Round,
   DiamondThree,
   FontSizeTwo,
-  ArrowRight,
+  RectangleOne,
+  Round,
 } from "@icon-park/react";
+import { DrawType } from "@/types";
 
 export const ICON_LIST = [
   { type: DrawType.selection, Icon: Click },

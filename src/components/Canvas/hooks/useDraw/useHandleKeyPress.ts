@@ -1,9 +1,9 @@
-import { useRef } from 'react';
-import { message } from 'antd';
-import { nanoid } from 'nanoid';
-import { useKeyPress } from 'ahooks';
-import { Coordinate, GraphItem, SetDrawData } from '@/types';
-import { getContentArea, getSelectedItems, history } from '@/utils';
+import { useKeyPress } from "ahooks";
+import { message } from "antd";
+import { nanoid } from "nanoid";
+import { useRef } from "react";
+import type { Coordinate, GraphItem, SetDrawData } from "@/types";
+import { getContentArea, getSelectedItems, history } from "@/utils";
 
 interface UseHandleKeyPressParams {
   staticDrawData: GraphItem[];
@@ -20,38 +20,38 @@ export const useHandleKeyPress = ({
   moveCoordinate,
 }: UseHandleKeyPressParams) => {
   // 全选
-  useKeyPress(['meta.a'], () =>
+  useKeyPress(["meta.a"], () =>
     setStaticDrawData((pre) =>
       pre.map((item) => ({
         ...item,
-        selected: 'containerId' in item ? !item.containerId : true,
-      })),
-    ),
+        selected: "containerId" in item ? !item.containerId : true,
+      }))
+    )
   );
 
   // 删除
-  useKeyPress(['Backspace'], () => {
+  useKeyPress(["Backspace"], () => {
     const selectedItems = getSelectedItems(staticDrawData);
 
     history.collectRemovedRecord(selectedItems);
 
     setStaticDrawData((pre) =>
-      pre.filter((item) => !selectedItems.some((i) => i.id === item.id)),
+      pre.filter((item) => !selectedItems.some((i) => i.id === item.id))
     );
   });
 
   const copyData = useRef<GraphItem[]>([]);
   // 复制
-  useKeyPress(['meta.c'], () => {
+  useKeyPress(["meta.c"], () => {
     const selectedItems = getSelectedItems(staticDrawData);
     copyData.current = selectedItems;
     if (selectedItems.length) {
-      message.success('复制成功');
+      message.success("复制成功");
     }
   });
 
   // 粘贴
-  useKeyPress(['meta.v'], () => {
+  useKeyPress(["meta.v"], () => {
     if (!copyData.current.length) {
       return;
     }
@@ -73,18 +73,18 @@ export const useHandleKeyPress = ({
           id: newId,
           x: item.x + offsetX,
           y: item.y + offsetY,
-          selected: 'containerId' in item ? !item.containerId : true,
+          selected: "containerId" in item ? !item.containerId : true,
         };
       })
       // 替换容器和绑定元素的id
       .map((item) => ({
         ...item,
         containerId:
-          'containerId' in item && item.containerId
+          "containerId" in item && item.containerId
             ? idsMap[item.containerId]
             : undefined,
         boundingElements:
-          'boundingElements' in item
+          "boundingElements" in item
             ? item.boundingElements?.map((item) => ({
                 ...item,
                 id: idsMap[item.id],
@@ -101,14 +101,14 @@ export const useHandleKeyPress = ({
   });
 
   // 撤回
-  useKeyPress(['meta.z'], (e) => {
+  useKeyPress(["meta.z"], (e) => {
     e.preventDefault();
     const result = history.undo(staticDrawData);
     result && setStaticDrawData(result);
   });
 
   // 重做
-  useKeyPress(['meta.y'], (e) => {
+  useKeyPress(["meta.y"], (e) => {
     e.preventDefault();
     const result = history.redo(staticDrawData);
     result && setStaticDrawData(result);

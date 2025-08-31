@@ -1,20 +1,20 @@
-import { useRef } from 'react';
-import { useEventListener, useTrackedEffect } from 'ahooks';
-import { useAtomValue } from 'jotai';
+import { useEventListener, useTrackedEffect } from "ahooks";
+import { useAtomValue } from "jotai";
+import { useRef } from "react";
 
-import { drawTypeAtom } from '@/store';
+import { drawTypeAtom } from "@/store";
 import {
-  Coordinate,
-  GraphItem,
+  type Coordinate,
   DrawType,
-  ResizePosition,
-  SetDrawData,
-  TimeoutValue,
-} from '@/types';
-import { useHandleCursorPoint } from './useHandleCursorPoint';
-import { useHandleText } from './useHandleText';
-import { useHandleDraw } from './useHandleDraw';
-import { useHandleMoveAndResize } from './useHandleMoveAndResize';
+  type GraphItem,
+  type ResizePosition,
+  type SetDrawData,
+  type TimeoutValue,
+} from "@/types";
+import { useHandleCursorPoint } from "./useHandleCursorPoint";
+import { useHandleDraw } from "./useHandleDraw";
+import { useHandleMoveAndResize } from "./useHandleMoveAndResize";
+import { useHandleText } from "./useHandleText";
 
 interface UseHandleDrawDataParams {
   staticDrawData: GraphItem[];
@@ -77,7 +77,7 @@ export const useHandleDrawData = ({
     resizePosition,
   });
 
-  useEventListener('dblclick', (e: MouseEvent) => {
+  useEventListener("dblclick", (e: MouseEvent) => {
     if (drawType !== DrawType.selection) {
       return;
     }
@@ -110,6 +110,6 @@ export const useHandleDrawData = ({
 
       handleCursorPoint();
     },
-    [startCoordinate, moveCoordinate],
+    [startCoordinate, moveCoordinate]
   );
 };

@@ -1,27 +1,27 @@
 import {
-  SELECTION_AREA_BG_COLOR,
-  DRAW_SELECTION_GAP,
-  TEXT_FONT_FAMILY,
-  SELECTION_LINE_DASH,
-  SELECTION_BORDER_COLOR,
   ARROW_DEG,
   ARROW_LENGTH,
   DEFAULT_STROKE_STYLE,
-} from '@/config';
+  DRAW_SELECTION_GAP,
+  SELECTION_AREA_BG_COLOR,
+  SELECTION_BORDER_COLOR,
+  SELECTION_LINE_DASH,
+  TEXT_FONT_FAMILY,
+} from "@/config";
 import {
-  GraphItem,
+  type BasicGraphData,
+  type DrawGraphFn,
+  type DrawTextFn,
   DrawType,
-  DrawGraphFn,
-  DrawTextFn,
+  type GraphItem,
+  type RoughCanvas,
   TextAlign,
-  RoughCanvas,
-  BasicGraphData,
-} from '@/types';
-import { getContentArea, getResizeRectData, getTextLines } from '.';
+} from "@/types";
+import { getContentArea, getResizeRectData, getTextLines } from ".";
 
 const drawResizeRects = (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
+  drawData: Pick<GraphItem, "x" | "y" | "width" | "height" | "type">
 ) => {
   const [startRect, endRect, xRect, yRect] = getResizeRectData(drawData);
 
@@ -36,11 +36,11 @@ const drawResizeRects = (
 /** 绘制selected的选择框 */
 const drawSelectedArea: (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<GraphItem, 'x' | 'y' | 'width' | 'height' | 'type'>,
+  drawData: Pick<GraphItem, "x" | "y" | "width" | "height" | "type">,
   options?: {
     withoutResizeRect?: boolean;
     isDashLine?: boolean;
-  },
+  }
 ) => void = (ctx, { x, y, width, height, type }, options) => {
   const gapX = width > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
   const gapY = height > 0 ? DRAW_SELECTION_GAP : -DRAW_SELECTION_GAP;
@@ -71,7 +71,7 @@ const drawSelectedArea: (
 
 const drawNormalRect = (
   ctx: CanvasRenderingContext2D,
-  { x, y, width, height }: BasicGraphData,
+  { x, y, width, height }: BasicGraphData
 ) => {
   ctx.moveTo(x, y);
   ctx.lineTo(x + width, y);
@@ -88,7 +88,7 @@ const drawRect: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
 
 const drawCircle: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed },
+  { x, y, width, height, seed }
 ) => {
   const centerX = x + width / 2;
   const centerY = y + height / 2;
@@ -99,7 +99,7 @@ const drawCircle: DrawGraphFn = (
 
 const drawDiamond: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed },
+  { x, y, width, height, seed }
 ) => {
   roughCanvas.polygon(
     [
@@ -110,13 +110,13 @@ const drawDiamond: DrawGraphFn = (
     ],
     {
       seed,
-    },
+    }
   );
 };
 
 const drawSelection = (
   ctx: CanvasRenderingContext2D,
-  { x, y, width, height }: BasicGraphData,
+  { x, y, width, height }: BasicGraphData
 ) => {
   ctx.save();
   ctx.fillStyle = SELECTION_AREA_BG_COLOR;
@@ -126,8 +126,8 @@ const drawSelection = (
 
 const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
   const arrowLength = Math.min(
-    Math.pow(width * width + height * height, 1 / 2) / 2,
-    ARROW_LENGTH,
+    (width * width + height * height) ** (1 / 2) / 2,
+    ARROW_LENGTH
   );
   const directionLength = height < 0 ? -arrowLength : arrowLength;
   const angle = Math.floor(180 / (Math.PI / Math.atan(width / height)));
@@ -148,13 +148,13 @@ const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
 
 const drawText: DrawTextFn = (
   ctx,
-  { x, y, content, width, fontSize, textAlign },
+  { x, y, content, width, fontSize, textAlign }
 ) => {
   if (!content?.trim()) {
     return;
   }
 
-  ctx.textBaseline = 'bottom';
+  ctx.textBaseline = "bottom";
   ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
 
   const lines = getTextLines(content);
@@ -177,7 +177,7 @@ const drawText: DrawTextFn = (
 const drawGraph = (
   ctx: CanvasRenderingContext2D,
   roughCanvas: RoughCanvas,
-  drawData: GraphItem,
+  drawData: GraphItem
 ) => {
   switch (drawData.type) {
     case DrawType.selection:
@@ -203,7 +203,7 @@ const drawGraph = (
 
 const drawSelectedBorder = (
   ctx: CanvasRenderingContext2D,
-  data: GraphItem[],
+  data: GraphItem[]
 ) => {
   const selectedList = data.filter((item) => item.selected);
 
@@ -221,7 +221,7 @@ const drawSelectedBorder = (
         height: maxY - minY,
         type: DrawType.selection,
       },
-      { isDashLine: true },
+      { isDashLine: true }
     );
   }
 
@@ -235,12 +235,14 @@ const drawSelectedBorder = (
 export const drawCanvas = (
   ctx: CanvasRenderingContext2D,
   roughCanvas: RoughCanvas,
-  data: GraphItem[],
+  data: GraphItem[]
 ) => {
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   drawSelectedBorder(ctx, data);
 
   ctx.beginPath();
-  data.forEach((item) => drawGraph(ctx, roughCanvas, item));
+  data.forEach((item) => {
+    drawGraph(ctx, roughCanvas, item);
+  });
   ctx.stroke();
 };

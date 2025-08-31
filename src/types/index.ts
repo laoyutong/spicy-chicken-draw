@@ -1,27 +1,27 @@
-import { Dispatch, RefObject, SetStateAction } from 'react';
-import type { RoughCanvas } from 'roughjs/bin/canvas';
+import type { Dispatch, RefObject, SetStateAction } from "react";
+import type { RoughCanvas } from "roughjs/bin/canvas";
 
 export type { RoughCanvas };
 
-export const enum DrawType {
-  selection = 'selection',
-  rectangle = 'rectangle',
-  circle = 'circle',
-  arrow = 'arrow',
-  text = 'text',
-  diamond = 'diamond',
+export enum DrawType {
+  selection = "selection",
+  rectangle = "rectangle",
+  circle = "circle",
+  arrow = "arrow",
+  text = "text",
+  diamond = "diamond",
 }
 
-export const enum CursorConfig {
-  default = 'default',
-  crosshair = 'crosshair',
-  move = 'move',
-  grab = 'grab',
-  neswResize = 'nesw-resize',
-  nwseResize = 'nwse-resize',
+export enum CursorConfig {
+  default = "default",
+  crosshair = "crosshair",
+  move = "move",
+  grab = "grab",
+  neswResize = "nesw-resize",
+  nwseResize = "nwse-resize",
 }
 
-export type Coordinate = Record<'x' | 'y', number>;
+export type Coordinate = Record<"x" | "y", number>;
 
 export interface BoundingElement {
   id: string;
@@ -79,38 +79,38 @@ export type TextOnChangeEvent = (
   value: string,
   coordinate: Coordinate | null,
   container: NormalGraphItem | null,
-  existElement?: TextGraphItem,
+  existElement?: TextGraphItem
 ) => void;
 
 export type SetDrawData = Dispatch<SetStateAction<GraphItem[]>>;
 
 export type BaseDrawFn<T extends GraphItem, K extends keyof T = keyof T> = (
   ctx: CanvasRenderingContext2D,
-  drawData: Pick<T, K>,
+  drawData: Pick<T, K>
 ) => void;
 
-type BasicGraphFields = 'x' | 'y' | 'width' | 'height';
+type BasicGraphFields = "x" | "y" | "width" | "height";
 
 export type BasicGraphData = Pick<GraphItem, BasicGraphFields>;
 
 export type DrawGraphFn = (
   roughCanvas: RoughCanvas,
-  drawData: Pick<NormalGraphItem, BasicGraphFields | 'seed'>,
+  drawData: Pick<NormalGraphItem, BasicGraphFields | "seed">
 ) => void;
 
 export type DrawTextFn = (
   ctx: CanvasRenderingContext2D,
-  drawData: TextGraphItem,
+  drawData: TextGraphItem
 ) => void;
 
-export const enum ResizePosition {
-  top = 'TOP',
-  bottom = 'BOTTOM',
+export enum ResizePosition {
+  top = "TOP",
+  bottom = "BOTTOM",
 }
 
-export const enum TextAlign {
-  left = 'left',
-  center = 'center',
+export enum TextAlign {
+  left = "left",
+  center = "center",
 }
 
 export type CanvasCtxRef = RefObject<CanvasRenderingContext2D | null>;

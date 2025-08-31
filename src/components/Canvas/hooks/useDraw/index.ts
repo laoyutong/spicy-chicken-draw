@@ -1,24 +1,23 @@
-import { useState } from 'react';
-import { CanvasCtxRef, GraphItem, RoughCanvasRef } from '@/types';
-import { APP_KEY } from '@/config';
-
-import { useOperationCoordinate } from './useOperationCoordinate';
-import { useOperationToolEvent } from './useOperationToolEvent';
-import { useHandleKeyPress } from './useHandleKeyPress';
-import { useDrawCanvas } from './useDrawCanvas';
-import { useHandleDrawData } from './useHandleDrawData';
+import { useState } from "react";
+import { APP_KEY } from "@/config";
+import type { CanvasCtxRef, GraphItem, RoughCanvasRef } from "@/types";
+import { useDrawCanvas } from "./useDrawCanvas";
+import { useHandleDrawData } from "./useHandleDrawData";
+import { useHandleKeyPress } from "./useHandleKeyPress";
+import { useOperationCoordinate } from "./useOperationCoordinate";
+import { useOperationToolEvent } from "./useOperationToolEvent";
 
 export const useDraw = (
   staticCanvasCtx: CanvasCtxRef,
   activeCanvasCtx: CanvasCtxRef,
   staticRoughCanvas: RoughCanvasRef,
-  activeRoughCanvas: RoughCanvasRef,
+  activeRoughCanvas: RoughCanvasRef
 ) => {
   const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
 
   const [staticDrawData, setStaticDrawData] = useState<GraphItem[]>(() => {
     try {
-      return JSON.parse(localStorage.getItem(APP_KEY) || '[]');
+      return JSON.parse(localStorage.getItem(APP_KEY) || "[]");
     } catch {
       return [];
     }

@@ -1,25 +1,25 @@
-import { MutableRefObject, useRef } from 'react';
-import { produce } from 'immer';
-import { useAtomValue } from 'jotai';
-import { cursorPointAtom } from '@/store';
+import { produce } from "immer";
+import { useAtomValue } from "jotai";
+import { type MutableRefObject, useRef } from "react";
+import { cursorPointAtom } from "@/store";
 import {
-  Coordinate,
+  type Coordinate,
   CursorConfig,
   DrawType,
-  GraphItem,
-  HistoryUpdatedRecordData,
+  type GraphItem,
+  type HistoryUpdatedRecordData,
   ResizePosition,
-  SetDrawData,
-  TimeoutValue,
-} from '@/types';
+  type SetDrawData,
+  type TimeoutValue,
+} from "@/types";
 import {
+  getContentArea,
   getHoverElement,
   getSelectedItems,
-  history,
-  handleDrawItem,
-  getContentArea,
   getTextLines,
-} from '@/utils';
+  handleDrawItem,
+  history,
+} from "@/utils";
 
 interface UseHandleMoveAndResizeParams {
   startCoordinate: Coordinate | null;
@@ -52,18 +52,18 @@ export const useHandleMoveAndResize = ({
 
   // 收集selected及其绑定的内容
   const collectSelectedElements = (
-    drawDataList: MutableRefObject<GraphItem[]>,
+    drawDataList: MutableRefObject<GraphItem[]>
   ) => {
     if (!drawDataList.current.length) {
-      console.log('execute collectSelectedElements');
+      console.log("execute collectSelectedElements");
       drawDataList.current = getSelectedItems(staticDrawData);
 
       if (drawDataList.current.length) {
         setActiveDrawData(drawDataList.current);
         setStaticDrawData((pre) =>
           pre.filter(
-            (item) => !drawDataList.current.some((i) => i.id === item.id),
-          ),
+            (item) => !drawDataList.current.some((i) => i.id === item.id)
+          )
         );
         return true;
       }
@@ -73,11 +73,11 @@ export const useHandleMoveAndResize = ({
 
   const collectUpdatedHistoryRecord = (
     dataCache: MutableRefObject<GraphItem[]>,
-    handleDrawItem: (drawItem: GraphItem) => Partial<GraphItem>,
+    handleDrawItem: (drawItem: GraphItem) => Partial<GraphItem>
   ) => {
     dataCache.current.forEach((dataItem) => {
       const activeDrawItem = activeDrawData.find(
-        (item) => dataItem.id === item.id,
+        (item) => dataItem.id === item.id
       );
 
       if (!activeDrawItem) {
@@ -154,14 +154,14 @@ export const useHandleMoveAndResize = ({
       const [contentAreaWidth, contentAreaHeight] = [maxX - minX, maxY - minY];
 
       const hasTextGraphItem = resizeDataCache.current.some(
-        (item) => item.type === DrawType.text,
+        (item) => item.type === DrawType.text
       );
 
       setActiveDrawData((pre) =>
         produce(pre, (draft) => {
           resizeDataCache.current.forEach((resizeCacheItem) => {
             const activeDraftItem = draft.find(
-              (item) => item.id === resizeCacheItem.id,
+              (item) => item.id === resizeCacheItem.id
             );
             if (!activeDraftItem) {
               return;
@@ -253,7 +253,7 @@ export const useHandleMoveAndResize = ({
               const handleZoomIn = (
                 isXLarger: boolean,
                 xUnit: 1 | -1,
-                yUnit: 1 | -1,
+                yUnit: 1 | -1
               ) => {
                 const largeDisX = (() => {
                   if (isXLarger) {
@@ -273,7 +273,7 @@ export const useHandleMoveAndResize = ({
 
                 handleResize(
                   xUnit * Math.abs(largeDisX),
-                  yUnit * Math.abs(largeDisY),
+                  yUnit * Math.abs(largeDisY)
                 );
               };
 
@@ -322,7 +322,7 @@ export const useHandleMoveAndResize = ({
               handleResize(moveDisX, moveDixY);
             }
           });
-        }),
+        })
       );
     }
 
@@ -379,7 +379,7 @@ export const useHandleMoveAndResize = ({
           });
 
           return { ...item, selected: false };
-        }),
+        })
       );
       // 异步执行，如果后续存在move or resize则不记录
       resetSelectedHistoryRecordTimer.current = setTimeout(() => {
@@ -399,7 +399,7 @@ export const useHandleMoveAndResize = ({
     ) {
       // 如果hover的图形有containerId，则hover其container
       const activeId =
-        ('containerId' in activeHoverElement
+        ("containerId" in activeHoverElement
           ? activeHoverElement.containerId
           : activeHoverElement.id) || activeHoverElement.id;
 
@@ -420,7 +420,7 @@ export const useHandleMoveAndResize = ({
             };
           }
           return item;
-        }),
+        })
       );
       return true;
     }
@@ -434,7 +434,7 @@ export const useHandleMoveAndResize = ({
       setActiveDrawData((pre) =>
         pre.map((item) => {
           const activeMovingDrawItem = moveDataCache.current.find(
-            (i) => i.id === item.id,
+            (i) => i.id === item.id
           );
 
           if (!activeMovingDrawItem) {
@@ -446,7 +446,7 @@ export const useHandleMoveAndResize = ({
             x: activeMovingDrawItem.x + moveCoordinate.x - startCoordinate.x,
             y: activeMovingDrawItem.y + moveCoordinate.y - startCoordinate.y,
           };
-        }),
+        })
       );
 
     return true;
