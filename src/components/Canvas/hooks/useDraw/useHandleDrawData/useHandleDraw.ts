@@ -1,14 +1,13 @@
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import { useRef } from "react";
 import { MIN_DRAW_DIS } from "@/config";
-import { drawTypeAtom } from "@/store";
+import { defaultFillColorAtom, defaultStrokeColorAtom, drawTypeAtom } from "@/store";
 import {
   type Coordinate,
   DrawType,
   type GraphItem,
   type HistoryUpdatedRecordData,
-  type NormalGraphType,
   type SetDrawData,
   type TextGraphItem,
 } from "@/types";
@@ -36,6 +35,8 @@ export const useHandleDraw = ({
   );
 
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
+  const defaultStrokeColor = useAtomValue(defaultStrokeColorAtom);
+  const defaultFillColor = useAtomValue(defaultFillColorAtom);
 
   const handleDrawElement = () => {
     if (!startCoordinate) {
@@ -87,15 +88,20 @@ export const useHandleDraw = ({
 
     // 初始化 workingDrawData
     if (!workingDrawData.current) {
-      workingDrawData.current = {
+      const base = {
         id: nanoid(),
-        type: drawType as NormalGraphType,
+        type: drawType,
         width: 0,
         height: 0,
         selected: false,
         seed: Math.ceil(Math.random() * 100000),
         ...startCoordinate,
       };
+      const withStyle =
+        drawType !== DrawType.selection && drawType !== DrawType.text
+          ? { ...base, strokeColor: defaultStrokeColor, fillColor: defaultFillColor }
+          : base;
+      workingDrawData.current = withStyle as Exclude<GraphItem, TextGraphItem>;
       return true;
     }
 

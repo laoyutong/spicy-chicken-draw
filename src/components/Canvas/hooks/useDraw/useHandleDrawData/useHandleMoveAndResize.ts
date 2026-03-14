@@ -1,7 +1,7 @@
 import { produce } from "immer";
 import { useAtomValue } from "jotai";
 import { type MutableRefObject, useRef } from "react";
-import { cursorPointAtom } from "@/store";
+import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   type Coordinate,
   CursorConfig,
@@ -47,6 +47,7 @@ export const useHandleMoveAndResize = ({
   resizePosition,
 }: UseHandleMoveAndResizeParams) => {
   const cursorPoint = useAtomValue(cursorPointAtom);
+  const drawType = useAtomValue(drawTypeAtom);
   const resizeDataCache = useRef<GraphItem[]>([]);
 
   // 缓存selected框的初始坐标，用于resize的尺寸计算
@@ -397,17 +398,12 @@ export const useHandleMoveAndResize = ({
       });
     }
 
-    if (cursorPoint !== CursorConfig.move) {
-      return false;
-    }
-
-    // 如果activeHoverElement为数组，肯定是批量selected的状态，所以仅需要判断单个的情况
-    // 当前点击到了没有selected的图形，需要设置selected状态
+    // 选择模式下点击未选中的图形：直接选中，不依赖 cursor 是否为 move（避免未先悬停时点击误触发框选）
     if (
+      drawType === DrawType.selection &&
       !Array.isArray(activeHoverElement) &&
       activeHoverElement?.selected === false
     ) {
-      // 如果hover的图形有containerId，则hover其container
       const activeId =
         ("containerId" in activeHoverElement
           ? activeHoverElement.containerId
@@ -424,15 +420,16 @@ export const useHandleMoveAndResize = ({
               },
             });
 
-            return {
-              ...item,
-              selected: true,
-            };
+            return { ...item, selected: true };
           }
           return item;
         })
       );
       return true;
+    }
+
+    if (cursorPoint !== CursorConfig.move) {
+      return false;
     }
 
     if (collectSelectedElements(moveDataCache)) {

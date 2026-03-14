@@ -1,6 +1,8 @@
 import { useAtomValue } from "jotai";
 import type { JSX } from "react";
+import { ShapeColorPanel } from "@/components/ShapeColorPanel";
 import { cursorPointAtom } from "@/store";
+import { DrawDataProvider } from "./context/DrawDataContext";
 import { useDraw, useInitCanvas, useResizeCanvas } from "./hooks";
 import styles from "./style.module.less";
 
@@ -21,17 +23,26 @@ export const Canvas = (): JSX.Element => {
     [staticCanvasCtx, activeCanvasCtx]
   );
 
-  useDraw(
-    staticCanvasCtx,
-    activeCanvasCtx,
-    staticRoughCanvas,
-    activeRoughCanvas
-  );
+  const { staticDrawData, setStaticDrawData, activeDrawData, setActiveDrawData } =
+    useDraw(
+      staticCanvasCtx,
+      activeCanvasCtx,
+      staticRoughCanvas,
+      activeRoughCanvas
+    );
 
   return (
-    <div className={styles.canvas_container} style={{ cursor: cursorPoint }}>
-      <canvas ref={activeCanvasRef} />
-      <canvas ref={staticCanvasRef} />
-    </div>
+    <DrawDataProvider
+      staticDrawData={staticDrawData}
+      setStaticDrawData={setStaticDrawData}
+      activeDrawData={activeDrawData}
+      setActiveDrawData={setActiveDrawData}
+    >
+      <div className={styles.canvas_container} style={{ cursor: cursorPoint, position: "relative" }}>
+        <canvas ref={staticCanvasRef} />
+        <canvas ref={activeCanvasRef} />
+        <ShapeColorPanel />
+      </div>
+    </DrawDataProvider>
   );
 };

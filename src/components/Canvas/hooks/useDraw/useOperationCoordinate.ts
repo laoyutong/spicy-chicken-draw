@@ -17,8 +17,12 @@ export const useOperationCoordinate = () => {
 
   useEventListener(
     "mousedown",
-    ({ pageX, pageY }) => {
-      setStartCoordinate({ x: pageX, y: pageY });
+    (e: MouseEvent) => {
+      // 点击工具栏、颜色面板等 UI 时不触发画布操作，避免拦截颜色选择器等
+      if ((e.target as Element).closest?.("[data-ignore-draw]")) {
+        return;
+      }
+      setStartCoordinate({ x: e.pageX, y: e.pageY });
     },
     { target: document }
   );

@@ -48,7 +48,7 @@ export const OperationTool = (): JSX.Element => {
   });
 
   return (
-    <div className="absolute top-3 left-3 rounded bg-slate-50 shadow p-1">
+    <div data-ignore-draw className="absolute top-3 left-3 rounded bg-slate-50 shadow p-1">
       <Dropdown menu={{ items }} overlayClassName="mt-8" trigger={["click"]}>
         <ListBottom {...ICON_PROPS} />
       </Dropdown>

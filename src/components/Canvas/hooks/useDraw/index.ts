@@ -49,4 +49,11 @@ export const useDraw = (
     staticRoughCanvas,
     activeRoughCanvas,
   });
+
+  return {
+    staticDrawData,
+    setStaticDrawData,
+    activeDrawData,
+    setActiveDrawData,
+  };
 };

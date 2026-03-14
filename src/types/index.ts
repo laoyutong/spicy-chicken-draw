@@ -51,13 +51,21 @@ export interface RoughGraphItem {
   seed: number;
 }
 
-export interface NormalGraphItem extends BaseGraphItem, RoughGraphItem {
+/** 支持边框和填充颜色的图形（矩形、圆、菱形、箭头） */
+export interface ShapeStyle {
+  /** 边框颜色 */
+  strokeColor?: string;
+  /** 背景/填充颜色 */
+  fillColor?: string;
+}
+
+export interface NormalGraphItem extends BaseGraphItem, RoughGraphItem, ShapeStyle {
   type: NormalGraphType;
   boundingElements?: BoundingElement[];
 }
 
 // TODO: 目前仅支持单纯的绘制能力
-export interface ArrowGraphItem extends BaseGraphItem, RoughGraphItem {
+export interface ArrowGraphItem extends BaseGraphItem, RoughGraphItem, ShapeStyle {
   type: DrawType.arrow;
 }
 
@@ -95,7 +103,7 @@ export type BasicGraphData = Pick<GraphItem, BasicGraphFields>;
 
 export type DrawGraphFn = (
   roughCanvas: RoughCanvas,
-  drawData: Pick<NormalGraphItem, BasicGraphFields | "seed">
+  drawData: Pick<NormalGraphItem, BasicGraphFields | "seed" | "strokeColor" | "fillColor">
 ) => void;
 
 export type DrawTextFn = (

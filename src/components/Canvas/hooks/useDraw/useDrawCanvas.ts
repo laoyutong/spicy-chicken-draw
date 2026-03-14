@@ -1,5 +1,5 @@
-import { useEventListener, useUpdateEffect } from "ahooks";
-import { useEffect } from "react";
+import { useEventListener } from "ahooks";
+import { useLayoutEffect } from "react";
 import { APP_KEY } from "@/config";
 import type { CanvasCtxRef, GraphItem, RoughCanvasRef } from "@/types";
 import { drawCanvas } from "@/utils";
@@ -28,7 +28,6 @@ export const useDrawCanvas = ({
     if (!staticCanvasCtx.current || !staticRoughCanvas.current) {
       return;
     }
-
     drawCanvas(
       staticCanvasCtx.current,
       staticRoughCanvas.current,
@@ -41,7 +40,6 @@ export const useDrawCanvas = ({
     if (!activeCanvasCtx.current || !activeRoughCanvas.current) {
       return;
     }
-
     drawCanvas(
       activeCanvasCtx.current,
       activeRoughCanvas.current,
@@ -49,11 +47,12 @@ export const useDrawCanvas = ({
     );
   };
 
-  useUpdateEffect(() => {
+  // useLayoutEffect 在浏览器绘制前同步执行，使颜色等更新立即反映到画布
+  useLayoutEffect(() => {
     drawActiveContent();
   }, [activeDrawData]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     drawStaticContent();
   }, [staticDrawData]);
 

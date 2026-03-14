@@ -6,7 +6,34 @@ export const ARROW_LENGTH = 30;
 
 export const DEFAULT_STROKE_STYLE = "#000";
 
-export const SELECTION_AREA_BG_COLOR = "rgb(224, 223, 255)";
+/** 图形默认边框颜色 */
+export const DEFAULT_STROKE_COLOR = "#000";
+
+/** 图形默认填充颜色（纯色） */
+export const DEFAULT_FILL_COLOR = "#ffffff";
+
+/** 边框/线条可选预设颜色（6 个） */
+export const PRESET_STROKE_COLORS = [
+  "#000000",
+  "#ffffff",
+  "#e53e3e",
+  "#3182ce",
+  "#38a169",
+  "#d69e2e",
+] as const;
+
+/** 填充可选预设颜色（6 个纯色） */
+export const PRESET_FILL_COLORS = [
+  "#ffffff",
+  "#e2e8f0",
+  "#feb2b2",
+  "#90cdf4",
+  "#9ae6b4",
+  "#fbd38d",
+] as const;
+
+/** 框选区域背景色（半透明，不遮挡底层图形） */
+export const SELECTION_AREA_BG_COLOR = "rgba(224, 223, 255, 0.35)";
 
 export const SELECTION_BORDER_COLOR = "rgb(105, 101, 219)";
 
@@ -40,6 +67,9 @@ export const TEXT_LINE_HEIGHT_RATIO = 1.2;
 export const EXPORT_IMAGE_GAP = 30;
 
 export const EXPORT_IMAGE_BACKGROUND_COLOR = "#fff";
+
+/** 画布背景纯色 */
+export const CANVAS_BACKGROUND_COLOR = "#ffffff";
 
 export const HAS_BOUNDING_ELEMENTS_LIST = [
   DrawType.circle,
