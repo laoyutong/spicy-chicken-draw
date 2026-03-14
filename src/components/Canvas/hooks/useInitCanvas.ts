@@ -1,10 +1,11 @@
 import { useMount } from "ahooks";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import roughjs from "roughjs";
 
 import type { RoughCanvas } from "@/types";
 
 export const useInitCanvas = () => {
+  const [canvasReady, setCanvasReady] = useState(false);
   const staticCanvasRef = useRef<HTMLCanvasElement>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -21,6 +22,7 @@ export const useInitCanvas = () => {
 
       staticRoughCanvas.current = roughjs.canvas(staticCanvasRef.current);
       activeRoughCanvas.current = roughjs.canvas(activeCanvasRef.current);
+      setCanvasReady(true);
     }
   });
 
@@ -31,5 +33,6 @@ export const useInitCanvas = () => {
     activeCanvasCtx,
     staticRoughCanvas,
     activeRoughCanvas,
+    canvasReady,
   };
 };

@@ -16,6 +16,7 @@ export const Canvas = (): JSX.Element => {
     staticCanvasRef,
     staticRoughCanvas,
     activeRoughCanvas,
+    canvasReady,
   } = useInitCanvas();
 
   useResizeCanvas(
@@ -28,7 +29,8 @@ export const Canvas = (): JSX.Element => {
       staticCanvasCtx,
       activeCanvasCtx,
       staticRoughCanvas,
-      activeRoughCanvas
+      activeRoughCanvas,
+      canvasReady
     );
 
   return (

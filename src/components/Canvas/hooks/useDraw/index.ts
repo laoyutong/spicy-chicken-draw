@@ -11,7 +11,8 @@ export const useDraw = (
   staticCanvasCtx: CanvasCtxRef,
   activeCanvasCtx: CanvasCtxRef,
   staticRoughCanvas: RoughCanvasRef,
-  activeRoughCanvas: RoughCanvasRef
+  activeRoughCanvas: RoughCanvasRef,
+  canvasReady: boolean
 ) => {
   const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
 
@@ -48,6 +49,7 @@ export const useDraw = (
     activeCanvasCtx,
     staticRoughCanvas,
     activeRoughCanvas,
+    canvasReady,
   });
 
   return {

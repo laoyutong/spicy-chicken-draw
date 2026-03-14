@@ -11,6 +11,7 @@ interface UseDrawCanvasParams {
   staticCanvasCtx: CanvasCtxRef;
   staticRoughCanvas: RoughCanvasRef;
   activeRoughCanvas: RoughCanvasRef;
+  canvasReady: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export const useDrawCanvas = ({
   activeCanvasCtx,
   staticRoughCanvas,
   activeRoughCanvas,
+  canvasReady,
 }: UseDrawCanvasParams) => {
   const drawStaticContent = (isResize?: boolean) => {
     if (!staticCanvasCtx.current || !staticRoughCanvas.current) {
@@ -47,14 +49,17 @@ export const useDrawCanvas = ({
     );
   };
 
-  // useLayoutEffect 在浏览器绘制前同步执行，使颜色等更新立即反映到画布
   useLayoutEffect(() => {
-    drawActiveContent();
-  }, [activeDrawData]);
+    if (canvasReady) {
+      drawActiveContent();
+    }
+  }, [activeDrawData, canvasReady]);
 
   useLayoutEffect(() => {
-    drawStaticContent();
-  }, [staticDrawData]);
+    if (canvasReady) {
+      drawStaticContent();
+    }
+  }, [staticDrawData, canvasReady]);
 
   useEventListener(
     "resize",
