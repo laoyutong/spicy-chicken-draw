@@ -3,6 +3,7 @@ import {
   Click,
   DiamondThree,
   FontSizeTwo,
+  Picture,
   RectangleOne,
   Round,
 } from "@icon-park/react";
@@ -13,6 +14,7 @@ export const ICON_LIST = [
   { type: DrawType.rectangle, Icon: RectangleOne },
   { type: DrawType.circle, Icon: Round },
   { type: DrawType.diamond, Icon: DiamondThree },
-  { type: DrawType.text, Icon: FontSizeTwo },
   { type: DrawType.arrow, Icon: ArrowRight },
+  { type: DrawType.text, Icon: FontSizeTwo },
+  { type: DrawType.image, Icon: Picture },
 ];

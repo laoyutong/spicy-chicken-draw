@@ -17,6 +17,7 @@ import {
   type DrawTextFn,
   DrawType,
   type GraphItem,
+  type ImageGraphItem,
   type RoughCanvas,
   TextAlign,
 } from "@/types";
@@ -223,6 +224,172 @@ const drawText: DrawTextFn = (
   });
 };
 
+// 缓存已加载的图片
+const imageCache = new Map<string, HTMLImageElement>();
+
+// 待处理的图片加载任务，用于触发重绘
+let pendingImageLoads = new Set<string>();
+let redrawCallback: (() => void) | null = null;
+
+export const setImageRedrawCallback = (callback: (() => void) | null) => {
+  redrawCallback = callback;
+};
+
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  if (imageCache.has(src)) {
+    return Promise.resolve(imageCache.get(src)!);
+  }
+
+  // 如果已经在加载中，返回一个新的 Promise 等待同一个图片
+  if (pendingImageLoads.has(src)) {
+    return new Promise((resolve) => {
+      const checkInterval = setInterval(() => {
+        if (imageCache.has(src)) {
+          clearInterval(checkInterval);
+          resolve(imageCache.get(src)!);
+        }
+      }, 50);
+    });
+  }
+
+  pendingImageLoads.add(src);
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      imageCache.set(src, img);
+      pendingImageLoads.delete(src);
+      // 图片加载完成后触发重绘
+      redrawCallback?.();
+      resolve(img);
+    };
+    img.onerror = () => {
+      pendingImageLoads.delete(src);
+      reject(new Error(`Failed to load image: ${src}`));
+    };
+    img.src = src;
+  });
+};
+
+export const clearImageCache = () => {
+  imageCache.clear();
+  pendingImageLoads.clear();
+};
+
+// 绘制图片兜底占位图
+const drawImageFallback = (
+  ctx: CanvasRenderingContext2D,
+  { x, y, width, height }: Pick<ImageGraphItem, "x" | "y" | "width" | "height">,
+) => {
+  const absWidth = Math.abs(width);
+  const absHeight = Math.abs(height);
+  const isFlippedX = width < 0;
+  const isFlippedY = height < 0;
+  const actualX = isFlippedX ? x + width : x;
+  const actualY = isFlippedY ? y + height : y;
+
+  // 绘制虚线边框
+  ctx.strokeStyle = "#94a3b8";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeRect(actualX, actualY, absWidth, absHeight);
+  ctx.setLineDash([]);
+
+  // 绘制背景色
+  ctx.fillStyle = "rgba(241, 245, 249, 0.8)";
+  ctx.fillRect(actualX, actualY, absWidth, absHeight);
+
+  // 绘制简化的图片图标（山和太阳）
+  const centerX = actualX + absWidth / 2;
+  const centerY = actualY + absHeight / 2;
+  const iconSize = Math.min(absWidth, absHeight) * 0.4;
+
+  if (iconSize > 20) {
+    ctx.save();
+
+    // 绘制外框（图片卡片样式）
+    ctx.strokeStyle = "#64748b";
+    ctx.lineWidth = 1.5;
+    const framePadding = iconSize * 0.1;
+    const frameX = centerX - iconSize / 2 - framePadding;
+    const frameY = centerY - iconSize / 2 - framePadding * 2;
+    const frameW = iconSize + framePadding * 2;
+    const frameH = iconSize + framePadding * 3;
+    ctx.strokeRect(frameX, frameY, frameW, frameH);
+
+    // 绘制山（三角形）
+    ctx.beginPath();
+    ctx.moveTo(frameX + framePadding, frameY + frameH - framePadding);
+    ctx.lineTo(frameX + frameW / 2, frameY + frameH / 2);
+    ctx.lineTo(frameX + frameW - framePadding, frameY + frameH - framePadding);
+    ctx.closePath();
+    ctx.fillStyle = "#94a3b8";
+    ctx.fill();
+    ctx.stroke();
+
+    // 绘制太阳（圆形）
+    ctx.beginPath();
+    ctx.arc(
+      frameX + frameW - framePadding * 2,
+      frameY + framePadding * 2,
+      iconSize * 0.12,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fillStyle = "#fbbf24";
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 绘制文字提示
+  if (absHeight > 40) {
+    ctx.fillStyle = "#64748b";
+    ctx.font = `12px ${TEXT_FONT_FAMILY}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("图片加载失败", centerX, actualY + absHeight - 20);
+    ctx.textAlign = "left";
+  }
+};
+
+const drawImage = (
+  ctx: CanvasRenderingContext2D,
+  drawData: Pick<ImageGraphItem, "x" | "y" | "width" | "height" | "src">,
+) => {
+  // src 为空时直接显示兜底图
+  if (!drawData.src) {
+    drawImageFallback(ctx, drawData);
+    return;
+  }
+
+  const img = imageCache.get(drawData.src);
+
+  if (img) {
+    // 图片已加载，直接绘制
+    ctx.drawImage(
+      img,
+      drawData.x,
+      drawData.y,
+      drawData.width,
+      drawData.height,
+    );
+  } else {
+    // 图片未加载，启动异步加载
+    loadImage(drawData.src).catch(() => {
+      // 图片加载失败时绘制兜底图
+      drawImageFallback(ctx, drawData);
+    });
+
+    // 绘制加载中占位框
+    ctx.strokeStyle = "#94a3b8";
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(drawData.x, drawData.y, drawData.width, drawData.height);
+    ctx.setLineDash([]);
+  }
+};
+
 const drawGraph = (
   ctx: CanvasRenderingContext2D,
   roughCanvas: RoughCanvas,
@@ -246,6 +413,9 @@ const drawGraph = (
       return;
     case DrawType.text:
       drawText(ctx, drawData);
+      return;
+    case DrawType.image:
+      drawImage(ctx, drawData);
       return;
   }
 };

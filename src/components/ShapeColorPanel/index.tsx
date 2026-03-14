@@ -48,7 +48,8 @@ export const ShapeColorPanel = (): JSX.Element | null => {
   ];
 
   // 检查是否有正在输入的文本（textarea 存在）
-  const isEditingText = document.querySelector("textarea.spicy-draw-textarea") !== null;
+  const isEditingText =
+    document.querySelector("textarea.spicy-draw-textarea") !== null;
 
   if (selectedItems.length === 0 && !isEditingText) {
     return null;
@@ -90,7 +91,9 @@ export const ShapeColorPanel = (): JSX.Element | null => {
       ? colorFromStroke === colorFromText
         ? colorFromStroke
         : null
-      : (colorFromStroke ?? colorFromText ?? (isEditingText ? defaultStrokeColor : null));
+      : (colorFromStroke ??
+        colorFromText ??
+        (isEditingText ? defaultStrokeColor : null));
 
   const fillColor =
     fillItems.length > 0 &&
@@ -138,7 +141,9 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     });
     setDefaultStroke(value);
     // 如果有正在输入的 textarea，实时更新其颜色
-    const textarea = document.querySelector("textarea.spicy-draw-textarea") as HTMLTextAreaElement | null;
+    const textarea = document.querySelector(
+      "textarea.spicy-draw-textarea",
+    ) as HTMLTextAreaElement | null;
     if (textarea) {
       textarea.style.color = value;
     }
@@ -165,7 +170,8 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     setDefaultFill(value);
   };
 
-  const hasColor = strokeItems.length > 0 || textItems.length > 0 || isEditingText;
+  const hasColor =
+    strokeItems.length > 0 || textItems.length > 0 || isEditingText;
 
   return (
     <div
@@ -174,7 +180,7 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     >
       {hasColor && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600 shrink-0 w-8">颜色</span>
+          <span className="text-sm text-slate-600 shrink-0 w-8">绘制</span>
           <div className="flex items-center gap-1 flex-wrap">
             {PRESET_COLORS.map((color) => (
               <button
@@ -199,7 +205,7 @@ export const ShapeColorPanel = (): JSX.Element | null => {
       )}
       {hasFill && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600 shrink-0 w-8">填充</span>
+          <span className="text-sm text-slate-600 shrink-0 w-8">背景</span>
           <div className="flex items-center gap-1 flex-wrap">
             {PRESET_FILL_COLORS.map((color) => (
               <button

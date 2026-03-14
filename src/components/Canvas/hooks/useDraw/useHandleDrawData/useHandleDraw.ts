@@ -1,6 +1,6 @@
 import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import { MIN_DRAW_DIS } from "@/config";
 import { defaultFillColorAtom, defaultStrokeColorAtom, drawTypeAtom } from "@/store";
 import {
@@ -8,6 +8,7 @@ import {
   DrawType,
   type GraphItem,
   type HistoryUpdatedRecordData,
+  type ImageGraphItem,
   type SetDrawData,
   type TextGraphItem,
 } from "@/types";
@@ -38,10 +39,75 @@ export const useHandleDraw = ({
   const defaultStrokeColor = useAtomValue(defaultStrokeColorAtom);
   const defaultFillColor = useAtomValue(defaultFillColorAtom);
 
+  // 创建图片元素
+  const createImageElement = useCallback((coordinate: Coordinate, src: string) => {
+    const img = new Image();
+    img.onload = () => {
+      // 保持图片比例，默认宽度为 300
+      const defaultWidth = 300;
+      const scale = defaultWidth / img.width;
+      const height = img.height * scale;
+
+      const newImageItem: ImageGraphItem = {
+        id: nanoid(),
+        type: DrawType.image,
+        x: coordinate.x - defaultWidth / 2,
+        y: coordinate.y - height / 2,
+        width: defaultWidth,
+        height: height,
+        src,
+        selected: true,
+      };
+
+      history.collectAddedRecord([newImageItem]);
+      setStaticDrawData((pre) => [...pre, newImageItem]);
+      setDrawType(DrawType.selection);
+    };
+    img.src = src;
+  }, [setDrawType, setStaticDrawData]);
+
+  // 处理图片文件选择
+  const handleImageSelect = useCallback((coordinate: Coordinate) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const src = event.target?.result as string;
+          if (src) {
+            createImageElement(coordinate, src);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // 用户取消选择，切换回选择模式
+        setDrawType(DrawType.selection);
+      }
+    };
+    input.click();
+  }, [createImageElement, setDrawType]);
+
   const handleDrawElement = () => {
+    // 图片类型特殊处理：点击即弹出文件选择
+    if (drawType === DrawType.image && startCoordinate && !workingDrawData.current) {
+      handleImageSelect(startCoordinate);
+      // 阻止继续处理，因为图片创建是异步的
+      workingDrawData.current = { type: DrawType.image } as Exclude<GraphItem, TextGraphItem>;
+      return true;
+    }
+
     if (!startCoordinate) {
       // 处理绘制结果
       if (workingDrawData.current) {
+        // 图片类型已经处理过了，这里直接清理
+        if (workingDrawData.current.type === DrawType.image) {
+          workingDrawData.current = null;
+          return false;
+        }
+
         // selection不需要绘制、text在createTextOnChange里绘制
         if (
           ![DrawType.selection, DrawType.text].includes(
@@ -86,7 +152,7 @@ export const useHandleDraw = ({
       return false;
     }
 
-    // 初始化 workingDrawData
+    // 初始化 workingDrawData（图片类型在上面已经处理）
     if (!workingDrawData.current) {
       const base = {
         id: nanoid(),

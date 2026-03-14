@@ -162,6 +162,13 @@ export const useHandleMoveAndResize = ({
         (item) => item.type === DrawType.text
       );
 
+      const hasImageGraphItem = resizeDataCache.current.some(
+        (item) => item.type === DrawType.image
+      );
+
+      // 图片类型和文本类型都只支持等比缩放
+      const shouldMaintainAspectRatio = hasTextGraphItem || hasImageGraphItem;
+
       setActiveDrawData((pre) =>
         produce(pre, (draft) => {
           resizeDataCache.current.forEach((resizeCacheItem) => {
@@ -237,8 +244,8 @@ export const useHandleMoveAndResize = ({
               }
             };
 
-            // 存在文本类型时，只支持等比缩放；缩放到一定小尺寸时允许翻转（宽高可为负）
-            if (hasTextGraphItem) {
+            // 存在文本类型或图片类型时，只支持等比缩放；缩放到一定小尺寸时允许翻转（宽高可为负）
+            if (shouldMaintainAspectRatio) {
               const resizeRate = contentAreaWidth / contentAreaHeight;
 
               const handleZoomOut = (isXLarger: boolean) => {

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { APP_KEY } from "@/config";
-import type { CanvasCtxRef, GraphItem, RoughCanvasRef } from "@/types";
+import { CanvasCtxRef, DrawType, GraphItem, RoughCanvasRef } from "@/types";
+import { getImage } from "@/utils";
 import { useDrawCanvas } from "./useDrawCanvas";
 import { useHandleDrawData } from "./useHandleDrawData";
 import { useHandleKeyPress } from "./useHandleKeyPress";
@@ -15,14 +16,40 @@ export const useDraw = (
   canvasReady: boolean
 ) => {
   const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
+  const [staticDrawData, setStaticDrawData] = useState<GraphItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [staticDrawData, setStaticDrawData] = useState<GraphItem[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(APP_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  });
+  // 从 localStorage 和 IndexedDB 加载数据
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = JSON.parse(
+          localStorage.getItem(APP_KEY) || "[]"
+        ) as GraphItem[];
+
+        // 对于图片元素，从 IndexedDB 获取 src
+        const dataWithImages = await Promise.all(
+          data.map(async (item) => {
+            if (item.type === DrawType.image) {
+              const src = await getImage(item.id);
+              // 即使 IndexedDB 中没有图片数据，也保留图片元素
+              // 显示兜底图而不是完全移除
+              return { ...item, src: src || "" } as GraphItem;
+            }
+            return item;
+          })
+        );
+
+        setStaticDrawData(dataWithImages);
+      } catch {
+        setStaticDrawData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const { startCoordinate, moveCoordinate } = useOperationCoordinate();
 

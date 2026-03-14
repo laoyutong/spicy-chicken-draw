@@ -10,6 +10,7 @@ export enum DrawType {
   arrow = "arrow",
   text = "text",
   diamond = "diamond",
+  image = "image",
 }
 
 export enum CursorConfig {
@@ -79,11 +80,18 @@ export interface TextGraphItem extends BaseGraphItem {
   color?: string;
 }
 
+export interface ImageGraphItem extends BaseGraphItem {
+  type: DrawType.image;
+  /** 图片的 base64 数据或 URL */
+  src: string;
+}
+
 export type GraphItem =
   | TextGraphItem
   | NormalGraphItem
   | SelectionGraphItem
-  | ArrowGraphItem;
+  | ArrowGraphItem
+  | ImageGraphItem;
 
 export type TextOnChangeEvent = (
   value: string,

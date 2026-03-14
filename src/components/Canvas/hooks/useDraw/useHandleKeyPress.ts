@@ -2,8 +2,8 @@ import { useKeyPress } from "ahooks";
 import { message } from "antd";
 import { nanoid } from "nanoid";
 import { useRef } from "react";
-import type { Coordinate, GraphItem, SetDrawData } from "@/types";
-import { getContentArea, getSelectedItems, history } from "@/utils";
+import { DrawType, type Coordinate, type GraphItem, type SetDrawData } from "@/types";
+import { deleteImage, getContentArea, getSelectedItems, history, saveImage } from "@/utils";
 
 interface UseHandleKeyPressParams {
   staticDrawData: GraphItem[];
@@ -33,6 +33,13 @@ export const useHandleKeyPress = ({
   useKeyPress(["Backspace"], () => {
     const selectedItems = getSelectedItems(staticDrawData);
 
+    // 删除图片时同步清理 IndexedDB
+    selectedItems.forEach((item) => {
+      if (item.type === DrawType.image) {
+        deleteImage(item.id).catch(console.error);
+      }
+    });
+
     history.collectRemovedRecord(selectedItems);
 
     setStaticDrawData((pre) =>
@@ -51,7 +58,7 @@ export const useHandleKeyPress = ({
   });
 
   // 粘贴
-  useKeyPress(["meta.v"], () => {
+  useKeyPress(["meta.v"], async () => {
     if (!copyData.current.length) {
       return;
     }
@@ -91,6 +98,13 @@ export const useHandleKeyPress = ({
               }))
             : undefined,
       }));
+
+    // 复制图片数据到 IndexedDB
+    for (const item of pasteData) {
+      if (item.type === DrawType.image && (item as { src?: string }).src) {
+        await saveImage(item.id, (item as { src: string }).src);
+      }
+    }
 
     history.collectAddedRecord(pasteData);
 

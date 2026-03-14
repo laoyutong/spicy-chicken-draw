@@ -118,6 +118,13 @@ export const getHoverElement = (
         return graphItem;
       }
     }
+
+    if (graphItem.type === DrawType.image) {
+      // 图片类型使用矩形区域的碰撞检测
+      if (isInRange(x, minX, maxX) && isInRange(y, minY, maxY)) {
+        return graphItem;
+      }
+    }
   }
 
   return null;

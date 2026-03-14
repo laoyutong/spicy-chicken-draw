@@ -5,3 +5,4 @@ export * from "./selection";
 export { default as mitt } from "./mitt";
 export * from "./file";
 export * from "./history";
+export * from "./imageStorage";
