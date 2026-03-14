@@ -54,6 +54,7 @@ export const useHandleDrawData = ({
     staticDrawData,
     activeDrawData,
     setStaticDrawData,
+    setActiveDrawData,
   });
 
   const { handleDrawElement } = useHandleDraw({

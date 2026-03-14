@@ -1,7 +1,11 @@
 import { useSetAtom } from "jotai";
 import { nanoid } from "nanoid";
 import { useRef } from "react";
-import { DEFAULT_TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from "@/config";
+import {
+  DEFAULT_TEXT_FONT_SIZE,
+  TEXT_BOUND_GAP,
+  TEXT_FONT_FAMILY,
+} from "@/config";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
   type BoundingElement,
@@ -28,14 +32,18 @@ interface UseHandleTextParams {
   staticDrawData: GraphItem[];
   activeDrawData: GraphItem[];
   setStaticDrawData: SetDrawData;
+  setActiveDrawData: SetDrawData;
 }
 
 export const useHandleText = ({
   staticDrawData,
   activeDrawData,
   setStaticDrawData,
+  setActiveDrawData,
 }: UseHandleTextParams) => {
   const textareaElement = useRef<HTMLTextAreaElement | null>(null);
+  /** 输入过程中当前容器（实时调整图形时保持中心不变，用 ref 追踪最新尺寸） */
+  const containerRef = useRef<NormalGraphItem | null>(null);
 
   const setDrawType = useSetAtom(drawTypeAtom);
   const setCursorPoint = useSetAtom(cursorPointAtom);
@@ -67,10 +75,43 @@ export const useHandleText = ({
 
       const textareaHeight = finalFontSizeValue * lines.length;
 
-      const textProperty = container
+      // 优先使用编辑过程中实时更新过的容器，保证创建完成后的图形位置与编辑时一致
+      const baseContainer = container
+        ? (containerRef.current ?? container)
+        : null;
+      let finalContainer: NormalGraphItem | null = baseContainer;
+      // 仅当未经过 onInput 更新（仍为初始 container）时才做扩大计算，避免重复计算导致位置跳动
+      if (baseContainer && baseContainer === container) {
+        const needW = maxWidth + TEXT_BOUND_GAP;
+        const needH = textareaHeight + TEXT_BOUND_GAP;
+        const absW = Math.abs(baseContainer.width);
+        const absH = Math.abs(baseContainer.height);
+        const expandW = absW < needW;
+        const expandH = absH < needH;
+        if (expandW || expandH) {
+          const newWidth =
+            baseContainer.width >= 0
+              ? Math.max(baseContainer.width, needW)
+              : -Math.max(absW, needW);
+          const newHeight =
+            baseContainer.height >= 0
+              ? Math.max(baseContainer.height, needH)
+              : -Math.max(absH, needH);
+          finalContainer = {
+            ...baseContainer,
+            width: newWidth,
+            height: newHeight,
+          };
+        }
+      }
+
+      const textProperty = finalContainer
         ? {
-            x: container.x + (container.width - maxWidth) / 2,
-            y: container.y + container.height / 2 - textareaHeight / 2,
+            x: finalContainer.x + (finalContainer.width - maxWidth) / 2,
+            y:
+              finalContainer.y +
+              finalContainer.height / 2 -
+              textareaHeight / 2,
           }
         : existElement
           ? { x: existElement.x, y: existElement.y }
@@ -88,14 +129,14 @@ export const useHandleText = ({
         fontSize: finalFontSizeValue,
         textAlign:
           existElement?.textAlign ||
-          (container ? TextAlign.center : TextAlign.left),
+          (finalContainer ? TextAlign.center : TextAlign.left),
         ...textProperty,
-        ...(container ? { containerId: container.id } : {}),
+        ...(finalContainer ? { containerId: finalContainer.id } : {}),
       };
 
       const updatedHistoryValue: HistoryUpdatedRecordData = [];
       const newContainerBoundingElements = [
-        ...(container?.boundingElements || []),
+        ...(finalContainer?.boundingElements || []),
         {
           id: newTextId,
           type: DrawType.text,
@@ -116,15 +157,21 @@ export const useHandleText = ({
         });
         history.collectUpdatedRecord(updatedHistoryValue);
       } else {
-        if (container) {
+        if (finalContainer && container) {
           updatedHistoryValue.push({
-            id: container.id,
+            id: finalContainer.id,
             value: {
               deleted: {
                 boundingElements: container.boundingElements,
+                ...(finalContainer !== container
+                  ? { x: container.x, y: container.y, width: container.width, height: container.height }
+                  : {}),
               },
               payload: {
                 boundingElements: newContainerBoundingElements,
+                ...(finalContainer !== container
+                  ? { x: finalContainer.x, y: finalContainer.y, width: finalContainer.width, height: finalContainer.height }
+                  : {}),
               },
             },
           });
@@ -133,11 +180,11 @@ export const useHandleText = ({
       }
 
       setStaticDrawData((pre) => {
-        const preDrawData = container
+        const preDrawData = finalContainer
           ? [
-              ...pre.filter((item) => item.id !== container.id),
+              ...pre.filter((item) => item.id !== finalContainer!.id),
               {
-                ...container,
+                ...finalContainer,
                 boundingElements: newContainerBoundingElements,
               },
             ]
@@ -169,9 +216,11 @@ export const useHandleText = ({
         ) as NormalGraphItem) || null
       : getTextContainer(coordinate, staticDrawData);
 
+    containerRef.current = containerElement;
+
     const onInput = (textContent: string) => {
-      // 在container里的textarea，需要实时根据内容修改宽度，以保证居中效果
-      if (!containerElement) {
+      const container = containerRef.current;
+      if (!container) {
         return;
       }
 
@@ -186,12 +235,55 @@ export const useHandleText = ({
       const lines = getTextLines(textContent);
       const finalFontSize =
         existTextElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
+      const textHeight = finalFontSize * lines.length;
 
-      textareaElement.current.style.top =
-        containerElement.y +
-        containerElement.height / 2 -
-        (finalFontSize * lines.length) / 2 +
-        "px";
+      let maxWidth = 0;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx && textContent.trim()) {
+        ctx.font = `${finalFontSize}px ${TEXT_FONT_FAMILY}`;
+        lines.forEach((line) => {
+          const { width } = ctx.measureText(line);
+          if (width > maxWidth) maxWidth = width;
+        });
+      }
+
+      const needW = maxWidth + TEXT_BOUND_GAP;
+      const needH = textHeight + TEXT_BOUND_GAP;
+      const absW = Math.abs(container.width);
+      const absH = Math.abs(container.height);
+      const newWidth =
+        container.width >= 0
+          ? Math.max(container.width, needW)
+          : -Math.max(absW, needW);
+      const newHeight =
+        container.height >= 0
+          ? Math.max(container.height, needH)
+          : -Math.max(absH, needH);
+      const centerX = container.x + container.width / 2;
+      const centerY = container.y + container.height / 2;
+      const newX = centerX - newWidth / 2;
+      const newY = centerY - newHeight / 2;
+
+      const updatedContainer: NormalGraphItem = {
+        ...container,
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight,
+      };
+      containerRef.current = updatedContainer;
+
+      const updateContainerInData = (item: GraphItem) =>
+        item.id === container.id ? { ...item, ...updatedContainer } : item;
+      setStaticDrawData((pre) => pre.map(updateContainerInData));
+      setActiveDrawData((pre) => pre.map(updateContainerInData));
+
+      const el = textareaElement.current;
+      el.style.top = `${newY + newHeight / 2 - textHeight / 2}px`;
+      el.style.left = `${newX + (newWidth < 0 ? newWidth : 0)}px`;
+      el.style.width = `${Math.abs(newWidth)}px`;
+      el.style.height = `${textHeight}px`;
     };
 
     createText(
