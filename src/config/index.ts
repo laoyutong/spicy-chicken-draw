@@ -22,6 +22,12 @@ export const DRAW_SELECTION_GAP = 3;
 
 export const MIN_DRAW_DIS = 3;
 
+/** 含文本图形缩放时，低于此尺寸（宽或高）允许翻转（宽高可为负） */
+export const MIN_TEXT_FLIP_SIZE = 20;
+
+/** 文本翻转后字体大小下限，避免过小不可读 */
+export const MIN_TEXT_FONT_SIZE = 12;
+
 export const SELECTION_RECT_WIDTH = 8;
 
 export const SELECTION_LINE_DASH = [3, 2];

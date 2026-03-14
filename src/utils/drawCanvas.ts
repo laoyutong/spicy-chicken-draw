@@ -148,29 +148,37 @@ const drawArrow: DrawGraphFn = (roughCanvas, { x, y, width, height, seed }) => {
 
 const drawText: DrawTextFn = (
   ctx,
-  { x, y, content, width, fontSize, textAlign }
+  { x, y, content, width, height, fontSize, textAlign }
 ) => {
   if (!content?.trim()) {
     return;
   }
 
+  const absFontSize = Math.abs(fontSize);
   ctx.textBaseline = "bottom";
-  ctx.font = `${fontSize}px  ${TEXT_FONT_FAMILY}`;
+  ctx.font = `${absFontSize}px  ${TEXT_FONT_FAMILY}`;
 
   const lines = getTextLines(content);
+  const isFlippedY = height < 0;
+  const isFlippedX = width < 0;
+
   lines.forEach((line, index) => {
     let xCoordinate = 0;
 
     if (textAlign === TextAlign.left) {
-      xCoordinate = x;
+      xCoordinate = isFlippedX ? x + width : x;
     }
 
     if (textAlign === TextAlign.center) {
       const { width: textWidth } = ctx.measureText(line);
-      xCoordinate = x + (width - textWidth) / 2;
+      xCoordinate = x + width / 2 - textWidth / 2;
     }
 
-    ctx.fillText(line, xCoordinate, y + fontSize * (index + 1));
+    const yCoordinate = isFlippedY
+      ? y + height + absFontSize * (index + 1)
+      : y + absFontSize * (index + 1);
+
+    ctx.fillText(line, xCoordinate, yCoordinate);
   });
 };
 
