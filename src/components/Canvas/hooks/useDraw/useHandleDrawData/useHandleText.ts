@@ -1,4 +1,4 @@
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { nanoid } from "nanoid";
 import { useRef } from "react";
 import {
@@ -7,7 +7,7 @@ import {
   TEXT_FONT_FAMILY,
   TEXT_LINE_HEIGHT_RATIO,
 } from "@/config";
-import { cursorPointAtom, drawTypeAtom } from "@/store";
+import { cursorPointAtom, defaultStrokeColorAtom, drawTypeAtom } from "@/store";
 import {
   type BoundingElement,
   type Coordinate,
@@ -49,6 +49,7 @@ export const useHandleText = ({
 
   const setDrawType = useSetAtom(drawTypeAtom);
   const setCursorPoint = useSetAtom(cursorPointAtom);
+  const defaultStrokeColor = useAtomValue(defaultStrokeColorAtom);
 
   const createTextOnChange: TextOnChangeEvent = (
     textValue,
@@ -125,18 +126,14 @@ export const useHandleText = ({
         }
       }
 
-      // 与 drawText 一致：首行视觉顶部在 y+lineHeight-fontSize，需与编辑时 textarea top 一致，故 y 多减 (lineHeight - fontSize)
-      const lineHeight =
-        finalFontSizeValue * TEXT_LINE_HEIGHT_RATIO;
-      const textYOffset = lineHeight - finalFontSizeValue;
+      // 为了与 textarea 视觉位置保持一致：
+      // - textarea 顶部为 containerCenter - textareaHeight/2
+      // - drawText 中第 n 行底部在 y + lineHeight*(n+1)
+      // 所以 text 的 y 应该等于 textarea 顶部，即 containerCenter - textareaHeight/2
       const textProperty = finalContainer
         ? {
             x: finalContainer.x + (finalContainer.width - maxWidth) / 2,
-            y:
-              finalContainer.y +
-              finalContainer.height / 2 -
-              textareaHeight / 2 -
-              textYOffset,
+            y: finalContainer.y + finalContainer.height / 2 - textareaHeight / 2,
           }
         : existElement
           ? { x: existElement.x, y: existElement.y }
@@ -155,6 +152,7 @@ export const useHandleText = ({
         textAlign:
           existElement?.textAlign ||
           (finalContainer ? TextAlign.center : TextAlign.left),
+        color: existElement?.color ?? defaultStrokeColor,
         ...textProperty,
         ...(finalContainer ? { containerId: finalContainer.id } : {}),
       };
@@ -329,7 +327,8 @@ export const useHandleText = ({
       createTextOnChange,
       containerElement,
       onInput,
-      existTextElement
+      existTextElement,
+      defaultStrokeColor
     );
 
     existTextElement &&

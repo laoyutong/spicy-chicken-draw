@@ -75,6 +75,8 @@ export interface TextGraphItem extends BaseGraphItem {
   fontSize: number;
   textAlign: TextAlign;
   containerId?: string;
+  /** 文本颜色 */
+  color?: string;
 }
 
 export type GraphItem =

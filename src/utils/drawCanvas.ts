@@ -2,6 +2,7 @@ import {
   ARROW_DEG,
   ARROW_LENGTH,
   DEFAULT_FILL_COLOR,
+  DEFAULT_STROKE_COLOR,
   DEFAULT_STROKE_STYLE,
   DRAW_SELECTION_GAP,
   SELECTION_AREA_BG_COLOR,
@@ -180,7 +181,7 @@ const drawArrow: DrawGraphFn = (
 
 const drawText: DrawTextFn = (
   ctx,
-  { x, y, content, width, height, fontSize, textAlign },
+  { x, y, content, width, height, fontSize, textAlign, color },
 ) => {
   if (!content?.trim()) {
     return;
@@ -188,8 +189,9 @@ const drawText: DrawTextFn = (
 
   const absFontSize = Math.abs(fontSize);
   const lineHeight = absFontSize * TEXT_LINE_HEIGHT_RATIO;
-  ctx.textBaseline = "bottom";
+  ctx.textBaseline = "middle";
   ctx.font = `${absFontSize}px  ${TEXT_FONT_FAMILY}`;
+  ctx.fillStyle = color ?? DEFAULT_STROKE_COLOR;
 
   const wrapWidth = Math.abs(width);
   const lines =
@@ -199,6 +201,8 @@ const drawText: DrawTextFn = (
   const isFlippedY = height < 0;
   const isFlippedX = width < 0;
 
+  // 使用 textBaseline="middle"，使文字中线对齐行中心
+  // 行中心位置：y + lineHeight * (index + 0.5)
   lines.forEach((line, index) => {
     let xCoordinate = 0;
 
@@ -211,11 +215,11 @@ const drawText: DrawTextFn = (
       xCoordinate = x + width / 2 - textWidth / 2;
     }
 
-    const yCoordinate = isFlippedY
-      ? y + height + lineHeight * (index + 1)
-      : y + lineHeight * (index + 1);
+    const lineCenterY = isFlippedY
+      ? y + height + lineHeight * (index + 0.5)
+      : y + lineHeight * (index + 0.5);
 
-    ctx.fillText(line, xCoordinate, yCoordinate);
+    ctx.fillText(line, xCoordinate, lineCenterY);
   });
 };
 

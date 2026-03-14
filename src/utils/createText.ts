@@ -1,4 +1,5 @@
 import {
+  DEFAULT_STROKE_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   TEXT_FONT_FAMILY,
   TEXT_LINE_HEIGHT_RATIO,
@@ -81,6 +82,7 @@ const getTextStyle = (
   existElement?: TextGraphItem
 ) => {
   const finalFontSize = existElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
+  const finalColor = existElement?.color || DEFAULT_STROKE_COLOR;
 
   if (!container) {
     return {
@@ -89,6 +91,7 @@ const getTextStyle = (
       width: `${window.innerWidth - x}px`,
       whiteSpace: "nowrap",
       fontSize: `${finalFontSize}px`,
+      color: finalColor,
     };
   }
 
@@ -124,6 +127,7 @@ const getTextStyle = (
     height: `${textElementHeight}px`,
     textAlign: "center",
     fontSize: `${finalFontSize}px`,
+    color: finalColor,
   };
 };
 
@@ -132,7 +136,8 @@ export const createText = (
   onChange: TextOnChangeEvent,
   container: NormalGraphItem | null,
   onInput?: (value: string) => void,
-  existElement?: TextGraphItem
+  existElement?: TextGraphItem,
+  defaultColor?: string
 ) => {
   const textAreaElement = createTextAreaElement();
   if (!textAreaElement) {
@@ -144,9 +149,12 @@ export const createText = (
     textAreaElement.setSelectionRange(0, existElement.content.length);
   }
 
+  // 使用传入的默认颜色（新文本）或已有元素的颜色
+  const color = existElement?.color ?? defaultColor;
+
   setTextAreaStyle(
     textAreaElement,
-    getTextStyle(coordinate, container, existElement)
+    getTextStyle(coordinate, container, { ...existElement, color } as TextGraphItem | undefined)
   );
 
   addTextAreaEvent(

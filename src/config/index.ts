@@ -12,10 +12,10 @@ export const DEFAULT_STROKE_COLOR = "#000";
 /** 图形默认填充颜色（纯色） */
 export const DEFAULT_FILL_COLOR = "#ffffff";
 
-/** 边框/线条可选预设颜色（6 个） */
-export const PRESET_STROKE_COLORS = [
+/** 边框/线条/文本统一可选预设颜色（6 个） */
+export const PRESET_COLORS = [
   "#000000",
-  "#ffffff",
+  "#64748b",
   "#e53e3e",
   "#3182ce",
   "#38a169",
