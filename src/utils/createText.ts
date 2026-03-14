@@ -1,11 +1,15 @@
-import { DEFAULT_TEXT_FONT_SIZE, TEXT_FONT_FAMILY } from "@/config";
+import {
+  DEFAULT_TEXT_FONT_SIZE,
+  TEXT_FONT_FAMILY,
+  TEXT_LINE_HEIGHT_RATIO,
+} from "@/config";
 import type {
   Coordinate,
   NormalGraphItem,
   TextGraphItem,
   TextOnChangeEvent,
 } from "@/types";
-import { getTextLines } from "./common";
+import { getTextLines, getWrappedTextLines } from "./common";
 
 const createTextAreaElement = () => {
   const oldTextarea = document.querySelector("textarea");
@@ -65,9 +69,9 @@ const setTextAreaStyle = (
     outline: 0,
     background: "transparent",
     resize: "none",
-    lineHeight: "1em",
+    lineHeight: `${TEXT_LINE_HEIGHT_RATIO}em`,
     fontFamily: TEXT_FONT_FAMILY,
-    overflow: "hidden",
+    overflow: "auto",
     ...style,
   });
 
@@ -88,16 +92,35 @@ const getTextStyle = (
     };
   }
 
-  const textLines = existElement
-    ? getTextLines(existElement.content).length
-    : 1;
+  let lineCount = 1;
+  if (existElement?.content) {
+    const wrapWidth = Math.abs(container.width);
+    if (wrapWidth > 0) {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.font = `${finalFontSize}px ${TEXT_FONT_FAMILY}`;
+        const wrapped = getWrappedTextLines(
+          existElement.content,
+          wrapWidth,
+          (s) => ctx.measureText(s).width
+        );
+        lineCount = wrapped.length;
+      } else {
+        lineCount = getTextLines(existElement.content).length;
+      }
+    } else {
+      lineCount = getTextLines(existElement.content).length;
+    }
+  }
 
-  const textElementHeight = textLines * finalFontSize;
+  const textElementHeight =
+    lineCount * finalFontSize * TEXT_LINE_HEIGHT_RATIO;
 
   return {
     top: `${container.y + container.height / 2 - textElementHeight / 2}px`,
     left: `${container.x - (container.width < 0 ? container.width : 0)}px`,
-    width: `${container.width}px`,
+    width: `${Math.abs(container.width)}px`,
     height: `${textElementHeight}px`,
     textAlign: "center",
     fontSize: `${finalFontSize}px`,
@@ -137,5 +160,6 @@ export const createText = (
     existElement
   );
 
+  textAreaElement.className = "spicy-draw-textarea";
   document.body.appendChild(textAreaElement);
 };

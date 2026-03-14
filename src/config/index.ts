@@ -34,6 +34,9 @@ export const SELECTION_LINE_DASH = [3, 2];
 
 export const TEXT_BOUND_GAP = 10;
 
+/** 文本行高相对字号的倍数，避免换行时行间重叠或被裁切 */
+export const TEXT_LINE_HEIGHT_RATIO = 1.2;
+
 export const EXPORT_IMAGE_GAP = 30;
 
 export const EXPORT_IMAGE_BACKGROUND_COLOR = "#fff";

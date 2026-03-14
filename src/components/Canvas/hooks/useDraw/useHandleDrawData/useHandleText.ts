@@ -5,6 +5,7 @@ import {
   DEFAULT_TEXT_FONT_SIZE,
   TEXT_BOUND_GAP,
   TEXT_FONT_FAMILY,
+  TEXT_LINE_HEIGHT_RATIO,
 } from "@/config";
 import { cursorPointAtom, drawTypeAtom } from "@/store";
 import {
@@ -25,6 +26,7 @@ import {
   getExistTextElement,
   getTextContainer,
   getTextLines,
+  getWrappedTextLines,
   history,
 } from "@/utils";
 
@@ -58,10 +60,27 @@ export const useHandleText = ({
       let maxWidth = 0;
       const canvas = document.createElement("canvas");
       const canvasCtx = canvas.getContext("2d");
-      const lines = getTextLines(textValue);
-
       const finalFontSizeValue =
         existElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
+
+      const baseContainerForMeasure = container
+        ? (containerRef.current ?? container)
+        : null;
+      const wrapWidth = baseContainerForMeasure
+        ? Math.abs(baseContainerForMeasure.width)
+        : 0;
+
+      const lines =
+        wrapWidth > 0 && canvasCtx
+          ? (() => {
+              canvasCtx.font = `${finalFontSizeValue}px  ${TEXT_FONT_FAMILY}`;
+              return getWrappedTextLines(
+                textValue,
+                wrapWidth,
+                (s) => canvasCtx!.measureText(s).width
+              );
+            })()
+          : getTextLines(textValue);
 
       if (canvasCtx) {
         canvasCtx.font = `${finalFontSizeValue}px  ${TEXT_FONT_FAMILY}`;
@@ -73,7 +92,8 @@ export const useHandleText = ({
         });
       }
 
-      const textareaHeight = finalFontSizeValue * lines.length;
+      const textareaHeight =
+        finalFontSizeValue * lines.length * TEXT_LINE_HEIGHT_RATIO;
 
       // 优先使用编辑过程中实时更新过的容器，保证创建完成后的图形位置与编辑时一致
       const baseContainer = container
@@ -105,13 +125,18 @@ export const useHandleText = ({
         }
       }
 
+      // 与 drawText 一致：首行视觉顶部在 y+lineHeight-fontSize，需与编辑时 textarea top 一致，故 y 多减 (lineHeight - fontSize)
+      const lineHeight =
+        finalFontSizeValue * TEXT_LINE_HEIGHT_RATIO;
+      const textYOffset = lineHeight - finalFontSizeValue;
       const textProperty = finalContainer
         ? {
             x: finalContainer.x + (finalContainer.width - maxWidth) / 2,
             y:
               finalContainer.y +
               finalContainer.height / 2 -
-              textareaHeight / 2,
+              textareaHeight / 2 -
+              textYOffset,
           }
         : existElement
           ? { x: existElement.x, y: existElement.y }
@@ -232,15 +257,28 @@ export const useHandleText = ({
         textareaElement.current = textareaSelector;
       }
 
-      const lines = getTextLines(textContent);
       const finalFontSize =
         existTextElement?.fontSize || DEFAULT_TEXT_FONT_SIZE;
-      const textHeight = finalFontSize * lines.length;
-
-      let maxWidth = 0;
+      const wrapWidth = Math.abs(container.width);
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      if (ctx && textContent.trim()) {
+
+      const lines =
+        wrapWidth > 0 && ctx
+          ? (() => {
+              ctx.font = `${finalFontSize}px ${TEXT_FONT_FAMILY}`;
+              return getWrappedTextLines(
+                textContent,
+                wrapWidth,
+                (s) => ctx!.measureText(s).width
+              );
+            })()
+          : getTextLines(textContent);
+
+      const textHeight =
+        finalFontSize * lines.length * TEXT_LINE_HEIGHT_RATIO;
+      let maxWidth = 0;
+      if (ctx && (lines.length > 0 && (lines.length > 1 || lines[0] !== ""))) {
         ctx.font = `${finalFontSize}px ${TEXT_FONT_FAMILY}`;
         lines.forEach((line) => {
           const { width } = ctx.measureText(line);

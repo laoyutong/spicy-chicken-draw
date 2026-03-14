@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 画布内文本输入框隐藏滚动条 */
+.spicy-draw-textarea::-webkit-scrollbar {
+  display: none;
+}
+.spicy-draw-textarea {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

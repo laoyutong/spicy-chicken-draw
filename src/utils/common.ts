@@ -15,6 +15,46 @@ export const getTextLines = (content: string) => {
   );
 };
 
+/**
+ * 按最大宽度自动换行：先按 \n 分段，每段再按 measureText 宽度折行，适配图形内文本不超出
+ * @param content 原文
+ * @param maxWidth 单行最大像素宽度，≤0 时按 getTextLines 仅按 \n 分行
+ * @param measureText 测量字符串宽度的函数（需已设置好 ctx.font）
+ */
+export const getWrappedTextLines = (
+  content: string,
+  maxWidth: number,
+  measureText: (text: string) => number
+): string[] => {
+  const paragraphs = content.replace(/\r\n?/g, "\n").split("\n");
+  const result: string[] = [];
+
+  for (const para of paragraphs) {
+    if (para === "") {
+      result.push("");
+      continue;
+    }
+    if (maxWidth <= 0) {
+      result.push(para);
+      continue;
+    }
+    let line = "";
+    for (let i = 0; i < para.length; i++) {
+      const c = para[i];
+      const next = line + c;
+      if (measureText(next) <= maxWidth) {
+        line = next;
+      } else {
+        if (line) result.push(line);
+        line = c;
+      }
+    }
+    if (line) result.push(line);
+  }
+
+  return result.length ? result : [""];
+};
+
 export const getMaxDis = (position: number, value: number) =>
   Math.max(position, position + value);
 

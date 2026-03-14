@@ -7,6 +7,7 @@ import {
   SELECTION_BORDER_COLOR,
   SELECTION_LINE_DASH,
   TEXT_FONT_FAMILY,
+  TEXT_LINE_HEIGHT_RATIO,
 } from "@/config";
 import {
   type BasicGraphData,
@@ -17,7 +18,12 @@ import {
   type RoughCanvas,
   TextAlign,
 } from "@/types";
-import { getContentArea, getResizeRectData, getTextLines } from ".";
+import {
+  getContentArea,
+  getResizeRectData,
+  getTextLines,
+  getWrappedTextLines,
+} from ".";
 
 const drawResizeRects = (
   ctx: CanvasRenderingContext2D,
@@ -155,10 +161,19 @@ const drawText: DrawTextFn = (
   }
 
   const absFontSize = Math.abs(fontSize);
+  const lineHeight = absFontSize * TEXT_LINE_HEIGHT_RATIO;
   ctx.textBaseline = "bottom";
   ctx.font = `${absFontSize}px  ${TEXT_FONT_FAMILY}`;
 
-  const lines = getTextLines(content);
+  const wrapWidth = Math.abs(width);
+  const lines =
+    wrapWidth > 0
+      ? getWrappedTextLines(
+          content,
+          wrapWidth,
+          (s) => ctx.measureText(s).width
+        )
+      : getTextLines(content);
   const isFlippedY = height < 0;
   const isFlippedX = width < 0;
 
@@ -175,8 +190,8 @@ const drawText: DrawTextFn = (
     }
 
     const yCoordinate = isFlippedY
-      ? y + height + absFontSize * (index + 1)
-      : y + absFontSize * (index + 1);
+      ? y + height + lineHeight * (index + 1)
+      : y + lineHeight * (index + 1);
 
     ctx.fillText(line, xCoordinate, yCoordinate);
   });

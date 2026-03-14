@@ -12,7 +12,10 @@ import {
   type SetDrawData,
   type TimeoutValue,
 } from "@/types";
-import { MIN_TEXT_FONT_SIZE } from "@/config";
+import {
+  MIN_TEXT_FONT_SIZE,
+  TEXT_LINE_HEIGHT_RATIO,
+} from "@/config";
 import {
   getContentArea,
   getHoverElement,
@@ -222,10 +225,13 @@ export const useHandleMoveAndResize = ({
               // 文本类型需要同步更改字体大小；翻转时用绝对值并保证最小字号
               if (activeDraftItem.type === DrawType.text) {
                 const lines = getTextLines(activeDraftItem.content);
-                const lineHeight = Math.abs(activeItemHeight) / lines.length;
+                const lineCount = lines.length || 1;
+                const fontSizeFromHeight =
+                  Math.abs(activeItemHeight) /
+                  (lineCount * TEXT_LINE_HEIGHT_RATIO);
                 activeDraftItem.fontSize = Math.max(
                   MIN_TEXT_FONT_SIZE,
-                  lineHeight
+                  fontSizeFromHeight
                 );
               }
             };
