@@ -176,7 +176,7 @@ export const ShapeColorPanel = (): JSX.Element | null => {
   return (
     <div
       data-ignore-draw
-      className="absolute top-14 left-1/2 -translate-x-1/2 z-10 flex flex-col gap-2 rounded bg-slate-50 shadow px-3 py-2"
+      className="fixed top-14 left-1/2 -translate-x-1/2 z-10 flex flex-col gap-2 rounded bg-slate-50 shadow px-3 py-2"
     >
       {hasColor && (
         <div className="flex items-center gap-2">

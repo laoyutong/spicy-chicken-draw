@@ -40,11 +40,19 @@ export const Canvas = (): JSX.Element => {
       activeDrawData={activeDrawData}
       setActiveDrawData={setActiveDrawData}
     >
-      <div className={styles.canvas_container} style={{ cursor: cursorPoint, position: "relative" }}>
+      <div
+        className={styles.canvas_container}
+        style={{
+          cursor: cursorPoint,
+          position: "fixed",
+          inset: 0,
+          overflow: "hidden",
+        }}
+      >
         <canvas ref={staticCanvasRef} />
         <canvas ref={activeCanvasRef} />
-        <ShapeColorPanel />
       </div>
+      <ShapeColorPanel />
     </DrawDataProvider>
   );
 };

@@ -20,8 +20,6 @@ export const useResizeCanvas = (
       }
 
       const { innerWidth, innerHeight, devicePixelRatio } = window;
-      item.current.width = innerWidth;
-      item.current.height = innerHeight;
       item.current.style.width = `${innerWidth}px`;
       item.current.style.height = `${innerHeight}px`;
       // 高清屏上物理像素和设备独立像素不一致 解决文本绘制模糊的问题

@@ -1,11 +1,15 @@
 import { useEventListener } from "ahooks";
+import { useAtomValue } from "jotai";
 import { useState } from "react";
+import { canvasZoomAtom } from "@/store";
 import type { Coordinate } from "@/types";
 
 /**
  * 获取操作时的初始和移动位置
  */
 export const useOperationCoordinate = () => {
+  const zoom = useAtomValue(canvasZoomAtom);
+
   const [startCoordinate, setStartCoordinate] = useState<Coordinate | null>(
     null
   );
@@ -15,21 +19,30 @@ export const useOperationCoordinate = () => {
     y: 0,
   });
 
+  const toCanvasCoordinate = (pageX: number, pageY: number): Coordinate => {
+    const scale = zoom / 100;
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    return {
+      x: (pageX - cx) / scale + cx,
+      y: (pageY - cy) / scale + cy,
+    };
+  };
+
   useEventListener(
     "mousedown",
     (e: MouseEvent) => {
-      // 点击工具栏、颜色面板等 UI 时不触发画布操作，避免拦截颜色选择器等
       if ((e.target as Element).closest?.("[data-ignore-draw]")) {
         return;
       }
-      setStartCoordinate({ x: e.pageX, y: e.pageY });
+      setStartCoordinate(toCanvasCoordinate(e.pageX, e.pageY));
     },
     { target: document }
   );
   useEventListener(
     "mousemove",
     ({ pageX, pageY }) => {
-      setMoveCoordinate({ x: pageX, y: pageY });
+      setMoveCoordinate(toCanvasCoordinate(pageX, pageY));
     },
     { target: document }
   );

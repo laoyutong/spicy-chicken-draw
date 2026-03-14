@@ -24,7 +24,7 @@ export const SelectionTool = (): JSX.Element => {
   }, [drawType]);
 
   return (
-    <div data-ignore-draw className="flex absolute top-3 left-1/2 -translate-x-1/2 rounded bg-slate-50 shadow">
+    <div data-ignore-draw className="flex fixed top-3 left-1/2 -translate-x-1/2 z-10 rounded bg-slate-50 shadow">
       {ICON_LIST.map(({ Icon, type }, index) => (
         <div
           key={type}

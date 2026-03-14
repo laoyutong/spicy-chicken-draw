@@ -474,8 +474,23 @@ export const drawCanvas = (
   ctx: CanvasRenderingContext2D,
   roughCanvas: RoughCanvas,
   data: GraphItem[],
+  zoom = 100,
 ) => {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.restore();
+
+  ctx.save();
+
+  if (zoom !== 100) {
+    const scale = zoom / 100;
+    const cx = ctx.canvas.width / (2 * window.devicePixelRatio);
+    const cy = ctx.canvas.height / (2 * window.devicePixelRatio);
+    ctx.translate(cx * (1 - scale), cy * (1 - scale));
+    ctx.scale(scale, scale);
+  }
+
   const selectionItems = data.filter((i) => i.type === DrawType.selection);
   const shapeItems = data.filter((i) => i.type !== DrawType.selection);
   // 1. 框选矩形（底层，拖拽选区时）
@@ -489,5 +504,7 @@ export const drawCanvas = (
   // 4. 缩放手柄（顶层，便于点击）
   ctx.save();
   drawSelectedResizeHandles(ctx, data);
+  ctx.restore();
+
   ctx.restore();
 };

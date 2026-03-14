@@ -1,6 +1,8 @@
 import { useEventListener } from "ahooks";
+import { useAtomValue } from "jotai";
 import { useLayoutEffect } from "react";
 import { APP_KEY } from "@/config";
+import { canvasZoomAtom } from "@/store";
 import { CanvasCtxRef, DrawType, GraphItem, RoughCanvasRef } from "@/types";
 import {
   drawCanvas,
@@ -31,6 +33,8 @@ export const useDrawCanvas = ({
   activeRoughCanvas,
   canvasReady,
 }: UseDrawCanvasParams) => {
+  const zoom = useAtomValue(canvasZoomAtom);
+
   const drawStaticContent = (isResize?: boolean) => {
     if (!staticCanvasCtx.current || !staticRoughCanvas.current) {
       return;
@@ -38,7 +42,8 @@ export const useDrawCanvas = ({
     drawCanvas(
       staticCanvasCtx.current,
       staticRoughCanvas.current,
-      staticDrawData
+      staticDrawData,
+      zoom
     );
 
     // 存储到 localStorage 和 IndexedDB
@@ -83,7 +88,8 @@ export const useDrawCanvas = ({
     drawCanvas(
       activeCanvasCtx.current,
       activeRoughCanvas.current,
-      activeDrawData
+      activeDrawData,
+      zoom
     );
   };
 
@@ -99,19 +105,19 @@ export const useDrawCanvas = ({
     return () => {
       setImageRedrawCallback(null);
     };
-  }, [canvasReady, staticDrawData, activeDrawData]);
+  }, [canvasReady, staticDrawData, activeDrawData, zoom]);
 
   useLayoutEffect(() => {
     if (canvasReady) {
       drawActiveContent();
     }
-  }, [activeDrawData, canvasReady]);
+  }, [activeDrawData, canvasReady, zoom]);
 
   useLayoutEffect(() => {
     if (canvasReady) {
       drawStaticContent();
     }
-  }, [staticDrawData, canvasReady]);
+  }, [staticDrawData, canvasReady, zoom]);
 
   useEventListener(
     "resize",
