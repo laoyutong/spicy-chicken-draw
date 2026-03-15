@@ -5,10 +5,16 @@ import { flushSync } from "react-dom";
 import {
   DEFAULT_FILL_COLOR,
   DEFAULT_STROKE_COLOR,
+  DEFAULT_STROKE_WIDTH,
   PRESET_COLORS,
   PRESET_FILL_COLORS,
+  PRESET_STROKE_WIDTHS,
 } from "@/config";
-import { defaultFillColorAtom, defaultStrokeColorAtom } from "@/store";
+import {
+  defaultFillColorAtom,
+  defaultStrokeColorAtom,
+  defaultStrokeWidthAtom,
+} from "@/store";
 import { DrawType, type GraphItem } from "@/types";
 import { history } from "@/utils";
 import { useDrawData } from "../Canvas/context/DrawDataContext";
@@ -40,6 +46,7 @@ export const ShapeColorPanel = (): JSX.Element | null => {
   } = useDrawData();
   const setDefaultStroke = useSetAtom(defaultStrokeColorAtom);
   const setDefaultFill = useSetAtom(defaultFillColorAtom);
+  const setDefaultStrokeWidth = useSetAtom(defaultStrokeWidthAtom);
   const defaultStrokeColor = useAtomValue(defaultStrokeColorAtom);
 
   const selectedItems = [
@@ -63,6 +70,10 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     "strokeColor" in item
       ? (item.strokeColor ?? DEFAULT_STROKE_COLOR)
       : DEFAULT_STROKE_COLOR;
+  const getStrokeWidth = (item: GraphItem) =>
+    "strokeWidth" in item
+      ? (item.strokeWidth ?? DEFAULT_STROKE_WIDTH)
+      : DEFAULT_STROKE_WIDTH;
   const getFill = (item: GraphItem) =>
     "fillColor" in item
       ? (item.fillColor ?? DEFAULT_FILL_COLOR)
@@ -100,7 +111,13 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     fillItems.every((i) => getFill(i) === getFill(fillItems[0]))
       ? getFill(fillItems[0])
       : null;
+  const strokeWidth =
+    strokeItems.length > 0 &&
+    strokeItems.every((i) => getStrokeWidth(i) === getStrokeWidth(strokeItems[0]))
+      ? getStrokeWidth(strokeItems[0])
+      : null;
   const hasFill = fillItems.length > 0;
+  const hasStroke = strokeItems.length > 0;
 
   const updateColor = (value: string) => {
     // 更新图形边框色
@@ -170,6 +187,28 @@ export const ShapeColorPanel = (): JSX.Element | null => {
     setDefaultFill(value);
   };
 
+  const updateStrokeWidth = (value: number) => {
+    const updates = strokeItems.map((item) => ({
+      id: item.id,
+      value: {
+        payload: { strokeWidth: value },
+        deleted: {
+          strokeWidth: (item as { strokeWidth?: number }).strokeWidth,
+        },
+      },
+    }));
+    if (updates.length) {
+      history.collectUpdatedRecord(updates);
+    }
+    const updateFn = (item: GraphItem) =>
+      item.selected && canHaveStroke(item) ? { ...item, strokeWidth: value } : item;
+    flushSync(() => {
+      setStaticDrawData((prev) => prev.map(updateFn));
+      setActiveDrawData((prev) => prev.map(updateFn));
+    });
+    setDefaultStrokeWidth(value);
+  };
+
   const hasColor =
     strokeItems.length > 0 || textItems.length > 0 || isEditingText;
 
@@ -224,6 +263,31 @@ export const ShapeColorPanel = (): JSX.Element | null => {
                 )}
                 style={{ backgroundColor: color }}
               />
+            ))}
+          </div>
+        </div>
+      )}
+      {hasStroke && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-600 shrink-0 w-8">粗细</span>
+          <div className="flex items-center gap-1 flex-wrap">
+            {PRESET_STROKE_WIDTHS.map(({ label, value }) => (
+              <button
+                key={value}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault(); // 阻止 textarea 失去焦点
+                  updateStrokeWidth(value);
+                }}
+                className={cls(
+                  "h-6 px-2 rounded border text-xs cursor-pointer transition-[border-color,color]",
+                  strokeWidth !== null && strokeWidth === value
+                    ? "border-slate-800 text-slate-900 bg-slate-100"
+                    : "border-slate-200 text-slate-600 hover:border-slate-400",
+                )}
+              >
+                {label}
+              </button>
             ))}
           </div>
         </div>

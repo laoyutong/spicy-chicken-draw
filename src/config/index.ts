@@ -9,8 +9,18 @@ export const DEFAULT_STROKE_STYLE = "#000";
 /** 图形默认边框颜色 */
 export const DEFAULT_STROKE_COLOR = "#000";
 
+/** 图形默认边框粗细（像素） */
+export const DEFAULT_STROKE_WIDTH = 2;
+
 /** 图形默认填充颜色（纯色） */
 export const DEFAULT_FILL_COLOR = "#ffffff";
+
+/** 内置边框粗细选项（细 / 中 / 粗） */
+export const PRESET_STROKE_WIDTHS = [
+  { label: "细", value: 1 },
+  { label: "中", value: 2 },
+  { label: "粗", value: 4 },
+] as const;
 
 /** 边框/线条/文本统一可选预设颜色（6 个） */
 export const PRESET_COLORS = [

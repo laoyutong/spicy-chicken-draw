@@ -56,6 +56,8 @@ export interface RoughGraphItem {
 export interface ShapeStyle {
   /** 边框颜色 */
   strokeColor?: string;
+  /** 边框粗细 */
+  strokeWidth?: number;
   /** 背景/填充颜色 */
   fillColor?: string;
 }
@@ -113,7 +115,10 @@ export type BasicGraphData = Pick<GraphItem, BasicGraphFields>;
 
 export type DrawGraphFn = (
   roughCanvas: RoughCanvas,
-  drawData: Pick<NormalGraphItem, BasicGraphFields | "seed" | "strokeColor" | "fillColor">
+  drawData: Pick<
+    NormalGraphItem,
+    BasicGraphFields | "seed" | "strokeColor" | "strokeWidth" | "fillColor"
+  >
 ) => void;
 
 export type DrawTextFn = (

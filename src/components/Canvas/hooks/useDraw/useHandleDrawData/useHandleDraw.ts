@@ -2,7 +2,12 @@ import { useAtom, useAtomValue } from "jotai";
 import { nanoid } from "nanoid";
 import { useRef, useCallback } from "react";
 import { MIN_DRAW_DIS } from "@/config";
-import { defaultFillColorAtom, defaultStrokeColorAtom, drawTypeAtom } from "@/store";
+import {
+  defaultFillColorAtom,
+  defaultStrokeColorAtom,
+  defaultStrokeWidthAtom,
+  drawTypeAtom,
+} from "@/store";
 import {
   type Coordinate,
   DrawType,
@@ -38,6 +43,7 @@ export const useHandleDraw = ({
   const [drawType, setDrawType] = useAtom(drawTypeAtom);
   const defaultStrokeColor = useAtomValue(defaultStrokeColorAtom);
   const defaultFillColor = useAtomValue(defaultFillColorAtom);
+  const defaultStrokeWidth = useAtomValue(defaultStrokeWidthAtom);
 
   // 创建图片元素
   const createImageElement = useCallback((coordinate: Coordinate, src: string) => {
@@ -165,7 +171,12 @@ export const useHandleDraw = ({
       };
       const withStyle =
         drawType !== DrawType.selection && drawType !== DrawType.text
-          ? { ...base, strokeColor: defaultStrokeColor, fillColor: defaultFillColor }
+          ? {
+              ...base,
+              strokeColor: defaultStrokeColor,
+              strokeWidth: defaultStrokeWidth,
+              fillColor: defaultFillColor,
+            }
           : base;
       workingDrawData.current = withStyle as Exclude<GraphItem, TextGraphItem>;
       return true;

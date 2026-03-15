@@ -1,9 +1,9 @@
 import {
   ARROW_DEG,
   ARROW_LENGTH,
-  DEFAULT_FILL_COLOR,
   DEFAULT_STROKE_COLOR,
   DEFAULT_STROKE_STYLE,
+  DEFAULT_STROKE_WIDTH,
   DRAW_SELECTION_GAP,
   SELECTION_AREA_BG_COLOR,
   SELECTION_BORDER_COLOR,
@@ -92,29 +92,35 @@ const drawNormalRect = (
 const getRoughOptions = (
   seed: number,
   strokeColor?: string,
+  strokeWidth?: number,
   fillColor?: string,
-) => ({
-  seed,
-  stroke: strokeColor ?? DEFAULT_STROKE_STYLE,
-  fill: fillColor === "transparent" || !fillColor ? "none" : fillColor,
-});
+) => {
+  const hasFill = fillColor !== "transparent" && !!fillColor;
+  return {
+    seed,
+    stroke: strokeColor ?? DEFAULT_STROKE_STYLE,
+    strokeWidth: strokeWidth ?? DEFAULT_STROKE_WIDTH,
+    fill: hasFill ? fillColor : "none",
+    fillStyle: hasFill ? "solid" : undefined,
+  };
+};
 
 const drawRect: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed, strokeColor, fillColor },
+  { x, y, width, height, seed, strokeColor, strokeWidth, fillColor },
 ) => {
   roughCanvas.rectangle(
     x,
     y,
     width,
     height,
-    getRoughOptions(seed, strokeColor, fillColor),
+    getRoughOptions(seed, strokeColor, strokeWidth, fillColor),
   );
 };
 
 const drawCircle: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed, strokeColor, fillColor },
+  { x, y, width, height, seed, strokeColor, strokeWidth, fillColor },
 ) => {
   const centerX = x + width / 2;
   const centerY = y + height / 2;
@@ -123,13 +129,13 @@ const drawCircle: DrawGraphFn = (
     centerY,
     width,
     height,
-    getRoughOptions(seed, strokeColor, fillColor),
+    getRoughOptions(seed, strokeColor, strokeWidth, fillColor),
   );
 };
 
 const drawDiamond: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed, strokeColor, fillColor },
+  { x, y, width, height, seed, strokeColor, strokeWidth, fillColor },
 ) => {
   roughCanvas.polygon(
     [
@@ -138,7 +144,7 @@ const drawDiamond: DrawGraphFn = (
       [x + width / 2, y + height],
       [x, y + height / 2],
     ],
-    getRoughOptions(seed, strokeColor, fillColor),
+    getRoughOptions(seed, strokeColor, strokeWidth, fillColor),
   );
 };
 
@@ -154,7 +160,7 @@ const drawSelection = (
 
 const drawArrow: DrawGraphFn = (
   roughCanvas,
-  { x, y, width, height, seed, strokeColor },
+  { x, y, width, height, seed, strokeColor, strokeWidth },
 ) => {
   const arrowLength = Math.min(
     (width * width + height * height) ** (1 / 2) / 2,
@@ -174,6 +180,7 @@ const drawArrow: DrawGraphFn = (
   const roughOptions = {
     seed,
     stroke: strokeColor ?? DEFAULT_STROKE_STYLE,
+    strokeWidth: strokeWidth ?? DEFAULT_STROKE_WIDTH,
   };
   roughCanvas.line(x, y, targetX, targetY, roughOptions);
   roughCanvas.line(targetX, targetY, x1, y1, roughOptions);
