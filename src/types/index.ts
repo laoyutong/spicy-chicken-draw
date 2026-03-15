@@ -123,7 +123,9 @@ export type DrawGraphFn = (
 
 export type DrawTextFn = (
   ctx: CanvasRenderingContext2D,
-  drawData: TextGraphItem
+  drawData: TextGraphItem,
+  /** 有容器时用容器宽度做换行，避免缩放后仍按文本自身 width 换行导致多余换行 */
+  wrapWidthOverride?: number
 ) => void;
 
 export enum ResizePosition {

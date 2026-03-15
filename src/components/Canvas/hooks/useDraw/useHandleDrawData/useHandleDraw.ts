@@ -23,6 +23,7 @@ interface UseHandleDrawParams {
   startCoordinate: Coordinate | null;
   moveCoordinate: Coordinate;
   staticDrawData: GraphItem[];
+  activeDrawData: GraphItem[];
   setStaticDrawData: SetDrawData;
   setActiveDrawData: SetDrawData;
 }
@@ -33,6 +34,7 @@ export const useHandleDraw = ({
   startCoordinate,
   moveCoordinate,
   staticDrawData,
+  activeDrawData,
   setStaticDrawData,
   setActiveDrawData,
 }: UseHandleDrawParams) => {
@@ -185,6 +187,15 @@ export const useHandleDraw = ({
     // 移动过程中实时更改 workingDrawData 的 width 和 height
     workingDrawData.current.width = moveCoordinate.x - startCoordinate.x;
     workingDrawData.current.height = moveCoordinate.y - startCoordinate.y;
+
+    // 开始拖拽选区框时，若 activeDrawData 中已有图形（如移动中未合并的文本等），先合并回 staticDrawData，避免被选区框覆盖导致丢失
+    if (drawType === DrawType.selection && workingDrawData.current.type === DrawType.selection) {
+      const realItems = activeDrawData.filter((i) => i.type !== DrawType.selection);
+      if (realItems.length > 0) {
+        setStaticDrawData((pre) => [...pre, ...realItems]);
+      }
+    }
+
     setActiveDrawData([workingDrawData.current]);
 
     // 对selection范围内的图形设置selected

@@ -21,6 +21,9 @@ const createTextAreaElement = () => {
   return document.createElement("textarea");
 };
 
+/** 用于 mousedown 时同步保存后，blur 不再重复保存 */
+type SavedFromMousedownRef = { current: boolean };
+
 const addTextAreaEvent = (
   textarea: HTMLTextAreaElement,
   coordinate: Coordinate,
@@ -32,8 +35,14 @@ const addTextAreaEvent = (
     onInput?: (value: string) => void;
     onChange: TextOnChangeEvent;
   },
-  existElement?: TextGraphItem
+  existElement: TextGraphItem | undefined,
+  options?: {
+    registerFlush?: (save: (() => void) | null) => void;
+    savedFromMousedownRef?: SavedFromMousedownRef;
+  }
 ) => {
+  const { registerFlush, savedFromMousedownRef } = options ?? {};
+
   textarea.onkeydown = (e) => {
     e.stopPropagation();
   };
@@ -43,15 +52,33 @@ const addTextAreaEvent = (
     onInput?.((e.target as HTMLInputElement).value);
   };
 
-  textarea.onblur = (e: Event) => {
+  const doSave = () => {
     onChange(
-      (e.target as HTMLInputElement).value,
+      textarea.value,
       coordinate,
       container,
       existElement
     );
     document.body.removeChild(textarea);
   };
+
+  textarea.onblur = () => {
+    if (savedFromMousedownRef?.current) {
+      savedFromMousedownRef.current = false;
+      if (textarea.parentNode) {
+        document.body.removeChild(textarea);
+      }
+      registerFlush?.(null);
+      return;
+    }
+    doSave();
+    registerFlush?.(null);
+  };
+
+  registerFlush?.(() => {
+    savedFromMousedownRef && (savedFromMousedownRef.current = true);
+    doSave();
+  });
 
   setTimeout(() => {
     textarea.focus();
@@ -131,13 +158,19 @@ const getTextStyle = (
   };
 };
 
+export type TextFlushOptions = {
+  registerFlush?: (save: (() => void) | null) => void;
+  savedFromMousedownRef?: SavedFromMousedownRef;
+};
+
 export const createText = (
   coordinate: Coordinate,
   onChange: TextOnChangeEvent,
   container: NormalGraphItem | null,
   onInput?: (value: string) => void,
   existElement?: TextGraphItem,
-  defaultColor?: string
+  defaultColor?: string,
+  flushOptions?: TextFlushOptions
 ) => {
   const textAreaElement = createTextAreaElement();
   if (!textAreaElement) {
@@ -165,7 +198,8 @@ export const createText = (
       onChange,
       onInput,
     },
-    existElement
+    existElement,
+    flushOptions
   );
 
   textAreaElement.className = "spicy-draw-textarea";

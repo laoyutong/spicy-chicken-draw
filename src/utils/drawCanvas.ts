@@ -190,6 +190,7 @@ const drawArrow: DrawGraphFn = (
 const drawText: DrawTextFn = (
   ctx,
   { x, y, content, width, height, fontSize, textAlign, color },
+  wrapWidthOverride,
 ) => {
   if (!content?.trim()) {
     return;
@@ -201,7 +202,11 @@ const drawText: DrawTextFn = (
   ctx.font = `${absFontSize}px  ${TEXT_FONT_FAMILY}`;
   ctx.fillStyle = color ?? DEFAULT_STROKE_COLOR;
 
-  const wrapWidth = Math.abs(width);
+  // 有容器时用容器宽度换行，避免缩放后容器变宽但仍按文本 width 换行导致“还有空间却换行”
+  const wrapWidth =
+    wrapWidthOverride !== undefined
+      ? wrapWidthOverride
+      : Math.abs(width);
   const lines =
     wrapWidth > 0
       ? getWrappedTextLines(content, wrapWidth, (s) => ctx.measureText(s).width)
@@ -401,6 +406,7 @@ const drawGraph = (
   ctx: CanvasRenderingContext2D,
   roughCanvas: RoughCanvas,
   drawData: GraphItem,
+  data: GraphItem[],
 ) => {
   switch (drawData.type) {
     case DrawType.selection:
@@ -418,9 +424,18 @@ const drawGraph = (
     case DrawType.arrow:
       drawArrow(roughCanvas, drawData);
       return;
-    case DrawType.text:
-      drawText(ctx, drawData);
+    case DrawType.text: {
+      const textItem = drawData;
+      const container =
+        "containerId" in textItem && textItem.containerId
+          ? data.find((i) => i.id === textItem.containerId)
+          : undefined;
+      const wrapWidthOverride = container
+        ? Math.abs((container as { width: number }).width)
+        : undefined;
+      drawText(ctx, textItem, wrapWidthOverride);
       return;
+    }
     case DrawType.image:
       drawImage(ctx, drawData);
       return;
@@ -501,13 +516,13 @@ export const drawCanvas = (
   const selectionItems = data.filter((i) => i.type === DrawType.selection);
   const shapeItems = data.filter((i) => i.type !== DrawType.selection);
   // 1. 框选矩形（底层，拖拽选区时）
-  selectionItems.forEach((item) => drawGraph(ctx, roughCanvas, item));
+  selectionItems.forEach((item) => drawGraph(ctx, roughCanvas, item, data));
   // 2. 选区边框（底层）
   ctx.save();
   drawSelectedOutlines(ctx, data);
   ctx.restore();
   // 3. 图形（中层，不被选区遮挡）
-  shapeItems.forEach((item) => drawGraph(ctx, roughCanvas, item));
+  shapeItems.forEach((item) => drawGraph(ctx, roughCanvas, item, data));
   // 4. 缩放手柄（顶层，便于点击）
   ctx.save();
   drawSelectedResizeHandles(ctx, data);

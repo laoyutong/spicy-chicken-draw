@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { useEventListener, useTrackedEffect } from "ahooks";
 import { useAtomValue } from "jotai";
 import { useRef } from "react";
@@ -23,6 +24,8 @@ interface UseHandleDrawDataParams {
   moveCoordinate: Coordinate;
   setStaticDrawData: SetDrawData;
   setActiveDrawData: SetDrawData;
+  textFlushRef?: MutableRefObject<(() => void) | null>;
+  savedFromMousedownRef?: MutableRefObject<boolean>;
 }
 
 /**
@@ -35,6 +38,8 @@ export const useHandleDrawData = ({
   staticDrawData,
   setStaticDrawData,
   setActiveDrawData,
+  textFlushRef,
+  savedFromMousedownRef,
 }: UseHandleDrawDataParams) => {
   const drawType = useAtomValue(drawTypeAtom);
 
@@ -55,12 +60,15 @@ export const useHandleDrawData = ({
     activeDrawData,
     setStaticDrawData,
     setActiveDrawData,
+    textFlushRef,
+    savedFromMousedownRef,
   });
 
   const { handleDrawElement } = useHandleDraw({
     startCoordinate,
     moveCoordinate,
     staticDrawData,
+    activeDrawData,
     setStaticDrawData,
     setActiveDrawData,
   });

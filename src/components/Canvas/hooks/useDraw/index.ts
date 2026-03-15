@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { APP_KEY } from "@/config";
 import { CanvasCtxRef, DrawType, GraphItem, RoughCanvasRef } from "@/types";
 import { getImage } from "@/utils";
@@ -18,6 +18,9 @@ export const useDraw = (
   const [activeDrawData, setActiveDrawData] = useState<GraphItem[]>([]);
   const [staticDrawData, setStaticDrawData] = useState<GraphItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const textFlushRef = useRef<(() => void) | null>(null);
+  const savedFromMousedownRef = useRef(false);
 
   // 从 localStorage 和 IndexedDB 加载数据
   useEffect(() => {
@@ -51,7 +54,9 @@ export const useDraw = (
     loadData();
   }, []);
 
-  const { startCoordinate, moveCoordinate } = useOperationCoordinate();
+  const { startCoordinate, moveCoordinate } = useOperationCoordinate({
+    textFlushRef,
+  });
 
   useHandleDrawData({
     startCoordinate,
@@ -60,6 +65,8 @@ export const useDraw = (
     activeDrawData,
     setStaticDrawData,
     setActiveDrawData,
+    textFlushRef,
+    savedFromMousedownRef,
   });
 
   useOperationToolEvent({

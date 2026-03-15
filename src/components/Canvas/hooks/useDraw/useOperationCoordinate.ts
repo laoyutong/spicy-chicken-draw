@@ -1,14 +1,22 @@
+import type { MutableRefObject } from "react";
 import { useEventListener } from "ahooks";
 import { useAtomValue } from "jotai";
 import { useState } from "react";
 import { canvasZoomAtom } from "@/store";
 import type { Coordinate } from "@/types";
 
+interface UseOperationCoordinateParams {
+  textFlushRef?: MutableRefObject<(() => void) | null>;
+}
+
 /**
  * 获取操作时的初始和移动位置
  */
-export const useOperationCoordinate = () => {
+export const useOperationCoordinate = (
+  params?: UseOperationCoordinateParams
+) => {
   const zoom = useAtomValue(canvasZoomAtom);
+  const textFlushRef = params?.textFlushRef;
 
   const [startCoordinate, setStartCoordinate] = useState<Coordinate | null>(
     null
@@ -34,6 +42,17 @@ export const useOperationCoordinate = () => {
     (e: MouseEvent) => {
       if ((e.target as Element).closest?.("[data-ignore-draw]")) {
         return;
+      }
+      // 若正在编辑文本框且点击在文本框外，先同步保存再处理点击，避免 blur 晚于 effect 导致文本丢失
+      const isClickOnTextarea = (e.target as Element).closest?.(
+        "textarea.spicy-draw-textarea"
+      );
+      if (
+        !isClickOnTextarea &&
+        textFlushRef?.current &&
+        document.querySelector("textarea.spicy-draw-textarea")
+      ) {
+        textFlushRef.current();
       }
       setStartCoordinate(toCanvasCoordinate(e.pageX, e.pageY));
     },

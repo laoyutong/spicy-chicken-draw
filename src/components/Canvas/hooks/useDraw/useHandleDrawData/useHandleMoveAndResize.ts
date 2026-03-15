@@ -19,6 +19,7 @@ import {
 import {
   getContentArea,
   getHoverElement,
+  getResizeCursor,
   getSelectedItems,
   getTextLines,
   handleDrawItem,
@@ -60,7 +61,6 @@ export const useHandleMoveAndResize = ({
     drawDataList: MutableRefObject<GraphItem[]>
   ) => {
     if (!drawDataList.current.length) {
-      console.log("execute collectSelectedElements");
       drawDataList.current = getSelectedItems(staticDrawData);
 
       if (drawDataList.current.length) {
@@ -375,10 +375,15 @@ export const useHandleMoveAndResize = ({
       ...activeDrawData,
     ]);
 
-    // 存在startCoordinate变更且有值，说明是点击的情况，则重置select的状态
+    // 存在startCoordinate变更且有值，说明是点击的情况，则重置select的状态（点击在缩放手柄上时不清除，否则 resize 时无法 collect 导致关联文本被画两份）
+    const isOnResizeHandle = getResizeCursor(startCoordinate, [
+      ...staticDrawData,
+      ...activeDrawData,
+    ]);
     if (
       isStartCoordinateChange &&
-      staticDrawData.find((item) => item.selected)
+      staticDrawData.find((item) => item.selected) &&
+      !isOnResizeHandle
     ) {
       const historyUpdatedRecord: HistoryUpdatedRecordData = [];
 

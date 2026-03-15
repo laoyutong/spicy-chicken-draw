@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { nanoid } from "nanoid";
 import { useRef } from "react";
@@ -35,6 +36,8 @@ interface UseHandleTextParams {
   activeDrawData: GraphItem[];
   setStaticDrawData: SetDrawData;
   setActiveDrawData: SetDrawData;
+  textFlushRef?: MutableRefObject<(() => void) | null>;
+  savedFromMousedownRef?: MutableRefObject<boolean>;
 }
 
 export const useHandleText = ({
@@ -42,6 +45,8 @@ export const useHandleText = ({
   activeDrawData,
   setStaticDrawData,
   setActiveDrawData,
+  textFlushRef,
+  savedFromMousedownRef,
 }: UseHandleTextParams) => {
   const textareaElement = useRef<HTMLTextAreaElement | null>(null);
   /** 输入过程中当前容器（实时调整图形时保持中心不变，用 ref 追踪最新尺寸） */
@@ -328,7 +333,20 @@ export const useHandleText = ({
       containerElement,
       onInput,
       existTextElement,
-      defaultStrokeColor
+      defaultStrokeColor,
+      textFlushRef && savedFromMousedownRef
+        ? {
+            registerFlush: (save) => {
+              textFlushRef.current = save
+                ? () => {
+                    save();
+                    textFlushRef.current = null;
+                  }
+                : null;
+            },
+            savedFromMousedownRef,
+          }
+        : undefined
     );
 
     existTextElement &&
